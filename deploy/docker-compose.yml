@@ -1,0 +1,73 @@
+# Docker Compose configuration for UMass Marketplace
+# Sets up PostgreSQL database, Spring Boot API, and React frontend for local development
+version: '3.8'
+
+services:
+  # PostgreSQL database service
+  db:
+    image: postgres:16
+    container_name: umass-marketplace-db
+    environment:
+      POSTGRES_DB: umarket
+      POSTGRES_USER: umarket
+      POSTGRES_PASSWORD: umarket
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umarket -d umarket"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - umass-marketplace
+
+  # Spring Boot API service
+  api:
+    build: 
+      context: ../api
+      dockerfile: Dockerfile
+    container_name: umass-marketplace-api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/umarket
+      SPRING_DATASOURCE_USERNAME: umarket
+      SPRING_DATASOURCE_PASSWORD: umarket
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - umass-marketplace
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React frontend service
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    container_name: umass-marketplace-web
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - umass-marketplace
+    volumes:
+      - ../web:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+
+networks:
+  umass-marketplace:
+    driver: bridge

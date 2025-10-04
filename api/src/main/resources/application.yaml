@@ -1,0 +1,93 @@
+# UMass Marketplace API Configuration
+# Spring Boot application configuration with profiles for different environments
+spring:
+  application:
+    name: umass-marketplace-api
+  
+  # Database configuration - connects to PostgreSQL
+  datasource:
+    url: jdbc:postgresql://localhost:5432/umarket
+    username: umarket
+    password: umarket
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA/Hibernate configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Use Flyway for schema management
+    properties:
+      hibernate:
+        format_sql: true  # Pretty print SQL queries in logs
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false  # Set to true for debugging
+  
+  # Flyway database migration configuration
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+  
+  # OAuth2 configuration (placeholders for Google OAuth)
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
+            scope: openid,profile,email
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://www.googleapis.com/oauth2/v4/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+# Server configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# SpringDoc OpenAPI configuration for Swagger UI
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    enabled: true
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  show-actuator: true
+
+# Logging configuration
+logging:
+  level:
+    edu.umass: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+---
+# Development profile configuration
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/umarket
+    username: umarket
+    password: umarket
+
+---
+# Test profile configuration
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:postgresql://localhost:5432/umarket_test
+    username: umarket_test
+    password: umarket_test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # For testing, recreate schema each time
