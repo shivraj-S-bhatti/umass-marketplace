@@ -25,13 +25,13 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     // Find listings by category with pagination
     Page<Listing> findByCategory(String category, Pageable pageable);
     
-    // Search listings by title using trigram similarity (PostgreSQL specific)
-    @Query("SELECT l FROM Listing l WHERE similarity(l.title, :query) > 0.3 ORDER BY similarity(l.title, :query) DESC")
-    Page<Listing> findByTitleSimilarity(@Param("query") String query, Pageable pageable);
+    // Search listings by title using LIKE (case-insensitive)
+    @Query("SELECT l FROM Listing l WHERE LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY l.title ASC")
+    Page<Listing> findByTitleContaining(@Param("query") String query, Pageable pageable);
     
     // Find listings with multiple filters
     @Query("SELECT l FROM Listing l WHERE " +
-           "(:query IS NULL OR similarity(l.title, :query) > 0.3) AND " +
+           "(:query IS NULL OR LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
            "(:category IS NULL OR l.category = :category) AND " +
            "(:status IS NULL OR l.status = :status) AND " +
            "(:minPrice IS NULL OR l.price >= :minPrice) AND " +
