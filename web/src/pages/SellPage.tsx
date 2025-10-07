@@ -1,4 +1,4 @@
-import { useState } from 'react'
+// ...existing code... (removed unused useState import)
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -49,7 +49,7 @@ export default function SellPage() {
       reset()
       navigate('/dashboard')
     },
-    onError: (error) => {
+    onError: (_error: Error) => {
       toast({
         title: 'Error',
         description: 'Failed to create listing. Please try again.',
