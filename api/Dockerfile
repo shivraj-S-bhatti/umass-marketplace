@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for UMass Marketplace API
 # Builds Spring Boot application with Maven and creates optimized runtime image
-FROM openjdk:21-jdk-slim as builder
+FROM maven:3.9-eclipse-temurin-21 as builder
 
 # Set working directory
 WORKDIR /app
@@ -9,18 +9,14 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-# Install Maven and build the application
-RUN apt-get update && \
-    apt-get install -y maven && \
-    mvn clean package -DskipTests
+# Build the application (Maven is pre-installed in this image)
+RUN mvn clean package -DskipTests
 
 # Runtime stage
-FROM openjdk:21-jre-slim
+FROM eclipse-temurin:21-jre-alpine
 
 # Install curl for health checks
-RUN apt-get update && \
-    apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
 # Set working directory
 WORKDIR /app
