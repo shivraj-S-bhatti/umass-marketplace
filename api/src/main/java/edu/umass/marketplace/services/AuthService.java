@@ -23,6 +23,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
     
