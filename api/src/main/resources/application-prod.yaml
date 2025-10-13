@@ -1,0 +1,37 @@
+# Production configuration
+spring:
+  # Database configuration
+  datasource:
+    url: ${PROD_DB_URL}
+    username: ${PROD_DB_USER}
+    password: ${PROD_DB_PASSWORD}
+  
+  # Email configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}  # e.g., noreply@marketplace.umass.edu
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# JWT Configuration
+application:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:86400000}
+
+# Server configuration
+server:
+  port: ${PORT:8080}
+
+# Production-specific settings
+springdoc:
+  swagger-ui:
+    enabled: false  # Disable Swagger UI in production
+  api-docs:
+    enabled: false  # Disable API docs in production

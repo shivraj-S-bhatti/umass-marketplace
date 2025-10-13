@@ -49,6 +49,26 @@ server:
   servlet:
     context-path: /
 
+# JWT Configuration
+application:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-key-here-minimum-32-chars}
+    expiration: 86400000  # 24 hours in milliseconds
+
+# Email Configuration
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:your-email@umass.edu}
+    password: ${MAIL_PASSWORD:your-app-specific-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 # SpringDoc OpenAPI configuration for Swagger UI
 springdoc:
   swagger-ui:

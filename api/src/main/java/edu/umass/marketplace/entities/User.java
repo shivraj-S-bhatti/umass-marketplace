@@ -25,11 +25,17 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
     
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+    
     @Column(name = "name")
     private String name;
     
     @Column(name = "picture_url")
     private String pictureUrl;
+    
+    @Column(nullable = false)
+    private String password;
     
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

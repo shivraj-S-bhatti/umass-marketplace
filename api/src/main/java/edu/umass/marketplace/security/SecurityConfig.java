@@ -10,6 +10,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 
@@ -22,7 +24,7 @@ public class SecurityConfig {
         http
             // Allow anonymous access to health check, Swagger endpoints, and API endpoints
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/health", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html", "/v3/api-docs/**", "/api/**").permitAll()
+                .requestMatchers("/health", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html", "/v3/api-docs/**", "/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
             // Enable CORS for frontend communication
@@ -36,6 +38,11 @@ public class SecurityConfig {
             );
         
         return http.build();
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
     
     @Bean
