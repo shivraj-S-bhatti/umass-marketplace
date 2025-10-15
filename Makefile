@@ -33,11 +33,48 @@ help:
 # Start all services
 up:
 	@echo "Starting UMass Marketplace services..."
-	docker compose -f deploy/docker-compose.yml up -d
-	@echo "Services started! Access points:"
+	@if command -v docker >/dev/null 2>&1; then \
+		docker compose -f deploy/docker-compose.yml up -d; \
+		echo "Services started! Access points:"; \
+		echo "  Frontend: http://localhost:5173"; \
+		echo "  API: http://localhost:8080"; \
+		echo "  Swagger: http://localhost:8080/swagger-ui"; \
+	else \
+		echo "Docker not found. Starting services locally..."; \
+		$(MAKE) dev; \
+	fi
+
+# Start development environment (no Docker required)
+dev:
+	@echo "Starting development environment..."
+	@echo "Starting database..."
+	@if command -v docker >/dev/null 2>&1; then \
+		docker compose -f deploy/docker-compose.yml up db -d; \
+		echo "Database started with Docker"; \
+	elif command -v psql >/dev/null 2>&1; then \
+		echo "PostgreSQL found locally"; \
+		@if ! pg_isready -q; then \
+			echo "Starting PostgreSQL..."; \
+			brew services start postgresql || sudo service postgresql start; \
+		fi; \
+		createdb umarket 2>/dev/null || true; \
+		echo "Database ready"; \
+	else \
+		echo "No database found. Using H2 in-memory database..."; \
+		$(MAKE) dev-h2; \
+	fi
+	@echo "Starting API and Frontend..."
+	@$(MAKE) -j2 api web
+
+# Start with H2 database (no external database required)
+dev-h2:
+	@echo "Starting with H2 in-memory database..."
+	@cd api && JAVA_HOME=$$(/usr/libexec/java_home -v 21) mvn spring-boot:run -Dspring.profiles.active=h2 &
+	@cd web && npm run dev &
+	@echo "Services started with H2 database!"
 	@echo "  Frontend: http://localhost:5173"
 	@echo "  API: http://localhost:8080"
-	@echo "  Swagger: http://localhost:8080/swagger-ui"
+	@echo "  H2 Console: http://localhost:8080/h2-console"
 
 # Stop all services
 down:

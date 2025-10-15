@@ -10,11 +10,11 @@ Copy these issues into your GitHub repository to get started with project manage
 Create the core listing functionality with JPA entity, repository, and REST controller.
 
 **Acceptance Criteria:**
-- [ ] Listing entity with all required fields
-- [ ] ListingRepository with custom query methods
-- [ [ ] ListingController with GET (paginated) and POST endpoints
-- [ ] Request/response DTOs with validation
-- [ ] Swagger documentation with examples
+- [x] Listing entity with all required fields
+- [x] ListingRepository with custom query methods
+- [x] ListingController with GET (paginated) and POST endpoints
+- [x] Request/response DTOs with validation
+- [x] Swagger documentation with examples
 - [ ] Unit tests for repository and controller
 
 **Estimated Effort:** 4-6 hours
@@ -97,6 +97,27 @@ Create the main listings page that displays items from the API.
 
 ---
 
+## Issue 5.5: WEB - Fix JavaScript context issue in React Query mutations
+
+**Labels:** `web`, `frontend`, `bug`, `priority:high`
+
+**Description:**
+Fix JavaScript 'this' context loss when passing methods to React Query mutations.
+
+**Acceptance Criteria:**
+- [x] Identify 'this.request is not a function' error
+- [x] Create bound functions to preserve context
+- [x] Update all mutation calls to use bound functions
+- [x] Test create listing functionality works end-to-end
+- [x] Add debugging logs for troubleshooting
+
+**Technical Details:**
+When passing `apiClient.createListing` directly to `useMutation`, JavaScript loses the `this` context. Solution was to create bound functions that explicitly call methods with correct context.
+
+**Estimated Effort:** 1 hour
+
+---
+
 ## Issue 6: WEB - Create listing form with zod validation
 
 **Labels:** `web`, `frontend`, `priority:high`
@@ -105,12 +126,12 @@ Create the main listings page that displays items from the API.
 Build the form for creating new marketplace listings.
 
 **Acceptance Criteria:**
-- [ ] Create listing form component
-- [ ] Zod schema validation
-- [ ] Form submission to API
-- [ ] Success/error handling
-- [ ] Form field validation
-- [ ] Responsive design
+- [x] Create listing form component
+- [x] Zod schema validation
+- [x] Form submission to API
+- [x] Success/error handling
+- [x] Form field validation
+- [x] Responsive design
 
 **Estimated Effort:** 4-5 hours
 

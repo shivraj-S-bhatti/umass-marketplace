@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { apiClient } from '@/lib/api'
+import { createListing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { Plus, DollarSign } from 'lucide-react'
 
@@ -39,8 +39,9 @@ export default function SellPage() {
   })
 
   const createListingMutation = useMutation({
-    mutationFn: apiClient.createListing,
-    onSuccess: () => {
+    mutationFn: createListing,
+    onSuccess: (data) => {
+      console.log('✅ Create listing success:', data)
       toast({
         title: 'Success!',
         description: 'Your listing has been created successfully.',
@@ -49,7 +50,8 @@ export default function SellPage() {
       reset()
       navigate('/dashboard')
     },
-    onError: (_error: Error) => {
+    onError: (error: Error) => {
+      console.error('❌ Create listing error:', error)
       toast({
         title: 'Error',
         description: 'Failed to create listing. Please try again.',
@@ -58,7 +60,16 @@ export default function SellPage() {
     },
   })
 
+  console.log('🔍 Form errors:', errors)
+  console.log('🔍 Mutation state:', { 
+    isPending: createListingMutation.isPending, 
+    isError: createListingMutation.isError,
+    error: createListingMutation.error 
+  })
+
   const onSubmit = (data: CreateListingForm) => {
+    console.log('📝 Form submitted with data:', data)
+    console.log('🔄 Calling createListingMutation.mutate...')
     createListingMutation.mutate(data)
   }
 
@@ -101,7 +112,9 @@ export default function SellPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit, (errors) => {
+            console.log('❌ Form validation errors:', errors)
+          })} className="space-y-6">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
@@ -196,6 +209,7 @@ export default function SellPage() {
                 type="submit"
                 disabled={createListingMutation.isPending}
                 className="flex-1"
+                onClick={() => console.log('🖱️ Create Listing button clicked!')}
               >
                 {createListingMutation.isPending ? 'Creating...' : 'Create Listing'}
               </Button>

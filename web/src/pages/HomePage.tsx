@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
-import { apiClient, type Listing } from '@/lib/api'
+import { getListings, type Listing } from '@/lib/api'
 import { Search, DollarSign, Calendar } from 'lucide-react'
 
 // Home Page - displays marketplace listings with search and filter capabilities
@@ -10,7 +10,7 @@ import { Search, DollarSign, Calendar } from 'lucide-react'
 export default function HomePage() {
   const { data: listingsData, isLoading, error } = useQuery({
     queryKey: ['listings'],
-    queryFn: () => apiClient.getListings({ page: 0, size: 12 }),
+    queryFn: () => getListings(0, 12),
   })
 
   if (isLoading) {

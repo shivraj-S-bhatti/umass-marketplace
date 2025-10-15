@@ -32,11 +32,15 @@ export interface ListingsResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
+console.log('🌐 API Base URL:', API_BASE_URL)
+console.log('🌐 Environment variables:', import.meta.env)
+
 class ApiClient {
   private baseUrl: string
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
+    console.log('🔧 ApiClient initialized with baseUrl:', this.baseUrl)
   }
 
   private async request<T>(
@@ -44,6 +48,8 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
+    console.log('🚀 API Request:', { url, options })
+    
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -51,6 +57,8 @@ class ApiClient {
       },
       ...options,
     })
+
+    console.log('📡 API Response:', { status: response.status, statusText: response.statusText })
 
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`)
@@ -105,3 +113,9 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
+
+// Create bound methods to avoid 'this' context issues
+export const createListing = (data: CreateListingRequest) => apiClient.createListing(data)
+export const getListings = (page = 0, size = 12) => apiClient.getListings({ page, size })
+export const getListing = (id: string) => apiClient.getListing(id)
+export const healthCheck = () => apiClient.healthCheck()
