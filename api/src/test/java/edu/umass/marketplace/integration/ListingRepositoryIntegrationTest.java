@@ -76,7 +76,7 @@ public class ListingRepositoryIntegrationTest {
         assertThat(savedListing.getId()).isNotNull();
         assertThat(savedListing.getTitle()).isEqualTo("Test Laptop");
         assertThat(savedListing.getPrice()).isEqualTo(new BigDecimal("500.00"));
-        assertThat(savedListing.getStatus()).isEqualTo(Listing.ListingStatus.ACTIVE);
+        assertThat(savedListing.getStatus()).isEqualTo(Listing.STATUS_ACTIVE);
     }
     
     @Test
@@ -101,11 +101,11 @@ public class ListingRepositoryIntegrationTest {
         // Given
         Listing activeListing = createTestListing("Active Item", "100.00");
         Listing soldListing = createTestListing("Sold Item", "200.00");
-        soldListing.setStatus(Listing.ListingStatus.SOLD);
+        soldListing.setStatus(Listing.STATUS_SOLD);
         listingRepository.saveAll(List.of(activeListing, soldListing));
         
         // When
-        List<Listing> activeListings = listingRepository.findByStatus(Listing.ListingStatus.ACTIVE,
+        List<Listing> activeListings = listingRepository.findByStatus(Listing.STATUS_ACTIVE,
                 org.springframework.data.domain.PageRequest.of(0, 10)).getContent();
         
         // Then

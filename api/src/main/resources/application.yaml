@@ -14,7 +14,7 @@ spring:
   # JPA/Hibernate configuration
   jpa:
     hibernate:
-      ddl-auto: validate  # Use Flyway for schema management
+      ddl-auto: create-drop  # Create schema on startup, drop on shutdown
     properties:
       hibernate:
         format_sql: true  # Pretty print SQL queries in logs
@@ -22,26 +22,13 @@ spring:
     show-sql: false  # Set to true for debugging
   
   # Flyway database migration configuration
-  flyway:
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    validate-on-migrate: true
+  # Flyway temporarily disabled - using Hibernate schema creation
+  # flyway:
+  #   locations: classpath:db/migration
+  #   baseline-on-migrate: true
+  #   validate-on-migrate: true
   
-  # OAuth2 configuration (placeholders for Google OAuth)
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:placeholder}
-            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
-            scope: openid,profile,email
-        provider:
-          google:
-            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
-            token-uri: https://www.googleapis.com/oauth2/v4/token
-            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-            user-name-attribute: sub
+  # OAuth2 configuration removed - using simple approach for now
 
 # Server configuration
 server:
@@ -49,25 +36,7 @@ server:
   servlet:
     context-path: /
 
-# JWT Configuration
-application:
-  jwt:
-    secret: ${JWT_SECRET:your-256-bit-secret-key-here-minimum-32-chars}
-    expiration: 86400000  # 24 hours in milliseconds
-
-# Email Configuration
-spring:
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:your-email@umass.edu}
-    password: ${MAIL_PASSWORD:your-app-specific-password}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+# JWT and Email configuration removed - using simple approach for now
 
 # SpringDoc OpenAPI configuration for Swagger UI
 springdoc:
@@ -97,6 +66,30 @@ spring:
     url: jdbc:postgresql://localhost:5432/umarket
     username: umarket
     password: umarket
+
+---
+# H2 Database profile (for development when PostgreSQL not available)
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
 
 ---
 # Test profile configuration

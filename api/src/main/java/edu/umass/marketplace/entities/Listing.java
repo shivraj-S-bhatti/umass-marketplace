@@ -39,9 +39,8 @@ public class Listing {
     @Column(name = "condition")
     private String condition;
     
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ListingStatus status = ListingStatus.ACTIVE;
+    private String status = "ACTIVE";
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
@@ -55,8 +54,8 @@ public class Listing {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
     
-    // Enum for listing status
-    public enum ListingStatus {
-        ACTIVE, ON_HOLD, SOLD
-    }
+    // Constants for listing status
+    public static final String STATUS_ACTIVE = "ACTIVE";
+    public static final String STATUS_ON_HOLD = "ON_HOLD";
+    public static final String STATUS_SOLD = "SOLD";
 }

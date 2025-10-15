@@ -24,7 +24,7 @@ public class ListingResponse {
     private BigDecimal price;
     private String category;
     private String condition;
-    private Listing.ListingStatus status;
+    private String status;
     private UUID sellerId;
     private String sellerName;
     private OffsetDateTime createdAt;
