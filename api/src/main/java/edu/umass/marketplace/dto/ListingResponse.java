@@ -2,7 +2,7 @@ package edu.umass.marketplace.dto;
 
 // Listing Response DTO - represents listing data in API responses
 // Provides a clean interface for frontend consumption with all necessary fields
-import edu.umass.marketplace.entities.Listing;
+import edu.umass.marketplace.model.Listing;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Schema(description = "Marketplace listing response data")
 public class ListingResponse {
-    
+
     private UUID id;
     private String title;
     private String description;
@@ -31,7 +31,7 @@ public class ListingResponse {
     private String sellerName;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
-    
+
     // Static factory method to convert from entity
     public static ListingResponse fromEntity(Listing listing) {
         return ListingResponse.builder()

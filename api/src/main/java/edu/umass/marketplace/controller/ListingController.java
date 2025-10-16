@@ -1,13 +1,13 @@
-package edu.umass.marketplace.controllers;
+package edu.umass.marketplace.controller;
 
 // Listing Controller - handles all listing-related API endpoints
 // Provides CRUD operations for marketplace listings with pagination and filtering
 import edu.umass.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.dto.ListingResponse;
-import edu.umass.marketplace.entities.Listing;
-import edu.umass.marketplace.entities.User;
-import edu.umass.marketplace.repositories.ListingRepository;
-import edu.umass.marketplace.repositories.UserRepository;
+import edu.umass.marketplace.model.Listing;
+import edu.umass.marketplace.model.User;
+import edu.umass.marketplace.repository.ListingRepository;
+import edu.umass.marketplace.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,10 +28,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "Listings", description = "Marketplace listing management")
 public class ListingController {
-    
+
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
-    
+
     @GetMapping
     @Operation(summary = "Get listings", description = "Retrieve paginated listings with optional filtering")
     public Page<ListingResponse> getListings(
@@ -44,13 +44,13 @@ public class ListingController {
             @Parameter(description = "Maximum price") @RequestParam(required = false) Double maxPrice
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        
+
         // For now, just return all listings - filtering will be added later
         Page<Listing> listings = listingRepository.findAll(pageable);
-        
+
         return listings.map(ListingResponse::fromEntity);
     }
-    
+
     @PostMapping
     @Operation(summary = "Create listing", description = "Create a new marketplace listing")
     public ResponseEntity<ListingResponse> createListing(@Valid @RequestBody CreateListingRequest request) {
@@ -62,7 +62,7 @@ public class ListingController {
                     user.setName("Dummy User");
                     return userRepository.save(user);
                 });
-        
+
         Listing listing = new Listing();
         listing.setTitle(request.getTitle());
         listing.setDescription(request.getDescription());
@@ -71,13 +71,13 @@ public class ListingController {
         listing.setCondition(request.getCondition());
         listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
         listing.setSeller(dummySeller);
-        
+
         Listing savedListing = listingRepository.save(listing);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ListingResponse.fromEntity(savedListing));
     }
-    
+
     @GetMapping("/{id}")
     @Operation(summary = "Get listing by ID", description = "Retrieve a specific listing by its ID")
     public ResponseEntity<ListingResponse> getListing(@PathVariable UUID id) {

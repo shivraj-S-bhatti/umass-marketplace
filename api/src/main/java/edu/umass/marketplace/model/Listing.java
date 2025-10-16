@@ -1,4 +1,4 @@
-package edu.umass.marketplace.entities;
+package edu.umass.marketplace.model;
 
 // Listing Entity - represents a marketplace item for sale
 // Maps to the listings table with JPA annotations and enum for status
@@ -19,41 +19,41 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Listing {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    
+
     @Column(nullable = false)
     private String title;
-    
+
     @Column(columnDefinition = "TEXT")
     private String description;
-    
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
-    
+
     @Column(name = "category")
     private String category;
-    
+
     @Column(name = "condition")
     private String condition;
-    
+
     @Column(nullable = false)
     private String status = "ACTIVE";
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
-    
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
-    
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
-    
+
     // Constants for listing status
     public static final String STATUS_ACTIVE = "ACTIVE";
     public static final String STATUS_ON_HOLD = "ON_HOLD";

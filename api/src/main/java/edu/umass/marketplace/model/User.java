@@ -1,4 +1,4 @@
-package edu.umass.marketplace.entities;
+package edu.umass.marketplace.model;
 
 // User Entity - represents a student user in the marketplace
 // Maps to the users table with JPA annotations for ORM mapping
@@ -17,20 +17,20 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    
+
     @Column(unique = true, nullable = false)
     private String email;
-    
+
     @Column(name = "name")
     private String name;
-    
+
     @Column(name = "picture_url")
     private String pictureUrl;
-    
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
