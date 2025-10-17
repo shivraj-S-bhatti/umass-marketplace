@@ -20,9 +20,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin; //
 
 import java.util.UUID;
 
+@CrossOrigin(origins = "http://localhost:5173", methods = "POST") //
 @RestController
 @RequestMapping("/api/listings")
 @RequiredArgsConstructor
