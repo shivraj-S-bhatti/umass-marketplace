@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/listings")
@@ -76,6 +78,44 @@ public class ListingController {
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ListingResponse.fromEntity(savedListing));
+    }
+
+    @PostMapping("/bulk")
+    @Operation(summary = "Create multiple listings", description = "Create multiple marketplace listings in bulk")
+    public ResponseEntity<List<ListingResponse>> createBulkListings(@Valid @RequestBody List<CreateListingRequest> requests) {
+        // Get dummy seller (same as single creation)
+        User dummySeller = userRepository.findByEmail("dummy@umass.edu")
+            .orElseGet(() -> {
+                User user = new User();
+                user.setEmail("dummy@umass.edu");
+                user.setName("Dummy User");
+                return userRepository.save(user);
+            });
+
+        // Map requests to entities
+        List<Listing> listings = requests.stream()
+            .map(request -> {
+                Listing listing = new Listing();
+                listing.setTitle(request.getTitle());
+                listing.setDescription(request.getDescription());
+                listing.setPrice(request.getPrice());
+                listing.setCategory(request.getCategory());
+                listing.setCondition(request.getCondition());
+                listing.setStatus(Listing.STATUS_ACTIVE);
+                listing.setSeller(dummySeller);
+                return listing;
+            })
+            .collect(Collectors.toList());
+
+        // Save all (uses saveAll for batch insert efficiency)
+        List<Listing> savedListings = listingRepository.saveAll(listings);
+
+        // Map to responses
+        List<ListingResponse> responses = savedListings.stream()
+            .map(ListingResponse::fromEntity)
+            .collect(Collectors.toList());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
     
     @GetMapping("/{id}")

@@ -11,6 +11,10 @@ import { Label } from '@/components/ui/label'
 import { createListing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { Plus, DollarSign } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import Papa from 'papaparse'
+import { useState } from 'react'
+import { createBulkListings } from '@/lib/api'
 
 // Sell Page - form for creating new marketplace listings
 // Allows users to post items for sale with validation and error handling
@@ -100,7 +104,9 @@ export default function SellPage() {
           List your item for sale to fellow UMass students
         </p>
       </div>
-
+      <div className="mb-6 flex justify-end">
+        <BulkUploadModal />
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -226,5 +232,111 @@ export default function SellPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+function BulkUploadModal() {
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const [file, setFile] = useState<File | null>(null)
+  const [isOpen, setIsOpen] = useState(false)
+
+  const createBulkListingsMutation = useMutation({
+    mutationFn: createBulkListings,
+    onSuccess: (data) => {
+      toast({ title: 'Success!', description: `${data.length} listings created successfully.` })
+      queryClient.invalidateQueries({ queryKey: ['listings'] })
+      setFile(null)
+      setIsOpen(false)
+      navigate('/dashboard')
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to create bulk listings.', variant: 'destructive' })
+    },
+  })
+
+  const handleSubmit = () => {
+    if (!file) {
+      toast({ title: 'No File', description: 'Please select a CSV file.', variant: 'destructive' })
+      return
+    }
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const parsedData = results.data as any[]
+        const validListings: CreateListingForm[] = []
+        const invalidRows: string[] = []
+
+        parsedData.forEach((row, index) => {
+          const listing = {
+            title: row.title?.trim() || '',
+            description: row.description?.trim() || '',
+            price: parseFloat(row.price) || 0,
+            category: row.category?.trim() || '',
+            condition: row.condition?.trim() || '',
+          }
+
+          const result = createListingSchema.safeParse(listing)
+          if (result.success) {
+            validListings.push(result.data)
+          } else {
+            invalidRows.push(`Row ${index + 2}: ${result.error.issues.map(issue => issue.message).join(', ')}`)
+          }
+        })
+
+        if (invalidRows.length > 0) {
+          toast({
+            title: 'Validation Errors',
+            description: invalidRows.join('\n'),
+            variant: 'destructive',
+          })
+        }
+
+        if (validListings.length > 0) {
+          createBulkListingsMutation.mutate(validListings)
+        } else {
+          toast({ title: 'No Valid Listings', description: 'No valid rows found in CSV.', variant: 'destructive' })
+        }
+      },
+      error: (error) => {
+        toast({ title: 'CSV Parse Error', description: error.message, variant: 'destructive' })
+      },
+    })
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Got a lot to sell? Bulk Uplaod via CSV</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Bulk Upload Listings</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="csvFile">Upload CSV File</Label>
+            <Input
+              id="csvFile"
+              type="file"
+              accept=".csv"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              CSV format: Headers - title,description,price,category,condition. Price as number (e.g., 99.99).
+            </p>
+          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={createBulkListingsMutation.isPending || !file}
+          >
+            {createBulkListingsMutation.isPending ? 'Uploading...' : 'Upload Bulk Listings'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
