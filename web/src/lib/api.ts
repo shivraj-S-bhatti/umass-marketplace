@@ -110,6 +110,14 @@ class ApiClient {
       body: JSON.stringify(data),
     })
   }
+
+  // Create new listings in bulk
+  async createBulkListings(data: CreateListingRequest[]): Promise<Listing[]> {
+    return this.request<Listing[]>('/api/listings/bulk', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
@@ -119,3 +127,4 @@ export const createListing = (data: CreateListingRequest) => apiClient.createLis
 export const getListings = (page = 0, size = 12) => apiClient.getListings({ page, size })
 export const getListing = (id: string) => apiClient.getListing(id)
 export const healthCheck = () => apiClient.healthCheck()
+export const createBulkListings = (data: CreateListingRequest[]) => apiClient.createBulkListings(data)
