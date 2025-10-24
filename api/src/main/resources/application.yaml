@@ -3,36 +3,36 @@
 spring:
   application:
     name: umass-marketplace-api
-  
+
   # Database configuration - connects to PostgreSQL
   datasource:
-    url: jdbc:postgresql://localhost:5432/umarket
-    username: umarket
-    password: umarket
+    url: jdbc:postgresql://localhost:5432/umarket_dev
+    username: umarket_dev
+    password: umarket_dev_dev_password_2024
     driver-class-name: org.postgresql.Driver
-  
+
   # JPA/Hibernate configuration
   jpa:
     hibernate:
-      ddl-auto: create-drop  # Create schema on startup, drop on shutdown
+      ddl-auto: validate  # Let Flyway handle schema creation
     properties:
       hibernate:
         format_sql: true  # Pretty print SQL queries in logs
         dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false  # Set to true for debugging
-  
+
   # Flyway database migration configuration
-  # Flyway temporarily disabled - using Hibernate schema creation
-  # flyway:
-  #   locations: classpath:db/migration
-  #   baseline-on-migrate: true
-  #   validate-on-migrate: true
-  
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    clean-disabled: false
+
   # OAuth2 configuration removed - using simple approach for now
 
 # Server configuration
 server:
-  port: 8080
+  port: 8081
   servlet:
     context-path: /
 
@@ -63,9 +63,9 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: jdbc:postgresql://localhost:5432/umarket
-    username: umarket
-    password: umarket
+    url: jdbc:postgresql://localhost:5432/umarket_dev
+    username: umarket_dev
+    password: umarket_dev_dev_password_2024
 
 ---
 # H2 Database profile (for development when PostgreSQL not available)
@@ -77,19 +77,21 @@ spring:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
+    password:
   h2:
     console:
       enabled: true
       path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create-drop  # For H2, use Hibernate schema creation
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
     show-sql: false
+  flyway:
+    enabled: false  # Disable Flyway for H2 profile
 
 ---
 # Test profile configuration
@@ -104,3 +106,5 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop  # For testing, recreate schema each time
+  flyway:
+    enabled: false  # Disable Flyway for test profile
