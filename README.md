@@ -50,7 +50,7 @@ mvn spring-boot:run -f api
 ### Access Points
 
 - **Frontend**: http://localhost:5173
-- **API**: http://localhost:8081
+- **API**: http://localhost:8080
 - **Swagger UI**: http://localhost:8080/swagger-ui
 - **Database**: localhost:5432 (umarket/umarket/umarket)
 
