@@ -64,14 +64,6 @@ export default function HomePage() {
         <p className="text-xl text-muted-foreground mb-8">
           Buy and sell items with fellow students
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg">
-            <Link to="/sell">Sell an Item</Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link to="/dashboard">My Dashboard</Link>
-          </Button>
-        </div>
       </div>
 
       {/* Search Bar */}
@@ -92,10 +84,7 @@ export default function HomePage() {
         {listings.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No listings available yet.</p>
-            <Button asChild>
-              <Link to="/sell">Be the first to sell an item!</Link>
-            </Button>
-          </div>
+            </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (
