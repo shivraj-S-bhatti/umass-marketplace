@@ -2,16 +2,40 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
-import { getListings, type Listing } from '@/lib/api'
+import { apiClient, type Listing } from '@/lib/api'
 import { Search, DollarSign, Calendar } from 'lucide-react'
+import SearchFilters, { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
+import { useState } from 'react'
 
 // Home Page - displays marketplace listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
 export default function HomePage() {
-  const { data: listingsData, isLoading, error } = useQuery({
-    queryKey: ['listings'],
-    queryFn: () => getListings(0, 12),
+  const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({
+    query: '',
+    category: '',
+    condition: '',
+    minPrice: undefined,
+    maxPrice: undefined,
+    status: '',
   })
+
+  const { data: listingsData, isLoading, error } = useQuery({
+    queryKey: ['listings', searchFilters],
+    queryFn: () => apiClient.getListings({
+      page: 0,
+      size: 12,
+      q: searchFilters.query || undefined,
+      category: searchFilters.category || undefined,
+      condition: searchFilters.condition || undefined,
+      minPrice: searchFilters.minPrice,
+      maxPrice: searchFilters.maxPrice,
+      status: searchFilters.status || undefined,
+    }),
+  })
+
+  const handleSearch = (filters: SearchFiltersType) => {
+    setSearchFilters(filters)
+  }
 
   if (isLoading) {
     return (
@@ -55,6 +79,9 @@ export default function HomePage() {
   }
 
   const listings = listingsData?.content || []
+  const hasActiveSearch = searchFilters.query || searchFilters.category || 
+                         searchFilters.condition || searchFilters.minPrice || 
+                         searchFilters.maxPrice || searchFilters.status
 
   return (
     <div className="space-y-8">
@@ -66,25 +93,51 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Search Bar */}
-      <div className="max-w-md mx-auto">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <input
-            type="text"
-            placeholder="Search items..."
-            className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-      </div>
+      {/* Search Filters */}
+      <SearchFilters onSearch={handleSearch} isLoading={isLoading} initialFilters={searchFilters} />
 
-      {/* Listings Grid */}
+      {/* Results Section */}
       <div>
-        <h2 className="text-2xl font-semibold mb-6">Recent Listings</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold">
+            {hasActiveSearch ? 'Search Results' : 'Recent Listings'}
+          </h2>
+          {listingsData && (
+            <p className="text-sm text-muted-foreground">
+              {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
+            </p>
+          )}
+        </div>
+        
         {listings.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">No listings available yet.</p>
-            </div>
+            <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              {hasActiveSearch ? 'No items found' : 'No listings available yet'}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {hasActiveSearch 
+                ? 'Try adjusting your search criteria or browse all listings'
+                : 'Be the first to list an item for sale'
+              }
+            </p>
+            {hasActiveSearch ? (
+              <Button variant="outline" onClick={() => handleSearch({
+                query: '',
+                category: '',
+                condition: '',
+                minPrice: undefined,
+                maxPrice: undefined,
+                status: '',
+              })}>
+                View All Listings
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link to="/sell">List Your First Item</Link>
+              </Button>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (

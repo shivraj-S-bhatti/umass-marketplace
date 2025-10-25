@@ -113,12 +113,6 @@ export default function DashboardPage() {
             Create New Listing
           </Link>
         </Button>
-        <Button variant="outline" asChild>
-          <Link to="/">
-            <LayoutDashboard className="h-4 w-4 mr-2" />
-            Browse All Listings
-          </Link>
-        </Button>
       </div>
 
       {/* My Listings */}

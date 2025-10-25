@@ -35,7 +35,7 @@ public class ListingController {
     private final UserRepository userRepository;
 
     @GetMapping
-    @Operation(summary = "Get listings", description = "Retrieve paginated listings with optional filtering")
+    @Operation(summary = "Get listings", description = "Retrieve paginated listings with optional filtering and search")
     public Page<ListingResponse> getListings(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
@@ -43,13 +43,56 @@ public class ListingController {
             @Parameter(description = "Category filter") @RequestParam(required = false) String category,
             @Parameter(description = "Status filter") @RequestParam(required = false) String status,
             @Parameter(description = "Minimum price") @RequestParam(required = false) Double minPrice,
-            @Parameter(description = "Maximum price") @RequestParam(required = false) Double maxPrice
+            @Parameter(description = "Maximum price") @RequestParam(required = false) Double maxPrice,
+            @Parameter(description = "Condition filter") @RequestParam(required = false) String condition
     ) {
+        // Debug logging
+        System.out.println("🔍 Search parameters received:");
+        System.out.println("  q: '" + q + "'");
+        System.out.println("  category: '" + category + "'");
+        System.out.println("  status: '" + status + "'");
+        System.out.println("  condition: '" + condition + "'");
+        System.out.println("  minPrice: " + minPrice);
+        System.out.println("  maxPrice: " + maxPrice);
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        // For now, just return all listings - filtering will be added later
-        Page<Listing> listings = listingRepository.findAll(pageable);
+        // Convert Double to BigDecimal for price filtering
+        java.math.BigDecimal minPriceBD = minPrice != null ? java.math.BigDecimal.valueOf(minPrice) : null;
+        java.math.BigDecimal maxPriceBD = maxPrice != null ? java.math.BigDecimal.valueOf(maxPrice) : null;
 
+        Page<Listing> listings;
+
+        // Use advanced filtering if any filters are provided
+        // Check for non-null and non-empty values
+        boolean hasQuery = q != null && !q.trim().isEmpty();
+        boolean hasCategory = category != null && !category.trim().isEmpty();
+        boolean hasStatus = status != null && !status.trim().isEmpty();
+        boolean hasCondition = condition != null && !condition.trim().isEmpty();
+        boolean hasMinPrice = minPrice != null;
+        boolean hasMaxPrice = maxPrice != null;
+
+        if (hasQuery || hasCategory || hasStatus || hasCondition || hasMinPrice || hasMaxPrice) {
+            // Pass null for empty strings to the repository
+            String queryParam = hasQuery ? q.trim() : null;
+            String categoryParam = hasCategory ? category.trim() : null;
+            String statusParam = hasStatus ? status.trim() : null;
+            String conditionParam = hasCondition ? condition.trim() : null;
+
+            System.out.println("🔍 Using filtered query with params:");
+            System.out.println("  queryParam: '" + queryParam + "'");
+            System.out.println("  categoryParam: '" + categoryParam + "'");
+            System.out.println("  statusParam: '" + statusParam + "'");
+            System.out.println("  conditionParam: '" + conditionParam + "'");
+
+            listings = listingRepository.findWithFilters(queryParam, categoryParam, statusParam, conditionParam, minPriceBD, maxPriceBD, pageable);
+        } else {
+            // Return all listings if no filters
+            System.out.println("🔍 No filters detected, returning all listings");
+            listings = listingRepository.findAll(pageable);
+        }
+
+        System.out.println("🔍 Query result: " + listings.getTotalElements() + " listings found");
         return listings.map(ListingResponse::fromEntity);
     }
 

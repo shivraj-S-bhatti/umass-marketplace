@@ -6,8 +6,11 @@ import edu.umass.marketplace.model.Listing;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Repository
@@ -22,23 +25,22 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     // Find listings by category with pagination
     Page<Listing> findByCategory(String category, Pageable pageable);
 
-    // Search listings by title using LIKE (case-insensitive) - temporarily disabled
-    // @Query("SELECT l FROM Listing l WHERE l.title LIKE CONCAT('%', :query, '%') ORDER BY l.title ASC")
-    // Page<Listing> findByTitleContaining(@Param("query") String query, Pageable pageable);
-
-    // Find listings with multiple filters - temporarily disabled
-    // @Query("SELECT l FROM Listing l WHERE " +
-    //        "(:query IS NULL OR l.title LIKE CONCAT('%', :query, '%')) AND " +
-    //        "(:category IS NULL OR l.category = :category) AND " +
-    //        "(:status IS NULL OR l.status = :status) AND " +
-    //        "(:minPrice IS NULL OR l.price >= :minPrice) AND " +
-    //        "(:maxPrice IS NULL OR l.price <= :maxPrice)")
-    // Page<Listing> findWithFilters(
-    //         @Param("query") String query,
-    //         @Param("category") String category,
-    //         @Param("status") Listing.ListingStatus status,
-    //         @Param("minPrice") Double minPrice,
-    //         @Param("maxPrice") Double maxPrice,
-    //         Pageable pageable
-    // );
+    // Find listings with multiple filters
+    @Query("SELECT l FROM Listing l WHERE " +
+           "(:query IS NULL OR LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+           "(:category IS NULL OR l.category = :category) AND " +
+           "(:status IS NULL OR l.status = :status) AND " +
+           "(:condition IS NULL OR l.condition = :condition) AND " +
+           "(:minPrice IS NULL OR l.price >= :minPrice) AND " +
+           "(:maxPrice IS NULL OR l.price <= :maxPrice) " +
+           "ORDER BY l.createdAt DESC")
+    Page<Listing> findWithFilters(
+            @Param("query") String query,
+            @Param("category") String category,
+            @Param("status") String status,
+            @Param("condition") String condition,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable
+    );
 }

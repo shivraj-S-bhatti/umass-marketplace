@@ -79,6 +79,7 @@ class ApiClient {
     q?: string
     category?: string
     status?: string
+    condition?: string
     minPrice?: number
     maxPrice?: number
   } = {}): Promise<ListingsResponse> {
@@ -89,6 +90,7 @@ class ApiClient {
     if (params.q) searchParams.set('q', params.q)
     if (params.category) searchParams.set('category', params.category)
     if (params.status) searchParams.set('status', params.status)
+    if (params.condition) searchParams.set('condition', params.condition)
     if (params.minPrice !== undefined) searchParams.set('minPrice', params.minPrice.toString())
     if (params.maxPrice !== undefined) searchParams.set('maxPrice', params.maxPrice.toString())
 
