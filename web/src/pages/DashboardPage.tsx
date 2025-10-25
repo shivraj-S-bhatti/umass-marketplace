@@ -4,13 +4,17 @@ import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
 import { LayoutDashboard, Plus, DollarSign, Calendar, Eye } from 'lucide-react'
+import { useState } from 'react'
 
 // Dashboard Page - displays user's listings and marketplace statistics
 // Shows seller's own listings with management options and overview stats
 export default function DashboardPage() {
+  const [currentPage, setCurrentPage] = useState(0)
+  const pageSize = 12
+
   const { data: listingsData, isLoading, error } = useQuery({
-    queryKey: ['listings'],
-    queryFn: () => apiClient.getListings({ page: 0, size: 50 }),
+    queryKey: ['listings', currentPage],
+    queryFn: () => apiClient.getListings({ page: currentPage, size: pageSize }),
   })
 
   if (isLoading) {
@@ -117,7 +121,21 @@ export default function DashboardPage() {
 
       {/* My Listings */}
       <div>
-        <h2 className="text-2xl font-semibold mb-6">My Listings</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold">My Listings</h2>
+          {listingsData && (
+            <div className="text-sm text-muted-foreground">
+              <p>
+                {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
+                {listingsData.totalPages > 1 && (
+                  <span className="ml-2">
+                    (Page {currentPage + 1} of {listingsData.totalPages})
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+        </div>
         {listings.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
@@ -132,11 +150,74 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {listings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            {listingsData && listingsData.totalPages > 1 && (
+              <div className="flex items-center justify-center space-x-2 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(0)}
+                  disabled={currentPage === 0}
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 0}
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, listingsData.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (listingsData.totalPages <= 5) {
+                      pageNum = i;
+                    } else if (currentPage < 3) {
+                      pageNum = i;
+                    } else if (currentPage >= listingsData.totalPages - 3) {
+                      pageNum = listingsData.totalPages - 5 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-10 h-10"
+                      >
+                        {pageNum + 1}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === listingsData.totalPages - 1}
+                >
+                  Next
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(listingsData.totalPages - 1)}
+                  disabled={currentPage === listingsData.totalPages - 1}
+                >
+                  Last
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

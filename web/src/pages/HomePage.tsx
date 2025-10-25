@@ -18,12 +18,14 @@ export default function HomePage() {
     maxPrice: undefined,
     status: '',
   })
+  const [currentPage, setCurrentPage] = useState(0)
+  const pageSize = 12
 
   const { data: listingsData, isLoading, error } = useQuery({
-    queryKey: ['listings', searchFilters],
+    queryKey: ['listings', searchFilters, currentPage],
     queryFn: () => apiClient.getListings({
-      page: 0,
-      size: 12,
+      page: currentPage,
+      size: pageSize,
       q: searchFilters.query || undefined,
       category: searchFilters.category || undefined,
       condition: searchFilters.condition || undefined,
@@ -35,6 +37,7 @@ export default function HomePage() {
 
   const handleSearch = (filters: SearchFiltersType) => {
     setSearchFilters(filters)
+    setCurrentPage(0) // Reset to first page when filters change
   }
 
   if (isLoading) {
@@ -103,9 +106,16 @@ export default function HomePage() {
             {hasActiveSearch ? 'Search Results' : 'Recent Listings'}
           </h2>
           {listingsData && (
-            <p className="text-sm text-muted-foreground">
-              {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
-            </p>
+            <div className="text-sm text-muted-foreground">
+              <p>
+                {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
+                {listingsData.totalPages > 1 && (
+                  <span className="ml-2">
+                    (Page {currentPage + 1} of {listingsData.totalPages})
+                  </span>
+                )}
+              </p>
+            </div>
           )}
         </div>
         
@@ -122,14 +132,17 @@ export default function HomePage() {
               }
             </p>
             {hasActiveSearch ? (
-              <Button variant="outline" onClick={() => handleSearch({
-                query: '',
-                category: '',
-                condition: '',
-                minPrice: undefined,
-                maxPrice: undefined,
-                status: '',
-              })}>
+              <Button variant="outline" onClick={() => {
+                handleSearch({
+                  query: '',
+                  category: '',
+                  condition: '',
+                  minPrice: undefined,
+                  maxPrice: undefined,
+                  status: '',
+                })
+                setCurrentPage(0)
+              }}>
                 View All Listings
               </Button>
             ) : (
@@ -139,11 +152,74 @@ export default function HomePage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {listings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            {listingsData && listingsData.totalPages > 1 && (
+              <div className="flex items-center justify-center space-x-2 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(0)}
+                  disabled={currentPage === 0}
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 0}
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, listingsData.totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (listingsData.totalPages <= 5) {
+                      pageNum = i;
+                    } else if (currentPage < 3) {
+                      pageNum = i;
+                    } else if (currentPage >= listingsData.totalPages - 3) {
+                      pageNum = listingsData.totalPages - 5 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-10 h-10"
+                      >
+                        {pageNum + 1}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === listingsData.totalPages - 1}
+                >
+                  Next
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(listingsData.totalPages - 1)}
+                  disabled={currentPage === listingsData.totalPages - 1}
+                >
+                  Last
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
