@@ -231,12 +231,6 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
               />
             </div>
 
-            {/* Search Button */}
-            <div className="flex items-end">
-              <Button onClick={handleSearch} disabled={isLoading} className="w-full">
-                {isLoading ? 'Searching...' : 'Apply Filters'}
-              </Button>
-            </div>
           </div>
         )}
       </CardContent>
