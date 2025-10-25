@@ -1,8 +1,8 @@
 package edu.umass.marketplace.controller;
 
-import edu.umass.marketplace.dto.AuthResponse;
 import edu.umass.marketplace.dto.LoginRequest;
 import edu.umass.marketplace.dto.RegisterRequest;
+import edu.umass.marketplace.response.AuthResponse;
 import edu.umass.marketplace.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

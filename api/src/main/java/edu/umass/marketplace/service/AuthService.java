@@ -1,8 +1,9 @@
 package edu.umass.marketplace.service;
 
-import edu.umass.marketplace.dto.AuthResponse;
 import edu.umass.marketplace.dto.LoginRequest;
 import edu.umass.marketplace.dto.RegisterRequest;
+import edu.umass.marketplace.response.AuthResponse;
+import edu.umass.marketplace.response.UserResponse;
 import edu.umass.marketplace.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +34,10 @@ public class AuthService {
         User user = userService.createUser(request);
 
         // For now, return a simple response - in real app, generate JWT token
-        AuthResponse response = new AuthResponse();
-        response.setToken("dummy-jwt-token-" + user.getId());
-//        response.setUser(user);
+        AuthResponse response = AuthResponse.create(
+            "dummy-jwt-token-" + user.getId(),
+            UserResponse.fromEntity(user)
+        );
 
         log.debug("🔍 User registered successfully with ID: {}", user.getId());
         return response;
@@ -57,9 +59,10 @@ public class AuthService {
         }
 
         // For now, return a simple response - in real app, generate JWT token
-        AuthResponse response = new AuthResponse();
-        response.setToken("dummy-jwt-token-" + user.getId());
-//        response.setUser(user);
+        AuthResponse response = AuthResponse.create(
+            "dummy-jwt-token-" + user.getId(),
+            UserResponse.fromEntity(user)
+        );
 
         log.debug("🔍 User logged in successfully with ID: {}", user.getId());
         return response;

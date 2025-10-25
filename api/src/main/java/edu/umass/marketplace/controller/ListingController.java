@@ -3,7 +3,7 @@ package edu.umass.marketplace.controller;
 // Listing Controller - handles all listing-related API endpoints
 // Provides CRUD operations for marketplace listings with pagination and filtering
 import edu.umass.marketplace.dto.CreateListingRequest;
-import edu.umass.marketplace.dto.ListingResponse;
+import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.service.ListingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

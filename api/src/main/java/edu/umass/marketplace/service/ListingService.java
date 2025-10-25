@@ -1,7 +1,8 @@
 package edu.umass.marketplace.service;
 
 import edu.umass.marketplace.dto.CreateListingRequest;
-import edu.umass.marketplace.dto.ListingResponse;
+import edu.umass.marketplace.dto.ListingDto;
+import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.model.Listing;
 import edu.umass.marketplace.model.User;
 import edu.umass.marketplace.repository.ListingRepository;
