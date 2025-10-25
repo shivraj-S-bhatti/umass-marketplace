@@ -93,7 +93,7 @@ export default function SellPage() {
     'Like New',
     'Good',
     'Fair',
-    'Poor',
+    'Does the job!',
   ]
 
   return (
