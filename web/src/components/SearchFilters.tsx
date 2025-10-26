@@ -39,7 +39,7 @@ const conditions = [
   'Like New',
   'Good',
   'Fair',
-  'Poor',
+  'Does the job!',
 ]
 
 const statuses = [
