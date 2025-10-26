@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Search, Filter, X } from 'lucide-react'
+import { CONDITIONS, CATEGORIES, STATUSES } from '@/lib/constants'
 
 // Search Filters Component for UMass Marketplace
 // Provides advanced filtering options for marketplace listings
@@ -22,31 +23,6 @@ interface SearchFiltersProps {
   isLoading?: boolean
   initialFilters?: SearchFilters
 }
-
-const categories = [
-  'Electronics',
-  'Furniture', 
-  'Clothing',
-  'Books',
-  'Sports',
-  'Home & Garden',
-  'Beauty & Health',
-  'Other',
-]
-
-const conditions = [
-  'New',
-  'Like New',
-  'Good',
-  'Fair',
-  'Does the job!',
-]
-
-const statuses = [
-  'ACTIVE',
-  'ON_HOLD',
-  'SOLD',
-]
 
 export default function SearchFilters({ onSearch, isLoading = false, initialFilters }: SearchFiltersProps) {
   const [filters, setFilters] = useState<SearchFilters>(initialFilters || {
@@ -154,7 +130,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <option value="">All Categories</option>
-                {categories.map((category) => (
+                {CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
@@ -172,7 +148,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <option value="">All Conditions</option>
-                {conditions.map((condition) => (
+                {CONDITIONS.map((condition) => (
                   <option key={condition} value={condition}>
                     {condition}
                   </option>
@@ -190,7 +166,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <option value="">All Statuses</option>
-                {statuses.map((status) => (
+                {STATUSES.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>

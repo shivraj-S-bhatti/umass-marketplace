@@ -2,6 +2,7 @@ package edu.umass.marketplace.repository;
 
 // Listing Repository - provides data access methods for Listing entities
 // Includes custom query methods for filtering and searching listings
+import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.model.Listing;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,19 +27,18 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     Page<Listing> findByCategory(String category, Pageable pageable);
 
     // Find listings with multiple filters
-    @Query("SELECT l FROM Listing l WHERE " +
-           "(:query IS NULL OR LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
-           "(:category IS NULL OR l.category = :category) AND " +
-           "(:status IS NULL OR l.status = :status) AND " +
-           "(:condition IS NULL OR l.condition = :condition) AND " +
-           "(:minPrice IS NULL OR l.price >= :minPrice) AND " +
-           "(:maxPrice IS NULL OR l.price <= :maxPrice) " +
-           "ORDER BY l.createdAt DESC")
+   @Query("SELECT l FROM Listing l WHERE " +
+      "(:query IS NULL OR :query = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+      "(:category IS NULL OR :category = '' OR l.category = :category) AND " +
+      "(:status IS NULL OR :status = '' OR l.status = :status) AND " +
+      "(COALESCE(:conditions, NULL) IS NULL OR l.condition IN :conditions) AND " +
+      "(:minPrice IS NULL OR l.price >= :minPrice) AND " +
+      "(:maxPrice IS NULL OR l.price <= :maxPrice)")
     Page<Listing> findWithFilters(
             @Param("query") String query,
             @Param("category") String category,
             @Param("status") String status,
-            @Param("condition") String condition,
+            @Param("conditions") Condition condition,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable

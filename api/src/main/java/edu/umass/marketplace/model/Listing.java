@@ -36,8 +36,9 @@ public class Listing {
     @Column(name = "category")
     private String category;
 
+    @Convert(converter = ConditionConverter.class)
     @Column(name = "condition")
-    private String condition;
+    private Condition condition;
 
     @Column(nullable = false)
     private String status = "ACTIVE";

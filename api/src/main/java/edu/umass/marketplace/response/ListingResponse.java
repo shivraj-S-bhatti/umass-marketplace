@@ -2,6 +2,7 @@ package edu.umass.marketplace.response;
 
 // Listing Response - represents listing data in API responses
 // Provides a clean interface for frontend consumption with only necessary fields
+import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.model.Listing;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class ListingResponse {
     private String description;
     private BigDecimal price;
     private String category;
-    private String condition;
+    private String condition; // Store as String for API compatibility
     private String status;
     private String sellerName; // Only seller name, not ID
     private OffsetDateTime createdAt;
@@ -38,7 +39,7 @@ public class ListingResponse {
                 .description(listing.getDescription())
                 .price(listing.getPrice())
                 .category(listing.getCategory())
-                .condition(listing.getCondition())
+                .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
                 .status(listing.getStatus())
                 .sellerName(listing.getSeller().getName())
                 .createdAt(listing.getCreatedAt())

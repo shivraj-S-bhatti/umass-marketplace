@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Papa from 'papaparse'
 import { useState } from 'react'
 import { createBulkListings } from '@/lib/api'
+import { CATEGORIES, CONDITIONS } from '@/lib/constants'
 
 // Sell Page - form for creating new marketplace listings
 // Allows users to post items for sale with validation and error handling
@@ -76,25 +77,6 @@ export default function SellPage() {
     console.log('🔄 Calling createListingMutation.mutate...')
     createListingMutation.mutate(data)
   }
-
-  const categories = [
-    'Electronics',
-    'Furniture',
-    'Clothing',
-    'Books',
-    'Sports',
-    'Home & Garden',
-    'Beauty & Health',
-    'Other',
-  ]
-
-  const conditions = [
-    'New',
-    'Like New',
-    'Good',
-    'Fair',
-    'Does the job!',
-  ]
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -178,7 +160,7 @@ export default function SellPage() {
                 {...register('category')}
               >
                 <option value="">Select a category</option>
-                {categories.map((category) => (
+                {CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
@@ -198,7 +180,7 @@ export default function SellPage() {
                 {...register('condition')}
               >
                 <option value="">Select condition</option>
-                {conditions.map((condition) => (
+                {CONDITIONS.map((condition) => (
                   <option key={condition} value={condition}>
                     {condition}
                   </option>

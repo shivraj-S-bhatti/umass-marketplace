@@ -2,6 +2,7 @@ package edu.umass.marketplace.service;
 
 import edu.umass.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.dto.ListingDto;
+import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.model.Listing;
 import edu.umass.marketplace.model.User;
@@ -72,7 +73,7 @@ public class ListingService {
             String queryParam = hasQuery ? query.trim() : null;
             String categoryParam = hasCategory ? category.trim() : null;
             String statusParam = hasStatus ? status.trim() : null;
-            String conditionParam = hasCondition ? condition.trim() : null;
+            Condition conditionParam = hasCondition ? Condition.fromDisplayName(condition.trim()) : null;
 
             log.debug("🔍 Using filtered query with params:");
             log.debug("  queryParam: '{}'", queryParam);
@@ -122,7 +123,7 @@ public class ListingService {
         listing.setDescription(request.getDescription());
         listing.setPrice(request.getPrice());
         listing.setCategory(request.getCategory());
-        listing.setCondition(request.getCondition());
+        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
         listing.setSeller(dummySeller);
 
@@ -155,7 +156,7 @@ public class ListingService {
                     listing.setDescription(request.getDescription());
                     listing.setPrice(request.getPrice());
                     listing.setCategory(request.getCategory());
-                    listing.setCondition(request.getCondition());
+                    listing.setCondition(Condition.fromDisplayName(request.getCondition()));
                     listing.setStatus(Listing.STATUS_ACTIVE);
                     listing.setSeller(dummySeller);
                     return listing;
@@ -184,7 +185,7 @@ public class ListingService {
         listing.setDescription(request.getDescription());
         listing.setPrice(request.getPrice());
         listing.setCategory(request.getCategory());
-        listing.setCondition(request.getCondition());
+        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());
