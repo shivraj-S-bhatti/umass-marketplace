@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -27,18 +28,19 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     Page<Listing> findByCategory(String category, Pageable pageable);
 
     // Find listings with multiple filters
-   @Query("SELECT l FROM Listing l WHERE " +
-      "(:query IS NULL OR :query = '' OR LOWER(l.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
-      "(:category IS NULL OR :category = '' OR l.category = :category) AND " +
-      "(:status IS NULL OR :status = '' OR l.status = :status) AND " +
-      "(COALESCE(:conditions, NULL) IS NULL OR l.condition IN :conditions) AND " +
-      "(:minPrice IS NULL OR l.price >= :minPrice) AND " +
-      "(:maxPrice IS NULL OR l.price <= :maxPrice)")
+    @Query("SELECT l FROM Listing l WHERE " +
+           "((:query IS NULL) OR :query = '' OR (LOWER(l.title) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')))) AND " +
+           "((:category IS NULL) OR :category = '' OR (l.category = :category)) AND " +
+           "((:status IS NULL) OR :status = '' OR (l.status = :status)) AND " +
+           "((:conditions IS NULL) OR (l.condition IN :conditions)) AND " +
+           "((:minPrice IS NULL) OR (l.price >= :minPrice)) AND " +
+           "((:maxPrice IS NULL) OR (l.price <= :maxPrice)) " +
+           "ORDER BY l.createdAt DESC")
     Page<Listing> findWithFilters(
             @Param("query") String query,
             @Param("category") String category,
             @Param("status") String status,
-            @Param("conditions") Condition condition,
+            @Param("conditions") List<Condition> conditions,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable

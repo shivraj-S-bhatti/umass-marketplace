@@ -13,7 +13,7 @@ export default function HomePage() {
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({
     query: '',
     category: '',
-    condition: '',
+    condition: [],
     minPrice: undefined,
     maxPrice: undefined,
     status: '',
@@ -28,7 +28,7 @@ export default function HomePage() {
       size: pageSize,
       q: searchFilters.query || undefined,
       category: searchFilters.category || undefined,
-      condition: searchFilters.condition || undefined,
+      condition: searchFilters.condition.length > 0 ? searchFilters.condition.join(',') : undefined,
       minPrice: searchFilters.minPrice,
       maxPrice: searchFilters.maxPrice,
       status: searchFilters.status || undefined,
@@ -136,7 +136,7 @@ export default function HomePage() {
                 handleSearch({
                   query: '',
                   category: '',
-                  condition: '',
+                  condition: [],
                   minPrice: undefined,
                   maxPrice: undefined,
                   status: '',

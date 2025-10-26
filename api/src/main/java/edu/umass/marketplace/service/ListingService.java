@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -58,11 +59,27 @@ public class ListingService {
         BigDecimal minPriceBD = minPrice != null ? BigDecimal.valueOf(minPrice) : null;
         BigDecimal maxPriceBD = maxPrice != null ? BigDecimal.valueOf(maxPrice) : null;
 
+        // Parse condition parameter - can be comma-separated for multiple values
+        List<Condition> conditionParams = null;
+        if (condition != null && !condition.trim().isEmpty()) {
+            String[] conditionValues = condition.split(",");
+            conditionParams = new ArrayList<>();
+            for (String cond : conditionValues) {
+                Condition parsedCondition = Condition.fromDisplayName(cond.trim());
+                if (parsedCondition != null) {
+                    conditionParams.add(parsedCondition);
+                }
+            }
+            if (conditionParams.isEmpty()) {
+                conditionParams = null;
+            }
+        }
+
         // Check if any filters are active
         boolean hasQuery = query != null && !query.trim().isEmpty();
         boolean hasCategory = category != null && !category.trim().isEmpty();
         boolean hasStatus = status != null && !status.trim().isEmpty();
-        boolean hasCondition = condition != null && !condition.trim().isEmpty();
+        boolean hasCondition = conditionParams != null && !conditionParams.isEmpty();
         boolean hasMinPrice = minPriceBD != null;
         boolean hasMaxPrice = maxPriceBD != null;
 
@@ -73,15 +90,14 @@ public class ListingService {
             String queryParam = hasQuery ? query.trim() : null;
             String categoryParam = hasCategory ? category.trim() : null;
             String statusParam = hasStatus ? status.trim() : null;
-            Condition conditionParam = hasCondition ? Condition.fromDisplayName(condition.trim()) : null;
 
             log.debug("🔍 Using filtered query with params:");
             log.debug("  queryParam: '{}'", queryParam);
             log.debug("  categoryParam: '{}'", categoryParam);
             log.debug("  statusParam: '{}'", statusParam);
-            log.debug("  conditionParam: '{}'", conditionParam);
+            log.debug("  conditionParams: '{}'", conditionParams);
 
-            listings = listingRepository.findWithFilters(queryParam, categoryParam, statusParam, conditionParam, minPriceBD, maxPriceBD, pageable);
+            listings = listingRepository.findWithFilters(queryParam, categoryParam, statusParam, conditionParams, minPriceBD, maxPriceBD, pageable);
         } else {
             // Return all listings if no filters
             log.debug("🔍 No filters detected, returning all listings");

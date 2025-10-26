@@ -38,7 +38,7 @@ public class ListingController {
             @Parameter(description = "Status filter") @RequestParam(required = false) String status,
             @Parameter(description = "Minimum price") @RequestParam(required = false) Double minPrice,
             @Parameter(description = "Maximum price") @RequestParam(required = false) Double maxPrice,
-            @Parameter(description = "Condition filter") @RequestParam(required = false) String condition
+            @Parameter(description = "Condition filter (comma-separated for multiple)") @RequestParam(required = false) String condition
     ) {
         return listingService.getListings(q, category, status, condition, minPrice, maxPrice, page, size);
     }

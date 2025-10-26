@@ -12,7 +12,7 @@ import { CONDITIONS, CATEGORIES, STATUSES } from '@/lib/constants'
 export interface SearchFilters {
   query: string
   category: string
-  condition: string
+  condition: string[]  // Changed to array for multi-select
   minPrice: number | undefined
   maxPrice: number | undefined
   status: string
@@ -28,7 +28,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
   const [filters, setFilters] = useState<SearchFilters>(initialFilters || {
     query: '',
     category: '',
-    condition: '',
+    condition: [],
     minPrice: undefined,
     maxPrice: undefined,
     status: '',
@@ -52,7 +52,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
     const clearedFilters: SearchFilters = {
       query: '',
       category: '',
-      condition: '',
+      condition: [],
       minPrice: undefined,
       maxPrice: undefined,
       status: '',
@@ -67,7 +67,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
     }
   }
 
-  const hasActiveFilters = filters.query || filters.category || filters.condition || 
+  const hasActiveFilters = filters.query || filters.category || filters.condition.length > 0 || 
                          filters.minPrice || filters.maxPrice || filters.status
 
   return (
@@ -138,22 +138,31 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
               </select>
             </div>
 
-            {/* Condition Filter */}
+            {/* Condition Filter - Multi-select */}
             <div className="space-y-2">
-              <Label htmlFor="condition">Condition</Label>
-              <select
-                id="condition"
-                value={filters.condition}
-                onChange={(e) => setFilters({ ...filters, condition: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                <option value="">All Conditions</option>
+              <Label>Condition</Label>
+              <div className="flex flex-wrap gap-2 border border-input rounded-md p-2 min-h-[40px]">
                 {CONDITIONS.map((condition) => (
-                  <option key={condition} value={condition}>
-                    {condition}
-                  </option>
+                  <label
+                    key={condition}
+                    className="flex items-center space-x-2 cursor-pointer text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.condition.includes(condition)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFilters({ ...filters, condition: [...filters.condition, condition] })
+                        } else {
+                          setFilters({ ...filters, condition: filters.condition.filter(c => c !== condition) })
+                        }
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <span>{condition}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
 
             {/* Status Filter */}
