@@ -27,6 +27,7 @@ public class ListingResponse {
     private BigDecimal price;
     private String category;
     private String condition; // Store as String for API compatibility
+    private String imageUrl;
     private String status;
     private String sellerName; // Only seller name, not ID
     private OffsetDateTime createdAt;
@@ -40,6 +41,7 @@ public class ListingResponse {
                 .price(listing.getPrice())
                 .category(listing.getCategory())
                 .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
+                .imageUrl(listing.getImageUrl())
                 .status(listing.getStatus())
                 .sellerName(listing.getSeller().getName())
                 .createdAt(listing.getCreatedAt())

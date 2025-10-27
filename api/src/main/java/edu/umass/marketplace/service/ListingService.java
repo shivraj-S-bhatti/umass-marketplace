@@ -140,6 +140,7 @@ public class ListingService {
         listing.setPrice(request.getPrice());
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+        listing.setImageUrl(request.getImageUrl());
         listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
         listing.setSeller(dummySeller);
 
@@ -173,6 +174,7 @@ public class ListingService {
                     listing.setPrice(request.getPrice());
                     listing.setCategory(request.getCategory());
                     listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+                    listing.setImageUrl(request.getImageUrl());
                     listing.setStatus(Listing.STATUS_ACTIVE);
                     listing.setSeller(dummySeller);
                     return listing;
@@ -202,6 +204,7 @@ public class ListingService {
         listing.setPrice(request.getPrice());
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+        listing.setImageUrl(request.getImageUrl());
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());

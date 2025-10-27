@@ -25,6 +25,7 @@ const createListingSchema = z.object({
   price: z.number().min(0.01, 'Price must be greater than 0').max(999999.99, 'Price must be less than $999,999.99'),
   category: z.string().max(100, 'Category must be less than 100 characters').optional(),
   condition: z.string().max(50, 'Condition must be less than 50 characters').optional(),
+  imageUrl: z.string().max(1000000, 'Image data is too large').optional(),
 })
 
 type CreateListingForm = z.infer<typeof createListingSchema>
@@ -33,15 +34,60 @@ export default function SellPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<CreateListingForm>({
     resolver: zodResolver(createListingSchema),
   })
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Invalid file type',
+          description: 'Please select an image file.',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'File too large',
+          description: 'Image must be less than 5MB.',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      setImageFile(file)
+
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setImagePreview(base64String)
+        setValue('imageUrl', base64String)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setImageFile(null)
+    setImagePreview('')
+    setValue('imageUrl', '')
+  }
 
   const createListingMutation = useMutation({
     mutationFn: createListing,
@@ -53,6 +99,8 @@ export default function SellPage() {
       })
       queryClient.invalidateQueries({ queryKey: ['listings'] })
       reset()
+      setImageFile(null)
+      setImagePreview('')
       navigate('/dashboard')
     },
     onError: (error: Error) => {
@@ -191,6 +239,42 @@ export default function SellPage() {
               )}
             </div>
 
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="image">Item Image (Optional)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="cursor-pointer"
+                />
+                {imageFile && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemoveImage}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+              {errors.imageUrl && (
+                <p className="text-sm text-destructive">{errors.imageUrl.message}</p>
+              )}
+              {imagePreview && (
+                <div className="mt-2">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="h-32 w-32 object-cover rounded-md border border-input"
+                  />
+                </div>
+              )}
+            </div>
+
             {/* Submit Button */}
             <div className="flex gap-4">
               <Button
@@ -257,9 +341,10 @@ function BulkUploadModal() {
             title: row.title?.trim() || '',
             description: row.description?.trim() || '',
             price: parseFloat(row.price) || 0,
-            category: row.category?.trim() || '',
-            condition: row.condition?.trim() || '',
-          }
+          category: row.category?.trim() || '',
+          condition: row.condition?.trim() || '',
+          imageUrl: row.imageUrl?.trim() || '',
+        }
 
           const result = createListingSchema.safeParse(listing)
           if (result.success) {

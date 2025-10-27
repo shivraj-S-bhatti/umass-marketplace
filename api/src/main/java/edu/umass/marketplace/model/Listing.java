@@ -47,6 +47,9 @@ public class Listing {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

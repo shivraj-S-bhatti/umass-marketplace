@@ -7,6 +7,7 @@ export interface Listing {
   price: number
   category?: string
   condition?: string
+  imageUrl?: string
   status: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
   sellerId: string
   sellerName?: string
@@ -20,6 +21,7 @@ export interface CreateListingRequest {
   price: number
   category?: string
   condition?: string
+  imageUrl?: string
 }
 
 export interface ListingsResponse {

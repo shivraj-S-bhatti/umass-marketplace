@@ -1,10 +1,10 @@
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
 import { LayoutDashboard, Plus, DollarSign, Calendar, Eye } from 'lucide-react'
-import { useState } from 'react'
 
 // Dashboard Page - displays user's listings and marketplace statistics
 // Shows seller's own listings with management options and overview stats
@@ -15,6 +15,22 @@ export default function DashboardPage() {
   const { data: listingsData, isLoading, error } = useQuery({
     queryKey: ['listings', currentPage],
     queryFn: () => apiClient.getListings({ page: currentPage, size: pageSize }),
+  })
+
+  // Fetch stats for total counts across all listings
+  const { data: activeListingsData } = useQuery({
+    queryKey: ['listings', 'stats', 'ACTIVE'],
+    queryFn: () => apiClient.getListings({ page: 0, size: 1000, status: 'ACTIVE' }),
+  })
+
+  const { data: soldListingsData } = useQuery({
+    queryKey: ['listings', 'stats', 'SOLD'],
+    queryFn: () => apiClient.getListings({ page: 0, size: 1000, status: 'SOLD' }),
+  })
+
+  const { data: onHoldListingsData } = useQuery({
+    queryKey: ['listings', 'stats', 'ON_HOLD'],
+    queryFn: () => apiClient.getListings({ page: 0, size: 1000, status: 'ON_HOLD' }),
   })
 
   if (isLoading) {
@@ -55,9 +71,10 @@ export default function DashboardPage() {
   }
 
   const listings = listingsData?.content || []
-  const activeListings = listings.filter(l => l.status === 'ACTIVE')
-  const soldListings = listings.filter(l => l.status === 'SOLD')
-  const onHoldListings = listings.filter(l => l.status === 'ON_HOLD')
+  // Use totalElements from filtered queries for accurate counts across all pages
+  const activeListingsCount = activeListingsData?.totalElements || 0
+  const soldListingsCount = soldListingsData?.totalElements || 0
+  const onHoldListingsCount = onHoldListingsData?.totalElements || 0
 
   return (
     <div className="space-y-8">
@@ -75,7 +92,7 @@ export default function DashboardPage() {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeListings.length}</div>
+            <div className="text-2xl font-bold">{activeListingsCount}</div>
             <p className="text-xs text-muted-foreground">
               Currently for sale
             </p>
@@ -88,7 +105,7 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{soldListings.length}</div>
+            <div className="text-2xl font-bold">{soldListingsCount}</div>
             <p className="text-xs text-muted-foreground">
               Successfully sold
             </p>
@@ -101,7 +118,7 @@ export default function DashboardPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{onHoldListings.length}</div>
+            <div className="text-2xl font-bold">{onHoldListingsCount}</div>
             <p className="text-xs text-muted-foreground">
               Temporarily unavailable
             </p>
@@ -226,6 +243,8 @@ export default function DashboardPage() {
 
 // Individual listing card component for dashboard
 function ListingCard({ listing }: { listing: Listing }) {
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -241,8 +260,32 @@ function ListingCard({ listing }: { listing: Listing }) {
     })
   }
 
+  // Handle Escape key to close modal
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isImageModalOpen) {
+        setIsImageModalOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [isImageModalOpen])
+
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <>
+      <Card className="hover:shadow-lg transition-shadow">
+        {listing.imageUrl && (
+          <div 
+            className="w-full h-48 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
+          >
+            <img
+              src={listing.imageUrl}
+              alt={listing.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
@@ -291,5 +334,54 @@ function ListingCard({ listing }: { listing: Listing }) {
         </div>
       </CardContent>
     </Card>
+
+    {/* Image Modal */}
+    {isImageModalOpen && listing.imageUrl && (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        onClick={() => setIsImageModalOpen(false)}
+      >
+        <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
+          {/* Close button */}
+          <button
+            onClick={() => setIsImageModalOpen(false)}
+            className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 rounded-full p-2 transition-colors"
+            aria-label="Close image"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          {/* Image */}
+          <img
+            src={listing.imageUrl}
+            alt={listing.title}
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Image info */}
+          <div className="absolute bottom-4 left-4 right-4 bg-black/60 text-white rounded-lg p-3 backdrop-blur-sm">
+            <h3 className="font-semibold text-lg mb-1">{listing.title}</h3>
+            <p className="text-sm text-gray-300">
+              {formatPrice(listing.price)} • {listing.category || 'Uncategorized'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   )
 }

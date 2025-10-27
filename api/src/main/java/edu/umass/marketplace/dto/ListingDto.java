@@ -23,6 +23,7 @@ public class ListingDto {
     private BigDecimal price;
     private String category;
     private String condition;
+    private String imageUrl;
     private String status;
     private UUID sellerId;
     private OffsetDateTime createdAt;

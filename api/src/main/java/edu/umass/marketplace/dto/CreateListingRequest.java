@@ -34,4 +34,8 @@ public class CreateListingRequest {
     @Size(max = 50, message = "Condition must not exceed 50 characters")
     @Schema(description = "Condition of the item", example = "Like New")
     private String condition;
+    
+    @Size(max = 1000000, message = "Image data is too large")
+    @Schema(description = "Base64 encoded image data or image URL")
+    private String imageUrl;
 }
