@@ -122,12 +122,21 @@ class ApiClient {
       body: JSON.stringify(data),
     })
   }
+
+  // Update an existing listing
+  async updateListing(id: string, data: CreateListingRequest): Promise<Listing> {
+    return this.request<Listing>(`/api/listings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
 
 // Create bound methods to avoid 'this' context issues
 export const createListing = (data: CreateListingRequest) => apiClient.createListing(data)
+export const updateListing = (id: string, data: CreateListingRequest) => apiClient.updateListing(id, data)
 export const getListings = (page = 0, size = 12) => apiClient.getListings({ page, size })
 export const getListing = (id: string) => apiClient.getListing(id)
 export const healthCheck = () => apiClient.healthCheck()

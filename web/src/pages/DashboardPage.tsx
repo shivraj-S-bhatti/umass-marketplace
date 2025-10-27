@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
 import { LayoutDashboard, Plus, DollarSign, Calendar, Eye } from 'lucide-react'
 
@@ -243,6 +243,7 @@ export default function DashboardPage() {
 
 // Individual listing card component for dashboard
 function ListingCard({ listing }: { listing: Listing }) {
+  const navigate = useNavigate()
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
 
   const formatPrice = (price: number) => {
@@ -258,6 +259,10 @@ function ListingCard({ listing }: { listing: Listing }) {
       day: 'numeric',
       year: 'numeric',
     })
+  }
+
+  const handleEdit = () => {
+    navigate(`/edit/${listing.id}`)
   }
 
   // Handle Escape key to close modal
@@ -325,7 +330,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           )}
         </div>
         <div className="mt-4 flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1">
+          <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
             Edit
           </Button>
           <Button size="sm" variant="outline" className="flex-1">

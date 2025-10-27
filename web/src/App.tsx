@@ -4,6 +4,7 @@ import Layout from '@/components/Layout'
 import HomePage from '@/pages/HomePage'
 import SellPage from '@/pages/SellPage'
 import DashboardPage from '@/pages/DashboardPage'
+import EditPage from '@/pages/EditPage'
 import LoginPage from '@/pages/LoginPage'
 
 // Main App component for UMass Marketplace
@@ -16,6 +17,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/sell" element={<SellPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/edit/:id" element={<EditPage />} />
           <Route path="/login" element={<LoginPage />} />
         </Routes>
       </Layout>
