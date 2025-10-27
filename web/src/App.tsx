@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
+import { UserProvider } from '@/contexts/UserContext'
 import Layout from '@/components/Layout'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import HomePage from '@/pages/HomePage'
 import SellPage from '@/pages/SellPage'
 import DashboardPage from '@/pages/DashboardPage'
@@ -11,18 +13,41 @@ import LoginPage from '@/pages/LoginPage'
 // Sets up routing and provides global layout with navigation
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/sell" element={<SellPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/edit/:id" element={<EditPage />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Routes>
-      </Layout>
-      <Toaster />
-    </div>
+    <UserProvider>
+      <div className="min-h-screen bg-background">
+        <Layout>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route
+              path="/sell"
+              element={
+                <ProtectedRoute requireSeller>
+                  <SellPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute requireSeller>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edit/:id"
+              element={
+                <ProtectedRoute requireSeller>
+                  <EditPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
+        </Layout>
+        <Toaster />
+      </div>
+    </UserProvider>
   )
 }
 

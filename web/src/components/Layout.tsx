@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ShoppingBag, Plus, LayoutDashboard, LogIn } from 'lucide-react'
+import { useUser } from '@/contexts/UserContext'
 
 // Layout component for UMass Marketplace
 // Provides consistent navigation and page structure across the application
@@ -10,12 +11,21 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
+  const { isSeller, setRole } = useUser()
 
-  const navItems = [
+  // Navigation items for sellers
+  const sellerNavItems = [
     { path: '/', label: 'Explore', icon: ShoppingBag },
     { path: '/sell', label: 'Sell', icon: Plus },
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   ]
+
+  // Navigation items for buyers (without Sell and Dashboard)
+  const buyerNavItems = [
+    { path: '/', label: 'Explore', icon: ShoppingBag },
+  ]
+
+  const navItems = isSeller ? sellerNavItems : buyerNavItems
 
   return (
     <div className="min-h-screen bg-background">
