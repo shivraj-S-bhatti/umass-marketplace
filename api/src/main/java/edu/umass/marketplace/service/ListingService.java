@@ -239,4 +239,20 @@ public class ListingService {
         log.debug("🔍 Found {} listings for seller ID: {}", listings.getTotalElements(), sellerId);
         return listings.map(ListingResponse::fromEntity);
     }
+
+    /**
+     * Get listing statistics (counts by status)
+     */
+    @Transactional(readOnly = true)
+    public edu.umass.marketplace.response.StatsResponse getListingStats() {
+        log.debug("🔍 Getting listing statistics");
+        
+        long activeCount = listingRepository.countByStatus(Listing.STATUS_ACTIVE);
+        long soldCount = listingRepository.countByStatus(Listing.STATUS_SOLD);
+        long onHoldCount = listingRepository.countByStatus(Listing.STATUS_ON_HOLD);
+        
+        log.debug("🔍 Stats - Active: {}, Sold: {}, On Hold: {}", activeCount, soldCount, onHoldCount);
+        
+        return new edu.umass.marketplace.response.StatsResponse(activeCount, soldCount, onHoldCount);
+    }
 }

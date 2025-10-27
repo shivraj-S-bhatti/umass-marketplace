@@ -18,19 +18,9 @@ export default function DashboardPage() {
   })
 
   // Fetch stats for total counts across all listings
-  const { data: activeListingsData } = useQuery({
-    queryKey: ['listings', 'stats', 'ACTIVE'],
-    queryFn: () => apiClient.getListings({ page: 0, size: 1000, status: 'ACTIVE' }),
-  })
-
-  const { data: soldListingsData } = useQuery({
-    queryKey: ['listings', 'stats', 'SOLD'],
-    queryFn: () => apiClient.getListings({ page: 0, size: 1000, status: 'SOLD' }),
-  })
-
-  const { data: onHoldListingsData } = useQuery({
-    queryKey: ['listings', 'stats', 'ON_HOLD'],
-    queryFn: () => apiClient.getListings({ page: 0, size: 1000, status: 'ON_HOLD' }),
+  const { data: stats } = useQuery({
+    queryKey: ['listings-stats'],
+    queryFn: () => apiClient.getListingStats(),
   })
 
   if (isLoading) {
@@ -71,10 +61,10 @@ export default function DashboardPage() {
   }
 
   const listings = listingsData?.content || []
-  // Use totalElements from filtered queries for accurate counts across all pages
-  const activeListingsCount = activeListingsData?.totalElements || 0
-  const soldListingsCount = soldListingsData?.totalElements || 0
-  const onHoldListingsCount = onHoldListingsData?.totalElements || 0
+  // Use stats from the dedicated stats endpoint
+  const activeListingsCount = stats?.activeListings || 0
+  const soldListingsCount = stats?.soldListings || 0
+  const onHoldListingsCount = stats?.onHoldListings || 0
 
   return (
     <div className="space-y-8">

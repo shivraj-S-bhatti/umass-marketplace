@@ -27,6 +27,9 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     // Find listings by category with pagination
     Page<Listing> findByCategory(String category, Pageable pageable);
 
+    // Count listings by status
+    long countByStatus(String status);
+
     // Find listings with multiple filters
     @Query("SELECT l FROM Listing l WHERE " +
            "((:query IS NULL) OR :query = '' OR (LOWER(l.title) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')))) AND " +

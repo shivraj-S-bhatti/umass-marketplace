@@ -32,6 +32,12 @@ export interface ListingsResponse {
   number: number
 }
 
+export interface ListingStats {
+  activeListings: number
+  soldListings: number
+  onHoldListings: number
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 console.log('🌐 API Base URL:', API_BASE_URL)
@@ -130,6 +136,11 @@ class ApiClient {
       body: JSON.stringify(data),
     })
   }
+
+  // Get listing statistics
+  async getListingStats(): Promise<ListingStats> {
+    return this.request<ListingStats>('/api/listings/stats')
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
@@ -139,5 +150,6 @@ export const createListing = (data: CreateListingRequest) => apiClient.createLis
 export const updateListing = (id: string, data: CreateListingRequest) => apiClient.updateListing(id, data)
 export const getListings = (page = 0, size = 12) => apiClient.getListings({ page, size })
 export const getListing = (id: string) => apiClient.getListing(id)
+export const getListingStats = () => apiClient.getListingStats()
 export const healthCheck = () => apiClient.healthCheck()
 export const createBulkListings = (data: CreateListingRequest[]) => apiClient.createBulkListings(data)

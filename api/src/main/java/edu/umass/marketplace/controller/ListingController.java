@@ -4,6 +4,7 @@ package edu.umass.marketplace.controller;
 // Provides CRUD operations for marketplace listings with pagination and filtering
 import edu.umass.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.response.ListingResponse;
+import edu.umass.marketplace.response.StatsResponse;
 import edu.umass.marketplace.service.ListingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -84,5 +85,11 @@ public class ListingController {
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size
     ) {
         return listingService.getListingsBySeller(sellerId, page, size);
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get listing statistics", description = "Retrieve counts of listings by status")
+    public StatsResponse getListingStats() {
+        return listingService.getListingStats();
     }
 }
