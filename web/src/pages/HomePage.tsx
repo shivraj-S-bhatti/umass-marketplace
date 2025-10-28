@@ -43,12 +43,6 @@ export default function HomePage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">UMass Marketplace</h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            Buy and sell items with fellow students
-          </p>
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -70,10 +64,6 @@ export default function HomePage() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-4xl font-bold mb-4">UMass Marketplace</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Buy and sell items with fellow students
-        </p>
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
           <p className="text-destructive">Failed to load listings. Please try again later.</p>
         </div>
@@ -89,12 +79,6 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">UMass Marketplace</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Buy and sell items with fellow students
-        </p>
-      </div>
 
       {/* Search Filters */}
       <SearchFilters onSearch={handleSearch} isLoading={isLoading} initialFilters={searchFilters} />

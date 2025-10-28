@@ -1,0 +1,211 @@
+@startuml
+title UMass Marketplace - Class Diagram
+
+package "Entity Layer" {
+  class User {
+    -UUID id
+    -String email
+    -String name
+    -String pictureUrl
+    -OffsetDateTime createdAt
+  }
+  
+  class Listing {
+    -UUID id
+    -String title
+    -String description
+    -BigDecimal price
+    -String category
+    -Condition condition
+    -String status
+    -String imageUrl
+    -OffsetDateTime createdAt
+    -OffsetDateTime updatedAt
+    -User seller
+  }
+  
+  enum Condition {
+    NEW
+    LIKE_NEW
+    GOOD
+    FAIR
+    DOES_THE_JOB
+  }
+  
+  class ConditionConverter {
+    +convertToDatabaseColumn() : String
+    +convertToEntityAttribute() : Condition
+  }
+}
+
+package "DTO Layer" {
+  class CreateListingRequest {
+    -String title
+    -String description
+    -BigDecimal price
+    -String category
+    -String condition
+    -String imageUrl
+  }
+  
+  class ListingDto {
+    -UUID id
+    -String title
+    -BigDecimal price
+    -String category
+  }
+  
+  class UserDto {
+    -UUID id
+    -String email
+    -String name
+  }
+  
+  class LoginRequest {
+    -String email
+    -String password
+  }
+  
+  class RegisterRequest {
+    -String email
+    -String name
+    -String password
+  }
+}
+
+package "Response Layer" {
+  class ListingResponse {
+    -UUID id
+    -String title
+    -String description
+    -BigDecimal price
+    -String category
+    -String condition
+    -String imageUrl
+    -String status
+    -String sellerName
+    -OffsetDateTime createdAt
+  }
+  
+  class StatsResponse {
+    -long activeListings
+    -long soldListings
+    -long onHoldListings
+  }
+  
+  class AuthResponse {
+    -String token
+    -UserResponse user
+  }
+  
+  class UserResponse {
+    -UUID id
+    -String email
+    -String name
+  }
+}
+
+package "Repository Layer" {
+  interface ListingRepository {
+    +findBySellerId() : Page<Listing>
+    +findByStatus() : Page<Listing>
+    +findByCategory() : Page<Listing>
+    +countByStatus() : long
+    +findWithFilters() : Page<Listing>
+    +findAll() : Page<Listing>
+    +save() : Listing
+    +deleteById() : void
+  }
+  
+  interface UserRepository {
+    +findByEmail() : Optional<User>
+    +findById() : Optional<User>
+    +save() : User
+  }
+}
+
+package "Service Layer" {
+  class ListingService {
+    +getListings() : Page<ListingResponse>
+    +getListingById() : ListingResponse
+    +createListing() : ListingResponse
+    +updateListing() : ListingResponse
+    +deleteListing() : void
+    +getListingsBySeller() : Page<ListingResponse>
+    +getListingStats() : StatsResponse
+    +createListingsBulk() : List<ListingResponse>
+  }
+  
+  class AuthService {
+    +register() : AuthResponse
+    +login() : AuthResponse
+    +validateToken() : UserResponse
+  }
+  
+  class UserService {
+    +getUserById() : UserResponse
+    +updateUser() : UserResponse
+    +getAllUsers() : List<UserResponse>
+  }
+}
+
+package "Controller Layer" {
+  class ListingController {
+    +getListings() : Page<ListingResponse>
+    +getListingById() : ListingResponse
+    +createListing() : ResponseEntity<ListingResponse>
+    +updateListing() : ListingResponse
+    +deleteListing() : ResponseEntity<Void>
+    +getListingsBySeller() : Page<ListingResponse>
+    +getListingStats() : StatsResponse
+  }
+  
+  class AuthController {
+    +register() : ResponseEntity<AuthResponse>
+    +login() : ResponseEntity<AuthResponse>
+    +getCurrentUser() : UserResponse
+  }
+  
+  class HealthController {
+    +health() : Map<String, String>
+  }
+}
+
+package "Configuration" {
+  class OpenApiConfig {
+    +openAPI() : OpenAPI
+  }
+  
+  class SecurityConfig {
+    +securityFilterChain() : SecurityFilterChain
+    +passwordEncoder() : PasswordEncoder
+  }
+  
+  class MarketplaceApplication {
+    +main()
+  }
+}
+
+' Relationships
+Listing "*" --> "1" User : seller
+Listing ..> Condition : uses
+Condition ..> ConditionConverter : converted by
+ListingRepository ..> Listing : manages
+UserRepository ..> User : manages
+
+ListingService ..> ListingRepository : uses
+ListingService ..> UserRepository : uses
+AuthService ..> UserRepository : uses
+UserService ..> UserRepository : uses
+
+ListingController ..> ListingService : uses
+AuthController ..> AuthService : uses
+
+CreateListingRequest ..> ListingService : creates
+ListingResponse <.. ListingService : returns
+ListingResponse <.. Listing : maps from
+
+SecurityConfig ..> ListingController : secures
+SecurityConfig ..> AuthController : secures
+
+@enduml

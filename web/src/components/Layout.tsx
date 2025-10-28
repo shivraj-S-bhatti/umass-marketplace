@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ShoppingBag, Plus, LayoutDashboard, LogIn } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
+import LogoIcon from '@/assets/logo-icon.svg'
 
 // Layout component for UMass Marketplace
 // Provides consistent navigation and page structure across the application
@@ -34,8 +35,8 @@ export default function Layout({ children }: LayoutProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-primary"></div>
+            <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+              <img src={LogoIcon} alt="UMass Marketplace Logo" className="h-10 w-10" />
               <span className="text-xl font-bold">UMass Marketplace</span>
             </Link>
 

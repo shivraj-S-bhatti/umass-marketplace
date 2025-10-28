@@ -1,0 +1,21 @@
+@startgantt
+printscale weekly
+title UMass Marketplace Development Timeline
+
+project starts 2025-09-01
+
+[Add individual item to sell] lasts 6 days
+[Bulk-upload items to sell in csv file] starts 2025-09-08 and lasts 6 days
+[Edit listings] starts 2025-09-15 and lasts 6 days
+[Search and filtering] starts 2025-09-22 and lasts 13 days
+[Pagination for items] starts 2025-10-06 and lasts 6 days
+[Buyer and seller views separately] starts 2025-10-13 and lasts 18 days
+
+[Chat between buyer and seller] starts 2025-11-01 and lasts 30 days
+[Authentication and validations for UMass students] starts 2025-11-15 and lasts 20 days
+[Urgency tags] starts 2025-11-15 and lasts 15 days
+[Transport score] starts 2025-11-01 and lasts 25 days
+[Final testing and integration] starts 2025-12-01 and lasts 10 days
+[Production deployment] starts 2025-12-08 and lasts 4 days
+
+@endgantt
