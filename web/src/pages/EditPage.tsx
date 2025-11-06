@@ -30,7 +30,7 @@ export default function EditPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
 
   // Fetch existing listing data

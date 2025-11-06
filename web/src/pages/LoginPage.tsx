@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { LogIn, Mail, ShoppingBag, Store } from 'lucide-react'
+import { LogIn, Mail } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
+import scrapBookImage from '@/assets/scrap_book.png'
 
 // Login Page - placeholder for OAuth authentication
 // Currently shows a placeholder for Google OAuth integration
@@ -15,14 +16,17 @@ export default function LoginPage() {
     window.location.href = '/oauth2/authorization/google'
   }
 
-  const handleRoleSelection = (role: 'buyer' | 'seller') => {
-    setRole(role)
-    navigate('/')
-  }
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <Card className="w-full max-w-md">
+    <div 
+      className="min-h-[calc(100vh-200px)] flex items-center justify-center py-8"
+      style={{
+        backgroundImage: `url(${scrapBookImage})`,
+        backgroundRepeat: 'repeat',
+        backgroundSize: 'auto',
+      }}
+    >
+      <Card className="w-full max-w-md mx-4">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
             <LogIn className="h-6 w-6 text-primary" />
@@ -47,31 +51,6 @@ export default function LoginPage() {
               You'll be redirected to Google to sign in with your UMass email address.
               Only @umass.edu email addresses are allowed.
             </p>
-          </div>
-
-          {/* Buyer and Seller Options */}
-          <div className="border-t pt-4">
-            <p className="text-center text-sm font-medium text-foreground mb-3">
-              Or continue as:
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => handleRoleSelection('buyer')}
-                className="flex flex-col items-center justify-center h-24 space-y-2"
-              >
-                <ShoppingBag className="h-6 w-6 text-primary" />
-                <span className="font-medium">Buyer</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleRoleSelection('seller')}
-                className="flex flex-col items-center justify-center h-24 space-y-2"
-              >
-                <Store className="h-6 w-6 text-primary" />
-                <span className="font-medium">Seller</span>
-              </Button>
-            </div>
           </div>
           
           <div className="border-t pt-4">

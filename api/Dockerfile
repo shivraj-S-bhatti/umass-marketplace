@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for UMass Marketplace API
 # Builds Spring Boot application with Maven and creates optimized runtime image
-FROM maven:3.9-eclipse-temurin-21 as builder
+FROM maven:3.9-eclipse-temurin-24 as builder
 
 # Set working directory
 WORKDIR /app
@@ -13,7 +13,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:24-jre-alpine
 
 # Install curl for health checks
 RUN apk add --no-cache curl

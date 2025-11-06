@@ -1,18 +1,22 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
-import { Search, DollarSign, Calendar } from 'lucide-react'
-import SearchFilters, { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
+import { Search, DollarSign, Calendar, Image as ImageIcon } from 'lucide-react'
+import { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
+import { StickerBadge } from '@/components/ui/sticker-badge'
+import TwoTierNavbar from '@/components/TwoTierNavbar'
+import { useSearchParams } from 'react-router-dom'
 
 // Home Page - displays marketplace listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
 export default function HomePage() {
+  const [searchParams] = useSearchParams()
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({
     query: '',
-    category: '',
+    category: searchParams.get('category') || '',
     condition: [],
     minPrice: undefined,
     maxPrice: undefined,
@@ -20,6 +24,16 @@ export default function HomePage() {
   })
   const [currentPage, setCurrentPage] = useState(0)
   const pageSize = 12
+
+  // Sync category from URL params
+  useEffect(() => {
+    const category = searchParams.get('category') || ''
+    if (category !== searchFilters.category) {
+      const newFilters = { ...searchFilters, category }
+      setSearchFilters(newFilters)
+      handleSearch(newFilters)
+    }
+  }, [searchParams.get('category')])
 
   const { data: listingsData, isLoading, error } = useQuery({
     queryKey: ['listings', searchFilters, currentPage],
@@ -77,31 +91,39 @@ export default function HomePage() {
                          searchFilters.maxPrice || searchFilters.status
 
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        {/* 2-Tier Navbar */}
+        <TwoTierNavbar 
+          onSearch={handleSearch} 
+          initialFilters={searchFilters}
+          isLoading={isLoading}
+        />
 
-      {/* Search Filters */}
-      <SearchFilters onSearch={handleSearch} isLoading={isLoading} initialFilters={searchFilters} />
-
-      {/* Results Section */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold">
-            {hasActiveSearch ? 'Search Results' : 'Recent Listings'}
-          </h2>
-          {listingsData && (
-            <div className="text-sm text-muted-foreground">
-              <p>
-                {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
-                {listingsData.totalPages > 1 && (
-                  <span className="ml-2">
-                    (Page {currentPage + 1} of {listingsData.totalPages})
+        {/* Content */}
+        <div className="flex-1 container mx-auto px-4 py-4 min-h-0">
+          <div className="space-y-4 pb-4">
+            {/* Results Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                {searchFilters.category && (
+                  <span className="text-sm font-bold text-primary">
+                    {searchFilters.category}
                   </span>
                 )}
-              </p>
+                {listingsData && (
+                  <div className="text-sm text-muted-foreground">
+                    <p>
+                      {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
+                      {listingsData.totalPages > 1 && (
+                        <span className="ml-2">
+                          (Page {currentPage + 1} of {listingsData.totalPages})
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
         
         {listings.length === 0 ? (
           <div className="text-center py-12">
@@ -137,7 +159,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {listings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}
@@ -145,7 +167,7 @@ export default function HomePage() {
             
             {/* Pagination Controls */}
             {listingsData && listingsData.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 mt-8">
+              <div className="flex items-center justify-center space-x-2 mt-4">
                 <Button
                   variant="outline"
                   onClick={() => setCurrentPage(0)}
@@ -205,7 +227,8 @@ export default function HomePage() {
             )}
           </>
         )}
-      </div>
+          </div>
+        </div>
     </div>
   )
 }
@@ -241,56 +264,59 @@ function ListingCard({ listing }: { listing: Listing }) {
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
-        {listing.imageUrl && (
-          <div 
-            className="w-full h-48 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
-          >
+      <Card className="hover:shadow-comic transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col">
+        {/* Image or Placeholder */}
+        <div 
+          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-comic cursor-pointer hover:opacity-90 transition-opacity bg-muted flex items-center justify-center flex-shrink-0"
+          onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
+        >
+          {listing.imageUrl ? (
             <img
               src={listing.imageUrl}
               alt={listing.title}
               className="w-full h-full object-cover"
             />
-          </div>
-        )}
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            listing.status === 'ACTIVE' 
-              ? 'bg-green-100 text-green-800' 
-              : listing.status === 'ON_HOLD'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {listing.status}
-          </span>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-muted-foreground">
+              <ImageIcon className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mb-1 sm:mb-2 opacity-50" />
+              <span className="text-xs sm:text-sm font-medium">No Image</span>
+            </div>
+          )}
         </div>
-        <CardDescription className="line-clamp-2">
+      <CardHeader className="pb-1.5 sm:pb-2 flex-shrink-0">
+        <div className="flex justify-between items-start gap-1.5 sm:gap-2">
+          <CardTitle className="text-sm sm:text-base font-bold line-clamp-2 flex-1 leading-tight">{listing.title}</CardTitle>
+        </div>
+        <CardDescription className="line-clamp-2 mt-0.5 sm:mt-1 text-xs sm:text-sm leading-tight">
           {listing.description || 'No description provided'}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center text-2xl font-bold text-primary">
-            <DollarSign className="h-5 w-5 mr-1" />
-            {formatPrice(listing.price)}
+      <CardContent className="pt-0 flex-1 flex flex-col justify-between">
+        <div className="space-y-1.5 sm:space-y-2">
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+            <StickerBadge variant="price" className="text-xs sm:text-sm md:text-base px-1.5 sm:px-2 py-0.5 sm:py-1 whitespace-nowrap">
+              {formatPrice(listing.price)}
+            </StickerBadge>
+            <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'} className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 whitespace-nowrap">
+              {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
+            </StickerBadge>
           </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
-            {formatDate(listing.createdAt)}
+          <div className="flex items-center text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{formatDate(listing.createdAt)}</span>
           </div>
-          {listing.category && (
-            <div className="text-sm">
-              <span className="font-medium">Category:</span> {listing.category}
-            </div>
-          )}
-          {listing.condition && (
-            <div className="text-sm">
-              <span className="font-medium">Condition:</span> {listing.condition}
-            </div>
-          )}
+          <div className="flex flex-wrap gap-1 sm:gap-1.5 text-xs">
+            {listing.category && (
+              <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-secondary border border-foreground font-medium whitespace-nowrap">
+                {listing.category}
+              </span>
+            )}
+            {listing.condition && (
+              <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-muted border border-foreground font-medium whitespace-nowrap">
+                {listing.condition}
+              </span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

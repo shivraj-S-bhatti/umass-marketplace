@@ -14,7 +14,7 @@ spring:
   # JPA/Hibernate configuration
   jpa:
     hibernate:
-      ddl-auto: validate  # Let Flyway handle schema creation
+      ddl-auto: update  # Create/update schema automatically
     properties:
       hibernate:
         format_sql: true  # Pretty print SQL queries in logs

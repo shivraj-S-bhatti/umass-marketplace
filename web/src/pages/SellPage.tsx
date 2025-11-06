@@ -127,30 +127,31 @@ export default function SellPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Sell an Item</h1>
-        <p className="text-muted-foreground">
-          List your item for sale to fellow UMass students
+    <div className="container mx-auto px-4 py-4">
+      <div className="max-w-2xl mx-auto">
+      <div className="text-center py-4 mb-4">
+        <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">Sell an Item</h1>
+        <p className="text-base text-muted-foreground">
+          List your item for sale to fellow UMass students 🍂
         </p>
       </div>
-      <div className="mb-6 flex justify-end">
+      <div className="mb-4 flex justify-end">
         <BulkUploadModal />
       </div>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Plus className="h-5 w-5 mr-2" />
+          <CardTitle className="flex items-center text-2xl">
+            <Plus className="h-6 w-6 mr-2" />
             Create New Listing
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Fill out the form below to list your item for sale
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit, (errors) => {
             console.log('❌ Form validation errors:', errors)
-          })} className="space-y-6">
+          })} className="space-y-4">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
@@ -297,6 +298,7 @@ export default function SellPage() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

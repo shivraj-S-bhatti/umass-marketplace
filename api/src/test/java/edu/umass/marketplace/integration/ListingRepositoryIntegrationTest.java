@@ -2,6 +2,7 @@ package edu.umass.marketplace.integration;
 
 // Integration Test for Listing Repository using Testcontainers
 // Tests CRUD operations against a real PostgreSQL database in a container
+import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.model.Listing;
 import edu.umass.marketplace.model.User;
 import edu.umass.marketplace.repository.ListingRepository;
@@ -65,7 +66,7 @@ public class ListingRepositoryIntegrationTest {
         listing.setDescription("Great condition laptop");
         listing.setPrice(new BigDecimal("500.00"));
         listing.setCategory("Electronics");
-        listing.setCondition("Good");
+        listing.setCondition(Condition.GOOD);
         listing.setSeller(testSeller);
 
         // When
@@ -118,7 +119,7 @@ public class ListingRepositoryIntegrationTest {
         listing.setDescription("Test description");
         listing.setPrice(new BigDecimal(price));
         listing.setCategory("Test");
-        listing.setCondition("Good");
+        listing.setCondition(Condition.GOOD);
         listing.setSeller(testSeller);
         return listing;
     }
