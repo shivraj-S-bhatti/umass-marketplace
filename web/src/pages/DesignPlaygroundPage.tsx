@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { StickerBadge } from '@/components/ui/sticker-badge'
 import { LeafDecoration } from '@/components/ui/leaf-decoration'
-import { Search, DollarSign, Calendar, Eye, Plus } from 'lucide-react'
+import { Search, Calendar, Eye, Plus } from 'lucide-react'
 
 // Design Playground Page - Isolated UI/UX testing environment
 // Use this page to test design changes before applying them to the rest of the app

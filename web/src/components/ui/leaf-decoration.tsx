@@ -1,5 +1,3 @@
-import React from 'react'
-
 // Leaf decoration component - hand-drawn leaf doodles for autumn feel
 interface LeafDecorationProps {
   className?: string

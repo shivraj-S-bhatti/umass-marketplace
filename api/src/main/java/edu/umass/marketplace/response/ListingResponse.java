@@ -31,6 +31,8 @@ public class ListingResponse {
     private String status;
     private String sellerName; // Only seller name, not ID
     private OffsetDateTime createdAt;
+    private Double latitude;
+    private Double longitude;
 
     // Static factory method to convert from entity
     public static ListingResponse fromEntity(Listing listing) {
@@ -45,6 +47,8 @@ public class ListingResponse {
                 .status(listing.getStatus())
                 .sellerName(listing.getSeller().getName())
                 .createdAt(listing.getCreatedAt())
+                .latitude(listing.getLatitude())
+                .longitude(listing.getLongitude())
                 .build();
     }
 }

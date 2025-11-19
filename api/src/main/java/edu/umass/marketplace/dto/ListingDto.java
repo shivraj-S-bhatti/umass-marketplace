@@ -26,6 +26,8 @@ public class ListingDto {
     private String imageUrl;
     private String status;
     private UUID sellerId;
+    private Double latitude;
+    private Double longitude;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

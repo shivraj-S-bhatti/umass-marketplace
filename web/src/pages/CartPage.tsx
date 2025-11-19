@@ -1,5 +1,4 @@
-import React from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react'
 import { StickerBadge } from '@/components/ui/sticker-badge'

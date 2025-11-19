@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ShoppingBag, Plus, LayoutDashboard, LogIn, Palette, ShoppingCart } from 'lucide-react'
-import { useUser } from '@/contexts/UserContext'
+import { UserRole, useUser } from '@/contexts/UserContext'
 import Logo from '@/components/Logo'
 import { LeafWallpaper } from '@/components/ui/leaf-wallpaper'
 import { useEffect } from 'react'
@@ -19,10 +19,10 @@ export default function Layout({ children }: LayoutProps) {
 
   // Navigation items - same for both modes, but will show/hide based on mode
   const allNavItems = [
-    { path: '/', label: 'Explore', icon: ShoppingBag, showIn: ['buyer', 'seller'] as const },
-    { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as const },
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as const },
-    { path: '/design-playground', label: 'Design', icon: Palette, showIn: ['buyer', 'seller'] as const },
+    { path: '/', label: 'Explore', icon: ShoppingBag, showIn: ['buyer', 'seller'] as UserRole[] },
+    { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as UserRole[] },
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as UserRole[] },
+    { path: '/design-playground', label: 'Design', icon: Palette, showIn: ['buyer', 'seller'] as UserRole[] },
   ]
 
   // Filter nav items based on current mode

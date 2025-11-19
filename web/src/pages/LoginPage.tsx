@@ -1,15 +1,11 @@
-import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LogIn, Mail } from 'lucide-react'
-import { useUser } from '@/contexts/UserContext'
 import scrapBookImage from '@/assets/scrap_book.png'
 
 // Login Page - placeholder for OAuth authentication
 // Currently shows a placeholder for Google OAuth integration
 export default function LoginPage() {
-  const navigate = useNavigate()
-  const { setRole } = useUser()
 
   const handleGoogleLogin = () => {
     // Placeholder for Google OAuth - will be implemented in future milestone

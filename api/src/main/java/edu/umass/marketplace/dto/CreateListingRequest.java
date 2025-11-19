@@ -38,4 +38,7 @@ public class CreateListingRequest {
     @Size(max = 1000000, message = "Image data is too large")
     @Schema(description = "Base64 encoded image data or image URL")
     private String imageUrl;
+
+    private Double latitude;
+    private Double longitude;
 }

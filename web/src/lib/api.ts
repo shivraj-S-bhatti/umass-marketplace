@@ -8,6 +8,8 @@ export interface Listing {
   category?: string
   condition?: string
   imageUrl?: string
+  latitude?: number | null
+  longitude?: number | null
   status: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
   sellerId: string
   sellerName?: string

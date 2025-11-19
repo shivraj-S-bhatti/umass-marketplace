@@ -28,6 +28,11 @@ spring:
     validate-on-migrate: true
     clean-disabled: false
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
   # OAuth2 configuration removed - using simple approach for now
 
 # Server configuration
