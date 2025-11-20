@@ -16,7 +16,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
+import edu.umass.marketplace.model.Condition;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -65,7 +65,7 @@ public class ListingRepositoryIntegrationTest {
         listing.setDescription("Great condition laptop");
         listing.setPrice(new BigDecimal("500.00"));
         listing.setCategory("Electronics");
-        listing.setCondition("Good");
+        listing.setCondition(Condition.fromDisplayName("Good"));
         listing.setSeller(testSeller);
 
         // When
@@ -118,7 +118,7 @@ public class ListingRepositoryIntegrationTest {
         listing.setDescription("Test description");
         listing.setPrice(new BigDecimal(price));
         listing.setCategory("Test");
-        listing.setCondition("Good");
+        listing.setCondition(Condition.fromDisplayName("Good"));
         listing.setSeller(testSeller);
         return listing;
     }

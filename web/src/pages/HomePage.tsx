@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
-import { Search, DollarSign, Calendar } from 'lucide-react'
+import { Search, DollarSign, Calendar, XCircle } from 'lucide-react'
 import SearchFilters, { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
 
 // Home Page - displays marketplace listings with search and filter capabilities
@@ -210,9 +210,33 @@ export default function HomePage() {
   )
 }
 
+import { ListingDetailModal } from '@/components/ui/listing-detail-modal'
+
 // Individual listing card component
 function ListingCard({ listing }: { listing: Listing }) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  // Get the current user's ID from local storage or context
+  const currentUserId = localStorage.getItem('userId') // This should match how you store the user ID
+
+  const handleUpdateStatus = async (newStatus: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => {
+    try {
+      setIsUpdating(true)
+      await apiClient.updateListing(listing.id, {
+        ...listing,
+        status: newStatus,
+      })
+      // Refetch the listings by invalidating the query cache
+      window.location.reload() // This is a temporary solution - ideally we'd use React Query's invalidation
+    } catch (error) {
+      console.error('Failed to update listing status:', error)
+      throw error
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -241,11 +265,17 @@ function ListingCard({ listing }: { listing: Listing }) {
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card 
+      className="hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => setIsDetailModalOpen(true)}
+    >
         {listing.imageUrl && (
           <div 
             className="w-full h-48 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsImageModalOpen(true);
+            }}
           >
             <img
               src={listing.imageUrl}
@@ -262,7 +292,7 @@ function ListingCard({ listing }: { listing: Listing }) {
               ? 'bg-green-100 text-green-800' 
               : listing.status === 'ON_HOLD'
               ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-gray-100 text-gray-800'
+              : 'bg-red-100 text-red-800'
           }`}>
             {listing.status}
           </span>
@@ -295,6 +325,15 @@ function ListingCard({ listing }: { listing: Listing }) {
       </CardContent>
     </Card>
 
+    {/* Details Modal */}
+    <ListingDetailModal
+      listing={listing}
+      isOpen={isDetailModalOpen}
+      onClose={() => setIsDetailModalOpen(false)}
+      isCurrentUserSeller={currentUserId === listing.sellerId}
+      onUpdateStatus={handleUpdateStatus}
+    />
+
     {/* Image Modal */}
     {isImageModalOpen && listing.imageUrl && (
       <div 
@@ -308,20 +347,7 @@ function ListingCard({ listing }: { listing: Listing }) {
             className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 rounded-full p-2 transition-colors"
             aria-label="Close image"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <XCircle className="h-6 w-6" />
           </button>
 
           {/* Image */}

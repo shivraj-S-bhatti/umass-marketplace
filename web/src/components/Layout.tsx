@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ShoppingBag, Plus, LayoutDashboard, LogIn } from 'lucide-react'
+import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
 import LogoIcon from '@/assets/logo-icon.svg'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 // Layout component for UMass Marketplace
 // Provides consistent navigation and page structure across the application
@@ -12,18 +14,20 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
-  const { isSeller, setRole } = useUser()
+  const { isSeller, setRole, user, setUser } = useUser()
 
   // Navigation items for sellers
   const sellerNavItems = [
     { path: '/', label: 'Explore', icon: ShoppingBag },
     { path: '/sell', label: 'Sell', icon: Plus },
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/messages', label: 'Messages', icon: MessageSquare },
   ]
 
   // Navigation items for buyers (without Sell and Dashboard)
   const buyerNavItems = [
     { path: '/', label: 'Explore', icon: ShoppingBag },
+    { path: '/messages', label: 'Messages', icon: MessageSquare },
   ]
 
   const navItems = isSeller ? sellerNavItems : buyerNavItems
@@ -58,13 +62,47 @@ export default function Layout({ children }: LayoutProps) {
               ))}
             </nav>
 
-            {/* Login Button */}
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Login
-              </Link>
-            </Button>
+            {/* User Info or Login Button */}
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Avatar className="cursor-pointer">
+                      <AvatarImage src={user.pictureUrl} alt={user.name} />
+                      <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <div className="px-3 py-2">
+                      <span className="font-medium text-sm">{user.name || user.email}</span>
+                    </div>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setRole(isSeller ? 'buyer' : 'seller')
+                      }}
+                    >
+                      {isSeller ? 'Switch to Buyer' : 'Switch to Seller'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setUser(null)
+                        localStorage.clear()
+                        setRole('buyer')
+                      }}
+                    >
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/login">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Navigation */}

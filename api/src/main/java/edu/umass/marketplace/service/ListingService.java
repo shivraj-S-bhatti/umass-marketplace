@@ -1,7 +1,7 @@
 package edu.umass.marketplace.service;
 
 import edu.umass.marketplace.dto.CreateListingRequest;
-import edu.umass.marketplace.dto.ListingDto;
+import edu.umass.marketplace.dto.ListingDTO;
 import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.model.Listing;
@@ -199,12 +199,19 @@ public class ListingService {
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
 
-        listing.setTitle(request.getTitle());
-        listing.setDescription(request.getDescription());
-        listing.setPrice(request.getPrice());
-        listing.setCategory(request.getCategory());
-        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-        listing.setImageUrl(request.getImageUrl());
+        // Update status if provided
+        if (request.getStatus() != null) {
+            log.debug("🔍 Updating listing status from {} to {}", listing.getStatus(), request.getStatus());
+            listing.setStatus(request.getStatus());
+        }
+
+        // Update other fields if provided
+        if (request.getTitle() != null) listing.setTitle(request.getTitle());
+        if (request.getDescription() != null) listing.setDescription(request.getDescription());
+        if (request.getPrice() != null) listing.setPrice(request.getPrice());
+        if (request.getCategory() != null) listing.setCategory(request.getCategory());
+        if (request.getCondition() != null) listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+        if (request.getImageUrl() != null) listing.setImageUrl(request.getImageUrl());
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());

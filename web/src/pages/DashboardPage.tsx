@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
+import { useToast } from '@/hooks/use-toast'
 import { LayoutDashboard, Plus, DollarSign, Calendar, Eye } from 'lucide-react'
 
 // Dashboard Page - displays user's listings and marketplace statistics
@@ -235,6 +236,8 @@ export default function DashboardPage() {
 function ListingCard({ listing }: { listing: Listing }) {
   const navigate = useNavigate()
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -319,13 +322,128 @@ function ListingCard({ listing }: { listing: Listing }) {
             </div>
           )}
         </div>
-        <div className="mt-4 flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
-            Edit
-          </Button>
-          <Button size="sm" variant="outline" className="flex-1">
-            {listing.status === 'ACTIVE' ? 'Mark Sold' : 'Reactivate'}
-          </Button>
+        <div className="mt-4 space-y-2">
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
+              Edit
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {listing.status === 'ACTIVE' && (
+              <>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={async () => {
+                    try {
+                      toast({
+                        title: "Putting listing on hold...",
+                        description: "Please wait while we update the listing status.",
+                      });
+                      
+                      await apiClient.updateListing(listing.id, {
+                        ...listing,
+                        status: 'ON_HOLD'
+                      });
+
+                      await queryClient.invalidateQueries({ queryKey: ['listings'] });
+                      await queryClient.invalidateQueries({ queryKey: ['listings-stats'] });
+                      
+                      toast({
+                        title: "Success!",
+                        description: "Listing has been put on hold.",
+                        variant: "default",
+                      });
+                    } catch (error) {
+                      console.error('Failed to update listing status:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to update listing status. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Put On Hold
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={async () => {
+                    try {
+                      toast({
+                        title: "Marking listing as sold...",
+                        description: "Please wait while we update the listing status.",
+                      });
+                      
+                      await apiClient.updateListing(listing.id, {
+                        ...listing,
+                        status: 'SOLD'
+                      });
+
+                      await queryClient.invalidateQueries({ queryKey: ['listings'] });
+                      await queryClient.invalidateQueries({ queryKey: ['listings-stats'] });
+                      
+                      toast({
+                        title: "Success!",
+                        description: "Listing has been marked as sold.",
+                        variant: "default",
+                      });
+                    } catch (error) {
+                      console.error('Failed to update listing status:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to update listing status. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Mark Sold
+                </Button>
+              </>
+            )}
+            {listing.status !== 'ACTIVE' && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1"
+                onClick={async () => {
+                  try {
+                    toast({
+                      title: "Reactivating listing...",
+                      description: "Please wait while we update the listing status.",
+                    });
+                    
+                    await apiClient.updateListing(listing.id, {
+                      ...listing,
+                      status: 'ACTIVE'
+                    });
+
+                    await queryClient.invalidateQueries({ queryKey: ['listings'] });
+                    await queryClient.invalidateQueries({ queryKey: ['listings-stats'] });
+                    
+                    toast({
+                      title: "Success!",
+                      description: "Listing has been reactivated.",
+                      variant: "default",
+                    });
+                  } catch (error) {
+                    console.error('Failed to update listing status:', error);
+                    toast({
+                      title: "Error",
+                      description: "Failed to update listing status. Please try again.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Reactivate
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

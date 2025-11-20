@@ -10,9 +10,11 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { setRole } = useUser()
 
-  const handleGoogleLogin = () => {
-    // Placeholder for Google OAuth - will be implemented in future milestone
-    window.location.href = '/oauth2/authorization/google'
+  const handleGoogleLogin = async () => {
+    // Redirect browser to the backend OAuth2 authorization endpoint for Google
+    // Backend will handle the OAuth handshake and redirect back to the frontend
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+    window.location.href = `${base}/oauth2/authorization/google`
   }
 
   const handleRoleSelection = (role: 'buyer' | 'seller') => {
