@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Calendar, DollarSign } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient, type Listing } from '@/lib/api'
 
@@ -110,7 +110,6 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center text-2xl font-bold text-primary">
-              <DollarSign className="h-5 w-5 mr-1" />
               {formatPrice(listing.price)}
             </div>
             <div className="flex items-center text-sm text-muted-foreground">

@@ -25,15 +25,19 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof OidcUser oidcUser) {
-            // extract user information
             String email = (String) oidcUser.getAttributes().get("email");
             String name = (String) oidcUser.getAttributes().get("name");
-            // Our CustomOidcUser stores the generated UUID id in UserPrincipal
             UUIDHolderHolder idHolder = UUIDHolderHolder.fromPrincipal(authentication.getPrincipal());
 
-            String token = jwtUtil.generateToken(idHolder.getId(), email, name);
+            // Restrict to @umass.edu domain
+            if (email == null || !email.endsWith("@umass.edu")) {
+                // Redirect to frontend with error message
+                String errorRedirect = frontendRedirect + "/auth/success?error=Only+UMass+email+addresses+are+allowed";
+                response.sendRedirect(errorRedirect);
+                return;
+            }
 
-            // Build redirect with token and some user info (frontend will store token and user data)
+            String token = jwtUtil.generateToken(idHolder.getId(), email, name);
             String redirect = String.format(
                 "%s/auth/success?token=%s&id=%s&email=%s&name=%s",
                 frontendRedirect,
@@ -45,8 +49,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             response.sendRedirect(redirect);
             return;
         }
-
-        // fallback
         response.sendRedirect(frontendRedirect);
     }
 }

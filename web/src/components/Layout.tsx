@@ -4,7 +4,6 @@ import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare } from 'lucide
 import { useUser } from '@/contexts/UserContext'
 import LogoIcon from '@/assets/logo-icon.svg'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 // Layout component for UMass Marketplace
 // Provides consistent navigation and page structure across the application
@@ -14,7 +13,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
-  const { isSeller, setRole, user, setUser } = useUser()
+  const { isSeller, user } = useUser()
 
   // Navigation items for sellers
   const sellerNavItems = [
@@ -65,35 +64,12 @@ export default function Layout({ children }: LayoutProps) {
             {/* User Info or Login Button */}
             {user ? (
               <div className="flex items-center space-x-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Avatar className="cursor-pointer">
-                      <AvatarImage src={user.pictureUrl} alt={user.name} />
-                      <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
-                    </Avatar>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <div className="px-3 py-2">
-                      <span className="font-medium text-sm">{user.name || user.email}</span>
-                    </div>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setRole(isSeller ? 'buyer' : 'seller')
-                      }}
-                    >
-                      {isSeller ? 'Switch to Buyer' : 'Switch to Seller'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setUser(null)
-                        localStorage.clear()
-                        setRole('buyer')
-                      }}
-                    >
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Link to="/login">
+                  <Avatar className="cursor-pointer">
+                    <AvatarImage src={user.pictureUrl} alt={user.name} />
+                    <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
+                  </Avatar>
+                </Link>
               </div>
             ) : (
               <Button variant="outline" size="sm" asChild>
