@@ -37,7 +37,7 @@ export function ListingDetailModal({
     const emailBody = encodeURIComponent(
       `Hi ${listing.sellerName},\n\nI'm interested in your listing "${listing.title}" on UMass Marketplace.`
     )
-    window.location.href = `mailto:${listing.sellerId}@umass.edu?subject=${emailSubject}&body=${emailBody}`
+    window.location.href = `mailto:${listing.sellerEmail}?subject=${emailSubject}&body=${emailBody}`
   }
 
   const handleStatusUpdate = async (newStatus: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => {
@@ -119,7 +119,10 @@ export function ListingDetailModal({
               <div className="space-y-2">
                 <div className="flex items-center text-muted-foreground">
                   <Mail className="h-4 w-4 mr-2" />
-                  {listing.sellerName} ({listing.sellerId}@umass.edu)
+                  {listing.sellerPictureUrl && (
+                    <img src={listing.sellerPictureUrl} alt={listing.sellerName} className="h-6 w-6 rounded-full mr-2" />
+                  )}
+                  {listing.sellerName} ({listing.sellerEmail})
                 </div>
               </div>
             </div>

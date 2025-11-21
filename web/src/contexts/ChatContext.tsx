@@ -53,10 +53,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       listing: {
         ...chat.listing,
         condition: chat.listing.condition || 'Unknown',
-        seller: transformUser(chat.participants[1]) // Assuming seller is always second participant
+        seller: transformUser(chat.seller) // use seller field from API
       },
-      buyer: transformUser(chat.participants[0]),
-      seller: transformUser(chat.participants[1]),
+      buyer: transformUser(chat.buyer),
+      seller: transformUser(chat.seller),
       lastMessage: chat.lastMessage ? {
         id: chat.lastMessage.id,
         chatId: chat.id,
@@ -116,10 +116,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         response.content.map(msg => transformMessage(msg, activeChat.id))
       )
 
+      // Backend returns messages in DESC (newest first) per page.
+      // For chat UI we want chronological order (oldest first -> newest last).
+      // Reverse the messages within the page so they are oldest->newest for that page.
+      const ordered = transformedMessages.slice().reverse()
+
       if (reset) {
-        setMessages(transformedMessages)
+        // For initial load, show the most recent page (reversed so oldest of that page is first)
+        setMessages(ordered)
       } else {
-        setMessages(prev => [...prev, ...transformedMessages])
+        // When loading older pages, prepend them above the current messages
+        setMessages(prev => [...ordered, ...prev])
       }
       
       setHasMoreMessages(page + 1 < response.totalPages)
@@ -142,7 +149,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       const apiMessage = await apiClient.sendMessage(activeChat.id, content)
       const transformedMessage = await transformMessage(apiMessage, activeChat.id)
-      setMessages(prev => [transformedMessage, ...prev])
+      // New outgoing message should appear at the end (bottom)
+      setMessages(prev => [...prev, transformedMessage])
       
       // Update the last message in the chat list
       setChats(prev =>

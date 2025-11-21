@@ -42,15 +42,43 @@ export function ChatMessages() {
         )}
         
         <div className="space-y-4">
-          {messages.map(message => (
-            <MessageComponent
-              key={message.id}
-              content={message.content}
-              sender={message.sender}
-              createdAt={message.createdAt}
-              isOwn={message.sender.id === user?.id}
-            />
-          ))}
+          {messages.map(message => {
+            // Normalize message content: some messages may be JSON strings like {"content":"..."}
+            let displayContent = ''
+            try {
+              if (typeof message.content === 'string') {
+                const trimmed = message.content.trim()
+                if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                  const parsed = JSON.parse(trimmed)
+                  if (parsed && typeof parsed === 'object' && 'content' in parsed) {
+                    displayContent = String(parsed.content)
+                  } else {
+                    // If it's an object without content, show a readable string
+                    displayContent = JSON.stringify(parsed)
+                  }
+                } else {
+                  displayContent = message.content
+                }
+              } else if (message.content && typeof message.content === 'object') {
+                displayContent = 'content' in message.content ? String((message.content as any).content) : JSON.stringify(message.content)
+              } else {
+                displayContent = String(message.content)
+              }
+            } catch (err) {
+              // Fallback: show raw content if parsing fails
+              displayContent = String(message.content)
+            }
+
+            return (
+              <MessageComponent
+                key={message.id}
+                content={displayContent}
+                sender={message.sender}
+                createdAt={message.createdAt}
+                isOwn={message.sender.id === user?.id}
+              />
+            )
+          })}
         </div>
         <div ref={messagesEndRef} />
       </div>

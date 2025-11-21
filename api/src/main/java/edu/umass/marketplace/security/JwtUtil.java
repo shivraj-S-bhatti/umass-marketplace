@@ -30,4 +30,14 @@ public class JwtUtil {
             .withExpiresAt(expiresAt)
             .sign(algorithm);
     }
+
+    public com.auth0.jwt.interfaces.DecodedJWT verifyToken(String token) {
+        com.auth0.jwt.JWTVerifier verifier = com.auth0.jwt.JWT.require(algorithm).build();
+        return verifier.verify(token);
+    }
+
+    public java.util.UUID getUserIdFromToken(String token) {
+        com.auth0.jwt.interfaces.DecodedJWT decoded = verifyToken(token);
+        return java.util.UUID.fromString(decoded.getSubject());
+    }
 }

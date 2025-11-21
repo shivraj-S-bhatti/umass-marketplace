@@ -15,11 +15,16 @@ export interface Message {
 export interface Chat {
   id: string
   listing: Listing
-  participants: {
+  buyer: {
     id: string
     name: string
     pictureUrl?: string
-  }[]
+  }
+  seller: {
+    id: string
+    name: string
+    pictureUrl?: string
+  }
   lastMessage?: Message
   createdAt: string
   updatedAt: string
@@ -36,6 +41,8 @@ export interface Listing {
   status: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
   sellerId: string
   sellerName?: string
+  sellerEmail?: string
+  sellerPictureUrl?: string
   createdAt: string
   updatedAt: string
 }

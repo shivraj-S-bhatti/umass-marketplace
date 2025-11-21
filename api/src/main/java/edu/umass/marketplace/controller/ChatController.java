@@ -25,20 +25,30 @@ public class ChatController {
     public ResponseEntity<ChatDTO> startChat(
             @PathVariable UUID listingId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        if (userPrincipal == null) {
+            return ResponseEntity.status(401).build();
+        }
         return ResponseEntity.ok(chatService.startChat(listingId, userPrincipal.getId()));
     }
 
     @GetMapping
     public ResponseEntity<List<ChatDTO>> getUserChats(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        if (userPrincipal == null) {
+            return ResponseEntity.status(401).build();
+        }
         return ResponseEntity.ok(chatService.getUserChats(userPrincipal.getId()));
     }
 
     @PostMapping("/{chatId}/messages")
     public ResponseEntity<MessageDTO> sendMessage(
             @PathVariable UUID chatId,
-            @RequestBody String content,
+            @RequestBody java.util.Map<String, String> body,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        if (userPrincipal == null) {
+            return ResponseEntity.status(401).build();
+        }
+        String content = body.get("content");
         return ResponseEntity.ok(chatService.sendMessage(chatId, userPrincipal.getId(), content));
     }
 
@@ -47,6 +57,9 @@ public class ChatController {
             @PathVariable UUID chatId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             Pageable pageable) {
+        if (userPrincipal == null) {
+            return ResponseEntity.status(401).build();
+        }
         return ResponseEntity.ok(chatService.getChatMessages(chatId, userPrincipal.getId(), pageable));
     }
 }

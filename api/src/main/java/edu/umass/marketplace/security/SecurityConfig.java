@@ -32,6 +32,7 @@ public class SecurityConfig {
     
     // This injection now works because JwtUtil is created in ApplicationConfig!
     private final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -47,7 +48,9 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService()))
                 .successHandler(oauth2LoginSuccessHandler)
-            );
+            )
+            // JWT filter to populate SecurityContext from Authorization header
+            .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

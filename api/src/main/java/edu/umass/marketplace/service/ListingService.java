@@ -28,6 +28,67 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(readOnly = true)
 public class ListingService {
+    /**
+     * Helper to get the current authenticated user from the security context
+     */
+    private User getCurrentAuthenticatedUser() {
+        // Uses Spring Security to get the current principal
+        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String email = null;
+        String name = null;
+        String pictureUrl = null;
+
+        if (principal instanceof edu.umass.marketplace.security.UserPrincipal userPrincipal) {
+            email = userPrincipal.getEmail();
+            name = userPrincipal.getName();
+            pictureUrl = userPrincipal.getPictureUrl();
+        } else if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
+            email = springUser.getUsername();
+        } else if (principal instanceof String principalStr) {
+            email = principalStr;
+        }
+
+        if (email == null) return null;
+
+        // Try to find existing user; if not found, create one from principal info
+        var opt = userRepository.findByEmail(email);
+        if (opt.isPresent()) return opt.get();
+
+        User u = new User();
+        u.setEmail(email);
+        u.setName(name != null ? name : "Unknown User");
+        u.setPictureUrl(pictureUrl);
+        return userRepository.save(u);
+    }
+
+    @Transactional
+    public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
+        // Get seller from authenticated principal
+        String email = principal != null ? principal.getName() : null;
+        if (email == null) {
+            throw new RuntimeException("Authenticated user not found. Cannot create listing.");
+        }
+        User seller = userRepository.findByEmail(email).orElse(null);
+        if (seller == null) {
+            throw new RuntimeException("Seller user not found in database.");
+        }
+
+        Listing listing = new Listing();
+        listing.setTitle(request.getTitle());
+        listing.setDescription(request.getDescription());
+        listing.setPrice(request.getPrice());
+        listing.setCategory(request.getCategory());
+        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+        listing.setImageUrl(request.getImageUrl());
+        listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
+        listing.setSeller(seller);
+
+        Listing savedListing = listingRepository.save(listing);
+        log.debug("🔍 Created listing with ID: {}", savedListing.getId());
+
+        return ListingResponse.fromEntity(savedListing);
+    }
 
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
@@ -125,14 +186,12 @@ public class ListingService {
     public ListingResponse createListing(CreateListingRequest request) {
         log.debug("🔍 Creating new listing: {}", request.getTitle());
         
-        // For now, create a dummy seller - in real app, get from authenticated user
-        User dummySeller = userRepository.findByEmail("dummy@umass.edu")
-                .orElseGet(() -> {
-                    User user = new User();
-                    user.setEmail("dummy@umass.edu");
-                    user.setName("Dummy User");
-                    return userRepository.save(user);
-                });
+        // Get seller from authenticated user context (OAuth2)
+        // This assumes a method getCurrentAuthenticatedUser() exists and returns the User
+        User seller = getCurrentAuthenticatedUser();
+        if (seller == null) {
+            throw new RuntimeException("Authenticated user not found. Cannot create listing.");
+        }
 
         Listing listing = new Listing();
         listing.setTitle(request.getTitle());
@@ -142,11 +201,11 @@ public class ListingService {
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         listing.setImageUrl(request.getImageUrl());
         listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
-        listing.setSeller(dummySeller);
+        listing.setSeller(seller);
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Created listing with ID: {}", savedListing.getId());
-        
+
         return ListingResponse.fromEntity(savedListing);
     }
 
@@ -157,14 +216,11 @@ public class ListingService {
     public List<ListingResponse> createListingsBulk(List<CreateListingRequest> requests) {
         log.debug("🔍 Creating {} listings in bulk", requests.size());
         
-        // For now, create a dummy seller - in real app, get from authenticated user
-        User dummySeller = userRepository.findByEmail("dummy@umass.edu")
-                .orElseGet(() -> {
-                    User user = new User();
-                    user.setEmail("dummy@umass.edu");
-                    user.setName("Dummy User");
-                    return userRepository.save(user);
-                });
+        // Get seller from authenticated user context (OAuth2)
+        User seller = getCurrentAuthenticatedUser();
+        if (seller == null) {
+            throw new RuntimeException("Authenticated user not found. Cannot create listings in bulk.");
+        }
 
         List<Listing> listings = requests.stream()
                 .map(request -> {
@@ -176,7 +232,7 @@ public class ListingService {
                     listing.setCondition(Condition.fromDisplayName(request.getCondition()));
                     listing.setImageUrl(request.getImageUrl());
                     listing.setStatus(Listing.STATUS_ACTIVE);
-                    listing.setSeller(dummySeller);
+                    listing.setSeller(seller);
                     return listing;
                 })
                 .collect(Collectors.toList());
