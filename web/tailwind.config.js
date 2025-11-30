@@ -59,12 +59,26 @@ export default {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
+  			},
+  			autumn: {
+  				red: '#d97706',
+  				orange: '#ea580c',
+  				yellow: '#f59e0b',
+  				brown: '#78350f',
+  				cream: '#fef3c7'
   			}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+  			'comic': '1.5rem'
+  		},
+  		borderWidth: {
+  			'comic': '4px'
+  		},
+  		boxShadow: {
+  			'comic': '4px 4px 0px rgba(0, 0, 0, 0.2), 8px 8px 0px rgba(0, 0, 0, 0.1)'
   		},
   		keyframes: {
   			'accordion-down': {

@@ -48,7 +48,14 @@ public class Listing {
     private User seller;
 
     @Column(name = "image_url", columnDefinition = "TEXT")
+    @Lob
     private String imageUrl;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

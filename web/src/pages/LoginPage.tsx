@@ -1,11 +1,11 @@
-import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LogIn, Mail, ShoppingBag, Store } from 'lucide-react'
 import { useUser } from '@/contexts/UserContext'
 import { useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useToast } from '@/hooks/use-toast'
+import scrapBookImage from '@/assets/scrap_book.png'
 
 // Login Page - placeholder for OAuth authentication
 // Currently shows a placeholder for Google OAuth integration
@@ -33,14 +33,22 @@ export default function LoginPage() {
     window.location.href = `${base}/oauth2/authorization/google`
   }
 
-  const handleRoleSelection = (role: 'buyer' | 'seller') => {
-    setRole(role)
+
+  const handleRoleSelection = (newRole: 'buyer' | 'seller') => {
+    setRole(newRole)
     navigate('/')
   }
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <Card className="w-full max-w-md">
+    <div 
+      className="min-h-[calc(100vh-200px)] flex items-center justify-center py-8"
+      style={{
+        backgroundImage: `url(${scrapBookImage})`,
+        backgroundRepeat: 'repeat',
+        backgroundSize: 'auto',
+      }}
+    >
+      <Card className="w-full max-w-md mx-4">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
             {isAuthenticated && user?.pictureUrl ? (
@@ -127,6 +135,22 @@ export default function LoginPage() {
               </div>
             </>
           )}
+          <Button 
+            onClick={handleGoogleLogin}
+            className="w-full"
+            size="lg"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            Sign in with Google
+          </Button>
+          
+          <div className="text-center text-sm text-muted-foreground">
+            <p>
+              You'll be redirected to Google to sign in with your UMass email address.
+              Only @umass.edu email addresses are allowed.
+            </p>
+          </div>
+          
           <div className="border-t pt-4">
             <div className="text-center text-sm text-muted-foreground">
               <p className="font-medium mb-2">For now, you can:</p>

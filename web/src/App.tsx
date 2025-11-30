@@ -2,8 +2,8 @@ import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { UserProvider } from '@/contexts/UserContext'
 import { ChatProvider } from '@/contexts/ChatContext' // <-- import ChatProvider
-import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import Layout from '@/components/Layout'
 import HomePage from '@/pages/HomePage'
 import SellPage from '@/pages/SellPage'
 import DashboardPage from '@/pages/DashboardPage'
@@ -11,6 +11,8 @@ import EditPage from '@/pages/EditPage'
 import LoginPage from '@/pages/LoginPage'
 import MessagesPage from '@/pages/MessagesPage'
 import OAuthSuccessPage from '@/pages/OAuthSuccessPage'
+import DesignPlaygroundPage from '@/pages/DesignPlaygroundPage'
+import CartPage from '@/pages/CartPage'
 
 // Main App component for UMass Marketplace
 // Sets up routing and provides global layout with navigation
@@ -56,6 +58,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/design-playground" element={<DesignPlaygroundPage />} />
+              <Route path="/cart" element={<CartPage />} />
             </Routes>
           </Layout>
           <Toaster />

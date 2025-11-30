@@ -42,4 +42,7 @@ public class CreateListingRequest {
     @Size(max = 20, message = "Status must not exceed 20 characters")
     @Schema(description = "Status of the listing (ACTIVE, SOLD, ON_HOLD)", example = "ACTIVE")
     private String status;
+
+    private Double latitude;
+    private Double longitude;
 }

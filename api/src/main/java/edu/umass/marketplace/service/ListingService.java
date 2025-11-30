@@ -200,6 +200,8 @@ public class ListingService {
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         listing.setImageUrl(request.getImageUrl());
+        listing.setLatitude(request.getLatitude());
+        listing.setLongitude(request.getLongitude());
         listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
         listing.setSeller(seller);
 
@@ -231,6 +233,8 @@ public class ListingService {
                     listing.setCategory(request.getCategory());
                     listing.setCondition(Condition.fromDisplayName(request.getCondition()));
                     listing.setImageUrl(request.getImageUrl());
+                    listing.setLatitude(request.getLatitude());
+                    listing.setLongitude(request.getLongitude());
                     listing.setStatus(Listing.STATUS_ACTIVE);
                     listing.setSeller(seller);
                     return listing;
@@ -268,6 +272,14 @@ public class ListingService {
         if (request.getCategory() != null) listing.setCategory(request.getCategory());
         if (request.getCondition() != null) listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         if (request.getImageUrl() != null) listing.setImageUrl(request.getImageUrl());
+        listing.setTitle(request.getTitle());
+        listing.setDescription(request.getDescription());
+        listing.setPrice(request.getPrice());
+        listing.setCategory(request.getCategory());
+        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+        listing.setLatitude(request.getLatitude());
+        listing.setLongitude(request.getLongitude());
+        listing.setImageUrl(request.getImageUrl());
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());

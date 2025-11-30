@@ -2,6 +2,7 @@ package edu.umass.marketplace.integration;
 
 // Integration Test for Listing Repository using Testcontainers
 // Tests CRUD operations against a real PostgreSQL database in a container
+import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.model.Listing;
 import edu.umass.marketplace.model.User;
 import edu.umass.marketplace.repository.ListingRepository;

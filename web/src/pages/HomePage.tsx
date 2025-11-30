@@ -1,18 +1,22 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
 import { Search, DollarSign, Calendar, XCircle } from 'lucide-react'
-import SearchFilters, { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
+import { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
+import TwoTierNavbar from '@/components/TwoTierNavbar'
+import { useSearchParams } from 'react-router-dom'
+import { ListingDetailModal } from '@/components/ui/listing-detail-modal'
 
 // Home Page - displays marketplace listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
 export default function HomePage() {
+  const [searchParams] = useSearchParams()
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({
     query: '',
-    category: '',
+    category: searchParams.get('category') || '',
     condition: [],
     minPrice: undefined,
     maxPrice: undefined,
@@ -20,6 +24,16 @@ export default function HomePage() {
   })
   const [currentPage, setCurrentPage] = useState(0)
   const pageSize = 12
+
+  // Sync category from URL params
+  useEffect(() => {
+    const category = searchParams.get('category') || ''
+    if (category !== searchFilters.category) {
+      const newFilters = { ...searchFilters, category }
+      setSearchFilters(newFilters)
+      handleSearch(newFilters)
+    }
+  }, [searchParams.get('category')])
 
   const { data: listingsData, isLoading, error } = useQuery({
     queryKey: ['listings', searchFilters, currentPage],
@@ -77,31 +91,39 @@ export default function HomePage() {
                          searchFilters.maxPrice || searchFilters.status
 
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        {/* 2-Tier Navbar */}
+        <TwoTierNavbar 
+          onSearch={handleSearch} 
+          initialFilters={searchFilters}
+          isLoading={isLoading}
+        />
 
-      {/* Search Filters */}
-      <SearchFilters onSearch={handleSearch} isLoading={isLoading} initialFilters={searchFilters} />
-
-      {/* Results Section */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold">
-            {hasActiveSearch ? 'Search Results' : 'Recent Listings'}
-          </h2>
-          {listingsData && (
-            <div className="text-sm text-muted-foreground">
-              <p>
-                {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
-                {listingsData.totalPages > 1 && (
-                  <span className="ml-2">
-                    (Page {currentPage + 1} of {listingsData.totalPages})
+        {/* Content */}
+        <div className="flex-1 container mx-auto px-4 py-4 min-h-0">
+          <div className="space-y-4 pb-4">
+            {/* Results Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                {searchFilters.category && (
+                  <span className="text-sm font-bold text-primary">
+                    {searchFilters.category}
                   </span>
                 )}
-              </p>
+                {listingsData && (
+                  <div className="text-sm text-muted-foreground">
+                    <p>
+                      {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
+                      {listingsData.totalPages > 1 && (
+                        <span className="ml-2">
+                          (Page {currentPage + 1} of {listingsData.totalPages})
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
         
         {listings.length === 0 ? (
           <div className="text-center py-12">
@@ -137,15 +159,15 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <HomeListingCard key={listing.id} listing={listing} />
               ))}
             </div>
             
             {/* Pagination Controls */}
             {listingsData && listingsData.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 mt-8">
+              <div className="flex items-center justify-center space-x-2 mt-4">
                 <Button
                   variant="outline"
                   onClick={() => setCurrentPage(0)}
@@ -205,15 +227,14 @@ export default function HomePage() {
             )}
           </>
         )}
-      </div>
+          </div>
+        </div>
     </div>
   )
 }
 
-import { ListingDetailModal } from '@/components/ui/listing-detail-modal'
-
 // Individual listing card component
-function ListingCard({ listing }: { listing: Listing }) {
+function HomeListingCard({ listing }: { listing: Listing }) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -253,7 +274,7 @@ function ListingCard({ listing }: { listing: Listing }) {
   }
 
   // Handle Escape key to close modal
-  React.useEffect(() => {
+  useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isImageModalOpen) {
         setIsImageModalOpen(false)

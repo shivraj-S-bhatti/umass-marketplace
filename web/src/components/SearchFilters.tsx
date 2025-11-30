@@ -78,9 +78,9 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
           Search Marketplace
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {/* Basic Search */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="search-query">Search Items</Label>
           <div className="flex gap-2">
             <Input

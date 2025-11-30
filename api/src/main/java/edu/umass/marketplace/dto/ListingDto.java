@@ -1,6 +1,4 @@
 package edu.umass.marketplace.dto;
-
-import edu.umass.marketplace.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +38,9 @@ public class ListingDTO {
     private String status = "ACTIVE";
     
     private UserDTO seller;
+    private UUID sellerId;
+    private Double latitude;
+    private Double longitude;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 

@@ -1,45 +1,76 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button } from './ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Calendar } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { StickerBadge } from '@/components/ui/sticker-badge'
+import { Calendar, Image as ImageIcon, MapPin, Navigation } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient, type Listing } from '@/lib/api'
+import * as turf from '@turf/turf'
+import LocationMapPopup from '@/components/LocationMapPopup'
 
-export function ListingCard({ listing }: { listing: Listing }) {
+interface ListingCardProps {
+  listing: Listing
+  showEditButtons?: boolean
+}
+
+export default function ListingCard({ listing, showEditButtons = false }: ListingCardProps) {
   const navigate = useNavigate()
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
+  
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [mapOpen, setMapOpen] = useState(false)
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800'
-      case 'ON_HOLD':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'SOLD':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
+  useEffect(() => {
+    if (userLocation) return;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price)
-  }
+    const requestLocation = () => {
+      if (!navigator.geolocation) return;
+      
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setUserLocation(loc);
+        },
+        (err) => {
+          console.log("Location denied:", err.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
+    requestLocation();
+
+    const handleFirstClick = () => {
+      requestLocation();
+      document.removeEventListener("click", handleFirstClick);
+    };
+    document.addEventListener("click", handleFirstClick);
+
+    return () => document.removeEventListener("click", handleFirstClick);
+  }, []);
+
+  const distanceText = userLocation && listing.latitude && listing.longitude
+    ? (() => {
+        const dist = turf.distance(
+          [userLocation.lng, userLocation.lat], 
+          [listing.longitude, listing.latitude], 
+          { units: "kilometers" }
+        );
+        return dist < 1
+          ? `${Math.round(dist * 1000)} m away`
+          : `${dist.toFixed(1)} km away`;
+      })()
+    : null;
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price)
+
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   const handleEdit = () => {
     navigate(`/edit/${listing.id}`)
@@ -47,14 +78,14 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
   const handleStatusUpdate = async (newStatus: string) => {
     try {
-      const actionMap = {
+      const actionMap: Record<string, string> = {
         'ACTIVE': 'Reactivating',
         'ON_HOLD': 'Putting on hold',
         'SOLD': 'Marking as sold'
       }
 
       toast({
-        title: `${actionMap[newStatus as keyof typeof actionMap]} listing...`,
+        title: `${actionMap[newStatus]} listing...`,
         description: 'Please wait while we update the listing status.',
       })
       
@@ -83,93 +114,104 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
-        {listing.imageUrl && (
-          <div 
-            className="w-full h-48 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={() => setIsImageModalOpen(true)}
-          >
-            <img
-              src={listing.imageUrl}
-              alt={listing.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(listing.status)}`}>
-              {listing.status}
-            </span>
-          </div>
-          <CardDescription className="line-clamp-2">
+      <Card className="hover:shadow-lg transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col">
+        <div
+          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-muted flex items-center justify-center flex-shrink-0"
+          onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
+        >
+          {listing.imageUrl ? (
+            <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-muted-foreground">
+              <ImageIcon className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mb-1 sm:mb-2 opacity-50" />
+              <span className="text-xs sm:text-sm font-medium">No Image</span>
+            </div>
+          )}
+        </div>
+
+        <CardHeader className="pb-1.5 sm:pb-2 flex-shrink-0">
+          <CardTitle className="text-sm sm:text-base font-bold line-clamp-2 leading-tight">
+            {listing.title}
+          </CardTitle>
+          <CardDescription className="line-clamp-2 mt-0.5 sm:mt-1 text-xs sm:text-sm">
             {listing.description || 'No description provided'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center text-2xl font-bold text-primary">
-              {formatPrice(listing.price)}
+
+        <CardContent className="pt-0 flex-1 flex flex-col justify-between">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <StickerBadge variant="price" className="text-xs sm:text-sm md:text-base px-1.5 sm:px-2 py-0.5 sm:py-1">
+                {formatPrice(listing.price)}
+              </StickerBadge>
+
+              {distanceText && (
+                <div className="flex items-center gap-2 text-green-600 font-bold text-sm sm:text-base animate-fade-in">
+                  <MapPin className="h-5 w-5" />
+                  <span>{distanceText}</span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4 mr-1" />
-              Listed {formatDate(listing.createdAt)}
+
+            <div className="flex items-center justify-between text-xs">
+              <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'}>
+                {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
+              </StickerBadge>
+              <div className="flex items-center text-muted-foreground">
+                <Calendar className="h-3 w-3 mr-1" />
+                <span>{formatDate(listing.createdAt)}</span>
+              </div>
             </div>
-            {listing.category && (
-              <div className="text-sm">
-                <span className="font-medium">Category:</span> {listing.category}
-              </div>
-            )}
-            {listing.condition && (
-              <div className="text-sm">
-                <span className="font-medium">Condition:</span> {listing.condition}
-              </div>
-            )}
+
+            <div className="flex flex-wrap gap-1.5 text-xs">
+              {listing.category && (
+                <span className="px-2 py-0.5 rounded-full bg-secondary border border-foreground font-medium">
+                  {listing.category}
+                </span>
+              )}
+              {listing.condition && (
+                <span className="px-2 py-0.5 rounded-full bg-muted border border-foreground font-medium">
+                  {listing.condition}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="mt-4 space-y-2">
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
-                Edit
+
+          <div className="mt-3">
+            {listing.latitude && listing.longitude ? (
+              <Button variant="default" className="w-full" onClick={() => setMapOpen(true)}>
+                <Navigation className="h-4 w-4 mr-2" />
+                Show on Map
               </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {listing.status === 'ACTIVE' && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={() => handleStatusUpdate('ON_HOLD')}
-                  >
-                    Put On Hold
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={() => handleStatusUpdate('SOLD')}
-                  >
-                    Mark Sold
-                  </Button>
-                </>
-              )}
-              {listing.status !== 'ACTIVE' && (
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => handleStatusUpdate('ACTIVE')}
-                >
-                  Reactivate
+            ) : showEditButtons ? (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={handleEdit}>
+                  Edit
                 </Button>
-              )}
-            </div>
+                {listing.status === 'ACTIVE' ? (
+                   <>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ON_HOLD')}>
+                      Hold
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('SOLD')}>
+                      Sold
+                    </Button>
+                   </>
+                ) : (
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ACTIVE')}>
+                    Reactivate
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Button variant="outline" className="w-full" disabled>
+                Location hidden
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Image Modal */}
       {isImageModalOpen && listing.imageUrl && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -212,6 +254,16 @@ export function ListingCard({ listing }: { listing: Listing }) {
             </div>
           </div>
         </div>
+      )}
+
+      {listing.latitude && listing.longitude && (
+        <LocationMapPopup
+          open={mapOpen}
+          onClose={() => setMapOpen(false)}
+          lat={listing.latitude}
+          lng={listing.longitude}
+          title={listing.title}
+        />
       )}
     </>
   )

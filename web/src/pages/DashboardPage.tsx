@@ -68,23 +68,23 @@ export default function DashboardPage() {
   const onHoldListingsCount = stats?.onHoldListings || 0
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 py-4 space-y-4">
       {/* Header */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">My Dashboard</h1>
-        <p className="text-muted-foreground">Manage your marketplace listings</p>
+      <div className="text-center py-3">
+        <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">My Dashboard</h1>
+        <p className="text-base text-muted-foreground">Manage your marketplace listings 🍂</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold">Active Listings</CardTitle>
+            <Eye className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeListingsCount}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-primary mb-1">{activeListingsCount}</div>
+            <p className="text-xs text-muted-foreground font-medium">
               Currently for sale
             </p>
           </CardContent>
@@ -92,12 +92,12 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sold Items</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold">Sold Items</CardTitle>
+            <DollarSign className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{soldListingsCount}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-primary mb-1">{soldListingsCount}</div>
+            <p className="text-xs text-muted-foreground font-medium">
               Successfully sold
             </p>
           </CardContent>
@@ -105,12 +105,12 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">On Hold</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold">On Hold</CardTitle>
+            <Calendar className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{onHoldListingsCount}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-primary mb-1">{onHoldListingsCount}</div>
+            <p className="text-xs text-muted-foreground font-medium">
               Temporarily unavailable
             </p>
           </CardContent>
@@ -129,8 +129,8 @@ export default function DashboardPage() {
 
       {/* My Listings */}
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold">My Listings</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-2xl font-bold">My Listings</h2>
           {listingsData && (
             <div className="text-sm text-muted-foreground">
               <p>
@@ -159,15 +159,15 @@ export default function DashboardPage() {
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <DashboardListingCard key={listing.id} listing={listing} />
               ))}
             </div>
             
             {/* Pagination Controls */}
             {listingsData && listingsData.totalPages > 1 && (
-              <div className="flex items-center justify-center space-x-2 mt-8">
+              <div className="flex items-center justify-center space-x-2 mt-4">
                 <Button
                   variant="outline"
                   onClick={() => setCurrentPage(0)}
@@ -233,7 +233,7 @@ export default function DashboardPage() {
 }
 
 // Individual listing card component for dashboard
-function ListingCard({ listing }: { listing: Listing }) {
+function DashboardListingCard({ listing }: { listing: Listing }) {
   const navigate = useNavigate()
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const queryClient = useQueryClient()
@@ -498,3 +498,4 @@ function ListingCard({ listing }: { listing: Listing }) {
   </>
   )
 }
+

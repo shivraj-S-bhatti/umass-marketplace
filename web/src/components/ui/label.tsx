@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 // Label component for form field labels
 // Provides accessible labeling for form inputs with consistent styling
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  "text-sm font-bold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 )
 
 const Label = React.forwardRef<

@@ -14,6 +14,7 @@ import { Plus, DollarSign } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import Papa from 'papaparse'
 import { useState } from 'react'
+import { MapPin, Loader2 } from 'lucide-react'
 import { createBulkListings } from '@/lib/api'
 import { CATEGORIES, CONDITIONS } from '@/lib/constants'
 
@@ -36,6 +37,10 @@ export default function SellPage() {
   const queryClient = useQueryClient()
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
+  const [useLocation, setUseLocation] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [latitude, setLatitude] = useState<number | null>(null)
+  const [longitude, setLongitude] = useState<number | null>(null)
 
   const {
     register,
@@ -113,6 +118,39 @@ export default function SellPage() {
     },
   })
 
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support location services.",
+        variant: "destructive",
+      })
+      return
+    }
+    setLocationLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude)
+        setLongitude(position.coords.longitude)
+        setLocationLoading(false)
+        toast({
+          title: "Location captured!",
+          description: `Near UMass Amherst (~${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`,
+        })
+      },
+      () => {
+        setLocationLoading(false)
+        setUseLocation(false)
+        toast({
+          title: "Location access denied",
+          description: "You can still create the listing without location.",
+          variant: "destructive",
+        })
+      },
+      { timeout: 10000 }
+    )
+  }
+
   console.log('🔍 Form errors:', errors)
   console.log('🔍 Mutation state:', { 
     isPending: createListingMutation.isPending, 
@@ -122,35 +160,42 @@ export default function SellPage() {
 
   const onSubmit = (data: CreateListingForm) => {
     console.log('📝 Form submitted with data:', data)
+    const finalData = {
+      ...data,
+      ...(useLocation && latitude && longitude
+        ? { latitude, longitude }
+        : {}),
+    }
     console.log('🔄 Calling createListingMutation.mutate...')
-    createListingMutation.mutate(data)
+    createListingMutation.mutate(finalData)
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Sell an Item</h1>
-        <p className="text-muted-foreground">
-          List your item for sale to fellow UMass students
+    <div className="container mx-auto px-4 py-4">
+      <div className="max-w-2xl mx-auto">
+      <div className="text-center py-4 mb-4">
+        <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">Sell an Item</h1>
+        <p className="text-base text-muted-foreground">
+          List your item for sale to fellow UMass students 🍂
         </p>
       </div>
-      <div className="mb-6 flex justify-end">
+      <div className="mb-4 flex justify-end">
         <BulkUploadModal />
       </div>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Plus className="h-5 w-5 mr-2" />
+          <CardTitle className="flex items-center text-2xl">
+            <Plus className="h-6 w-6 mr-2" />
             Create New Listing
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Fill out the form below to list your item for sale
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit, (errors) => {
             console.log('❌ Form validation errors:', errors)
-          })} className="space-y-6">
+          })} className="space-y-4">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
@@ -274,6 +319,64 @@ export default function SellPage() {
                 </div>
               )}
             </div>
+            {/* Location Sharing Toggle */}
+            <div className="space-y-3 rounded-lg border border-input bg-muted/20 p-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="useLocation"
+                  checked={useLocation}
+                  onChange={(e) => {
+                    setUseLocation(e.target.checked)
+                    if (!e.target.checked) {
+                      setLatitude(null)
+                      setLongitude(null)
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  aria-label="Share my location with buyers"
+                />
+                <Label htmlFor="useLocation" className="cursor-pointer font-medium flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Share my location with buyers
+                </Label>
+              </div>
+
+              {useLocation && (
+                <div className="ml-7 mt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={captureLocation}
+                    disabled={locationLoading}
+                    className="flex items-center gap-2"
+                  >
+                    {locationLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Getting your location...
+                      </>
+                    ) : latitude ? (
+                      <>
+                        <MapPin className="h-4 w-4" />
+                        Location captured
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="h-4 w-4" />
+                        Use my current location
+                      </>
+                    )}
+                  </Button>
+                  {latitude && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Location set to: {latitude.toFixed(4)}, {longitude?.toFixed(4)}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Submit Button */}
             <div className="flex gap-4">
@@ -297,6 +400,7 @@ export default function SellPage() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

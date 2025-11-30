@@ -33,22 +33,24 @@ public class ListingResponse {
     private String sellerEmail;
     private String sellerPictureUrl;
     private OffsetDateTime createdAt;
+    private Double latitude;
+    private Double longitude;
 
     // Static factory method to convert from entity
     public static ListingResponse fromEntity(Listing listing) {
         return ListingResponse.builder()
-            .id(listing.getId())
-            .title(listing.getTitle())
-            .description(listing.getDescription())
-            .price(listing.getPrice())
-            .category(listing.getCategory())
-            .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
-            .imageUrl(listing.getImageUrl())
-            .status(listing.getStatus())
-            .sellerName(listing.getSeller().getName())
-            .sellerEmail(listing.getSeller().getEmail())
-            .sellerPictureUrl(listing.getSeller().getPictureUrl())
-            .createdAt(listing.getCreatedAt())
-            .build();
+                .id(listing.getId())
+                .title(listing.getTitle())
+                .description(listing.getDescription())
+                .price(listing.getPrice())
+                .category(listing.getCategory())
+                .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
+                .imageUrl(listing.getImageUrl())
+                .status(listing.getStatus())
+                .sellerName(listing.getSeller().getName())
+                .createdAt(listing.getCreatedAt())
+                .latitude(listing.getLatitude())
+                .longitude(listing.getLongitude())
+                .build();
     }
 }
