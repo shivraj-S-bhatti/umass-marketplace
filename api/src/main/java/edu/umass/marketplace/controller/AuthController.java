@@ -24,7 +24,7 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Register user", description = "Register a new user account")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        log.debug("🔍 Registering new user: {}", request.getEmail());
+        log.debug("Registering new user: {}", request.getEmail());
         AuthResponse response = authService.register(request);
         return ResponseEntity.ok(response);
     }
@@ -32,7 +32,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Login user", description = "Authenticate user and return JWT token")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        log.debug("🔍 User login attempt: {}", request.getEmail());
+        log.debug("User login attempt: {}", request.getEmail());
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }

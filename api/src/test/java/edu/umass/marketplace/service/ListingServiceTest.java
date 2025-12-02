@@ -8,12 +8,16 @@ import edu.umass.marketplace.repository.ListingRepository;
 import edu.umass.marketplace.repository.UserRepository;
 import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.response.StatsResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +43,12 @@ class ListingServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
     @InjectMocks
     private ListingService listingService;
 
@@ -48,6 +58,11 @@ class ListingServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Mock Security Context
+        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        lenient().when(authentication.getPrincipal()).thenReturn("dummy@umass.edu");
+
         testSeller = new User();
         testSeller.setId(UUID.randomUUID());
         testSeller.setEmail("seller@umass.edu");
@@ -133,6 +148,11 @@ class ListingServiceTest {
         assertThatThrownBy(() -> listingService.getListingById(nonExistentId))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("not found");
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test

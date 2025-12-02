@@ -142,8 +142,8 @@ public class ChatService {
         dto.setDescription(listing.getDescription());
         dto.setPrice(listing.getPrice());
         dto.setImageUrl(listing.getImageUrl());
-        dto.setCondition(listing.getCondition().toString());
-        dto.setStatus(listing.getStatus().toString());
+        dto.setCondition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null);
+        dto.setStatus(listing.getStatus());
         dto.setSeller(convertToUserDTO(listing.getSeller()));
         dto.setCreatedAt(listing.getCreatedAt());
         return dto;

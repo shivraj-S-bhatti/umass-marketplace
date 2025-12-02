@@ -8,12 +8,33 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = HealthController.class,
-            excludeAutoConfiguration = {org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class})
+@WebMvcTest(controllers = HealthController.class)
+@org.springframework.context.annotation.Import(edu.umass.marketplace.security.SecurityConfig.class)
 class HealthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private edu.umass.marketplace.security.JwtUtil jwtUtil;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private edu.umass.marketplace.repository.UserRepository userRepository;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private edu.umass.marketplace.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private edu.umass.marketplace.security.JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() throws Exception {
+        org.mockito.Mockito.doAnswer(invocation -> {
+            jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
 
     @Test
     void shouldReturnHealthStatus() throws Exception {

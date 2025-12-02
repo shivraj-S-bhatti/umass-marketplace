@@ -47,8 +47,7 @@ public class Listing {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    @Column(name = "image_url", columnDefinition = "TEXT")
-    @Lob
+    @Column(name = "image_url")
     private String imageUrl;
 
     @Column(name = "latitude")

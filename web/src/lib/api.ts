@@ -57,6 +57,8 @@ export interface CreateListingRequest {
   condition?: string
   imageUrl?: string
   status?: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
+  latitude?: number | null
+  longitude?: number | null
 }
 
 export interface ListingsResponse {

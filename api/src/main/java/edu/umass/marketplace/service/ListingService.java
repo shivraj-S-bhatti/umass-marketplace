@@ -65,14 +65,20 @@ public class ListingService {
     @Transactional
     public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
         // Get seller from authenticated principal
-        String email = principal != null ? principal.getName() : null;
-        if (email == null) {
-            throw new RuntimeException("Authenticated user not found. Cannot create listing.");
+        if (principal == null) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                "Authentication required to create a listing");
         }
-        User seller = userRepository.findByEmail(email).orElse(null);
-        if (seller == null) {
-            throw new RuntimeException("Seller user not found in database.");
+        
+        String email = principal.getName();
+        if (email == null || email.trim().isEmpty()) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                "User email not found in authentication token");
         }
+        
+        User seller = userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "User not found in database. Please try logging in again."));
 
         Listing listing = new Listing();
         listing.setTitle(request.getTitle());
@@ -81,6 +87,8 @@ public class ListingService {
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         listing.setImageUrl(request.getImageUrl());
+        listing.setLatitude(request.getLatitude());
+        listing.setLongitude(request.getLongitude());
         listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
         listing.setSeller(seller);
 

@@ -13,7 +13,7 @@ spring:
   # JPA/Hibernate configuration
   jpa:
     hibernate:
-      ddl-auto: validate  # Prevent Hibernate from fighting with Flyway
+      ddl-auto: update  # Prevent Hibernate from fighting with Flyway
     properties:
       hibernate:
         format_sql: true
@@ -22,6 +22,7 @@ spring:
 
   # Flyway database migration configuration
   flyway:
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
@@ -42,8 +43,8 @@ spring:
 
 # FIXED: Added this section so Java can read your JWT_SECRET and FRONTEND_URL
 app:
-  jwt-secret: ${JWT_SECRET}
-  frontend-url: ${FRONTEND_URL}
+  jwt-secret: ${JWT_SECRET:default_secret_key_for_development_only_12345}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
 
 # Server configuration
 server:
