@@ -13,7 +13,7 @@ import java.util.UUID;
 public class MessageDTO {
     private UUID id;
     private UUID chatId;
-    private UserDTO sender;
+    private UserDto sender;
     private String content;
     private OffsetDateTime createdAt;
 }

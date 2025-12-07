@@ -1,7 +1,6 @@
 package edu.umass.marketplace.service;
 
 import edu.umass.marketplace.dto.CreateListingRequest;
-import edu.umass.marketplace.dto.ListingDTO;
 import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.model.Listing;
@@ -69,13 +68,13 @@ public class ListingService {
             throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
                 "Authentication required to create a listing");
         }
-        
+
         String email = principal.getName();
         if (email == null || email.trim().isEmpty()) {
             throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
                 "User email not found in authentication token");
         }
-        
+
         User seller = userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalArgumentException(
                 "User not found in database. Please try logging in again."));
@@ -193,7 +192,7 @@ public class ListingService {
     @Transactional
     public ListingResponse createListing(CreateListingRequest request) {
         log.debug("🔍 Creating new listing: {}", request.getTitle());
-        
+
         // Get seller from authenticated user context (OAuth2)
         // This assumes a method getCurrentAuthenticatedUser() exists and returns the User
         User seller = getCurrentAuthenticatedUser();
@@ -225,7 +224,7 @@ public class ListingService {
     @Transactional
     public List<ListingResponse> createListingsBulk(List<CreateListingRequest> requests) {
         log.debug("🔍 Creating {} listings in bulk", requests.size());
-        
+
         // Get seller from authenticated user context (OAuth2)
         User seller = getCurrentAuthenticatedUser();
         if (seller == null) {
@@ -251,7 +250,7 @@ public class ListingService {
 
         List<Listing> savedListings = listingRepository.saveAll(listings);
         log.debug("🔍 Created {} listings successfully", savedListings.size());
-        
+
         return savedListings.stream()
                 .map(ListingResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -263,7 +262,7 @@ public class ListingService {
     @Transactional
     public ListingResponse updateListing(UUID id, CreateListingRequest request) {
         log.debug("🔍 Updating listing with ID: {}", id);
-        
+
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
 
@@ -291,7 +290,7 @@ public class ListingService {
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());
-        
+
         return ListingResponse.fromEntity(savedListing);
     }
 
@@ -301,11 +300,11 @@ public class ListingService {
     @Transactional
     public void deleteListing(UUID id) {
         log.debug("🔍 Deleting listing with ID: {}", id);
-        
+
         if (!listingRepository.existsById(id)) {
             throw new RuntimeException("Listing not found with id: " + id);
         }
-        
+
         listingRepository.deleteById(id);
         log.debug("🔍 Deleted listing with ID: {}", id);
     }
@@ -315,10 +314,10 @@ public class ListingService {
      */
     public Page<ListingResponse> getListingsBySeller(UUID sellerId, int page, int size) {
         log.debug("🔍 Getting listings for seller ID: {}", sellerId);
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Listing> listings = listingRepository.findBySellerId(sellerId, pageable);
-        
+
         log.debug("🔍 Found {} listings for seller ID: {}", listings.getTotalElements(), sellerId);
         return listings.map(ListingResponse::fromEntity);
     }
@@ -329,13 +328,13 @@ public class ListingService {
     @Transactional(readOnly = true)
     public edu.umass.marketplace.response.StatsResponse getListingStats() {
         log.debug("🔍 Getting listing statistics");
-        
+
         long activeCount = listingRepository.countByStatus(Listing.STATUS_ACTIVE);
         long soldCount = listingRepository.countByStatus(Listing.STATUS_SOLD);
         long onHoldCount = listingRepository.countByStatus(Listing.STATUS_ON_HOLD);
-        
+
         log.debug("🔍 Stats - Active: {}, Sold: {}, On Hold: {}", activeCount, soldCount, onHoldCount);
-        
+
         return new edu.umass.marketplace.response.StatsResponse(activeCount, soldCount, onHoldCount);
     }
 }
