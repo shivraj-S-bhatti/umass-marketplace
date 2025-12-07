@@ -107,6 +107,14 @@ export interface SellerReviewStats {
   totalReviews: number
 }
 
+export interface User {
+  id: string
+  name: string
+  email: string
+  pictureUrl?: string
+  createdAt: string
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 console.log('🌐 API Base URL:', API_BASE_URL)
@@ -276,6 +284,11 @@ class ApiClient {
   async hasUserReviewedSeller(sellerId: string): Promise<boolean> {
     return this.request<boolean>(`/api/reviews/seller/${sellerId}/has-reviewed`)
   }
+
+  // User-related endpoints
+  async getUser(userId: string): Promise<User> {
+    return this.request<User>(`/api/users/${userId}`)
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
@@ -292,3 +305,4 @@ export const createReview = (data: CreateReviewRequest) => apiClient.createRevie
 export const getReviewsBySeller = (sellerId: string, page = 0, size = 10) => apiClient.getReviewsBySeller(sellerId, page, size)
 export const getSellerReviewStats = (sellerId: string) => apiClient.getSellerReviewStats(sellerId)
 export const hasUserReviewedSeller = (sellerId: string) => apiClient.hasUserReviewedSeller(sellerId)
+export const getUser = (userId: string) => apiClient.getUser(userId)

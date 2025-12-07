@@ -33,3 +33,4 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     long countBySellerId(UUID sellerId);
 }
 
+

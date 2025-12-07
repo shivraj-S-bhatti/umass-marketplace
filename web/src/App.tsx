@@ -13,6 +13,7 @@ import MessagesPage from '@/pages/MessagesPage'
 import OAuthSuccessPage from '@/pages/OAuthSuccessPage'
 import DesignPlaygroundPage from '@/pages/DesignPlaygroundPage'
 import CartPage from '@/pages/CartPage'
+import SellerProfilePage from '@/pages/SellerProfilePage'
 
 // Main App component for UMass Marketplace
 // Sets up routing and provides global layout with navigation
@@ -60,6 +61,7 @@ function App() {
               />
               <Route path="/design-playground" element={<DesignPlaygroundPage />} />
               <Route path="/cart" element={<CartPage />} />
+              <Route path="/profile/:sellerId" element={<SellerProfilePage />} />
             </Routes>
           </Layout>
           <Toaster />

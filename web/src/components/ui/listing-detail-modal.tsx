@@ -1,14 +1,14 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
 import { Button } from './button'
-import { DollarSign, Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle } from 'lucide-react'
+import { DollarSign, Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User } from 'lucide-react'
 import { formatPrice, formatDate } from '@/lib/utils'
 import type { Listing } from '@/lib/api'
 import { apiClient } from '@/lib/api'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useChat } from '@/contexts/ChatContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { SellerReviews } from '@/components/SellerReviews'
 import { CreateReview } from '@/components/CreateReview'
 
@@ -120,7 +120,7 @@ export function ListingDetailModal({
 
             <div className="border-t pt-4">
               <h4 className="font-semibold mb-2">Seller Information</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center text-muted-foreground">
                   <Mail className="h-4 w-4 mr-2" />
                   {listing.sellerPictureUrl && (
@@ -128,6 +128,16 @@ export function ListingDetailModal({
                   )}
                   {listing.sellerName} ({listing.sellerEmail})
                 </div>
+                {listing.sellerId && (
+                  <Link
+                    to={`/profile/${listing.sellerId}`}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <User className="h-4 w-4" />
+                    View Seller Profile & Reviews
+                  </Link>
+                )}
               </div>
             </div>
 

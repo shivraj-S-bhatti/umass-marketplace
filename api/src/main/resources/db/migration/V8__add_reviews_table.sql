@@ -15,3 +15,4 @@ CREATE INDEX idx_reviews_seller_id ON reviews(seller_id);
 CREATE INDEX idx_reviews_buyer_id ON reviews(buyer_id);
 CREATE INDEX idx_reviews_created_at ON reviews(created_at DESC);
 
+

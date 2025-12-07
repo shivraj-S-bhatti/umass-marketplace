@@ -24,3 +24,4 @@ public class SellerReviewStatsResponse {
     private Long totalReviews;
 }
 
+
