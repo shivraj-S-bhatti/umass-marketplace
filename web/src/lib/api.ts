@@ -75,6 +75,38 @@ export interface ListingStats {
   onHoldListings: number
 }
 
+export interface Review {
+  id: string
+  buyerId: string
+  buyerName: string
+  buyerPictureUrl?: string
+  sellerId: string
+  rating: number
+  comment?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateReviewRequest {
+  sellerId: string
+  rating: number
+  comment?: string
+}
+
+export interface ReviewsResponse {
+  content: Review[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+}
+
+export interface SellerReviewStats {
+  sellerId: string
+  averageRating: number
+  totalReviews: number
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 console.log('🌐 API Base URL:', API_BASE_URL)
@@ -110,7 +142,19 @@ class ApiClient {
     console.log('📡 API Response:', { status: response.status, statusText: response.statusText })
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      // Try to extract error message from response body
+      let errorMessage = `API Error: ${response.status} ${response.statusText}`
+      try {
+        const errorData = await response.json()
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.error) {
+          errorMessage = errorData.error
+        }
+      } catch {
+        // If response is not JSON, use default error message
+      }
+      throw new Error(errorMessage)
     }
 
     return response.json()
@@ -212,6 +256,26 @@ class ApiClient {
       totalElements: number;
     }>(`/api/chats/${chatId}/messages?page=${page}&size=${size}`)
   }
+
+  // Review-related endpoints
+  async createReview(data: CreateReviewRequest): Promise<Review> {
+    return this.request<Review>('/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getReviewsBySeller(sellerId: string, page = 0, size = 10): Promise<ReviewsResponse> {
+    return this.request<ReviewsResponse>(`/api/reviews/seller/${sellerId}?page=${page}&size=${size}`)
+  }
+
+  async getSellerReviewStats(sellerId: string): Promise<SellerReviewStats> {
+    return this.request<SellerReviewStats>(`/api/reviews/seller/${sellerId}/stats`)
+  }
+
+  async hasUserReviewedSeller(sellerId: string): Promise<boolean> {
+    return this.request<boolean>(`/api/reviews/seller/${sellerId}/has-reviewed`)
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
@@ -224,3 +288,7 @@ export const getListing = (id: string) => apiClient.getListing(id)
 export const getListingStats = () => apiClient.getListingStats()
 export const healthCheck = () => apiClient.healthCheck()
 export const createBulkListings = (data: CreateListingRequest[]) => apiClient.createBulkListings(data)
+export const createReview = (data: CreateReviewRequest) => apiClient.createReview(data)
+export const getReviewsBySeller = (sellerId: string, page = 0, size = 10) => apiClient.getReviewsBySeller(sellerId, page, size)
+export const getSellerReviewStats = (sellerId: string) => apiClient.getSellerReviewStats(sellerId)
+export const hasUserReviewedSeller = (sellerId: string) => apiClient.hasUserReviewedSeller(sellerId)

@@ -9,6 +9,8 @@ import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useChat } from '@/contexts/ChatContext'
 import { useNavigate } from 'react-router-dom'
+import { SellerReviews } from '@/components/SellerReviews'
+import { CreateReview } from '@/components/CreateReview'
 
 interface ListingDetailModalProps {
   listing: Listing | null
@@ -63,22 +65,24 @@ export function ListingDetailModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{listing.title}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {listing.imageUrl && (
-            <div className="aspect-video overflow-hidden rounded-lg">
-              <img
-                src={listing.imageUrl}
-                alt={listing.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="space-y-4">
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>{listing.title}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1 min-h-0 pr-2">
+              {listing.imageUrl && (
+                <div className="w-full aspect-video overflow-hidden rounded-lg flex-shrink-0 relative z-0 mb-4">
+                  <img
+                    src={listing.imageUrl}
+                    alt={listing.title}
+                    className="w-full h-full object-cover relative z-0"
+                  />
+                </div>
+              )}
+              <div className="space-y-4 flex-shrink-0 relative z-10">
             <div>
               <div className="flex items-center text-3xl font-bold text-primary mb-2">
                 <DollarSign className="h-6 w-6 mr-1" />
@@ -127,7 +131,20 @@ export function ListingDetailModal({
               </div>
             </div>
 
-            <div className="flex gap-2 pt-4">
+            {/* Seller Reviews Section */}
+            {!isCurrentUserSeller && listing.sellerId && (
+              <div className="border-t pt-4 space-y-4">
+                <h4 className="font-semibold mb-2">Seller Reviews</h4>
+                <SellerReviews sellerId={listing.sellerId} />
+                <CreateReview 
+                  sellerId={listing.sellerId} 
+                  sellerName={listing.sellerName}
+                />
+              </div>
+            )}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4 border-t flex-shrink-0 bg-background">
               {isCurrentUserSeller ? (
                 <div className="flex gap-2 w-full">
                   {listing.status !== 'SOLD' && (
@@ -193,8 +210,8 @@ export function ListingDetailModal({
               )}
             </div>
           </div>
-        </div>
-      </DialogContent>
+        </DialogContent>
     </Dialog>
+  </>
   )
 }

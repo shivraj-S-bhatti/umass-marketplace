@@ -29,6 +29,7 @@ public class ListingResponse {
     private String condition; // Store as String for API compatibility
     private String imageUrl;
     private String status;
+    private UUID sellerId;
     private String sellerName;
     private String sellerEmail;
     private String sellerPictureUrl;
@@ -47,6 +48,7 @@ public class ListingResponse {
                 .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
                 .imageUrl(listing.getImageUrl())
                 .status(listing.getStatus())
+                .sellerId(listing.getSeller() != null ? listing.getSeller().getId() : null)
                 .sellerName(listing.getSeller() != null ? listing.getSeller().getName() : null)
                 .sellerEmail(listing.getSeller() != null ? listing.getSeller().getEmail() : null)
                 .sellerPictureUrl(listing.getSeller() != null ? listing.getSeller().getPictureUrl() : null)
