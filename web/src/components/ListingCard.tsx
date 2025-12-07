@@ -1,32 +1,38 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StickerBadge } from '@/components/ui/sticker-badge'
 import { Calendar, Image as ImageIcon, MapPin, Navigation } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useToast } from '@/hooks/use-toast'
+import { apiClient, type Listing } from '@/lib/api'
 import * as turf from '@turf/turf'
 import LocationMapPopup from '@/components/LocationMapPopup'
-import { type Listing } from '@/lib/api'
 
 interface ListingCardProps {
   listing: Listing
-  showEditButtons?: boolean // optional: only show Edit/Sold buttons on dashboard
+  showEditButtons?: boolean
 }
 
 export default function ListingCard({ listing, showEditButtons = false }: ListingCardProps) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [mapOpen, setMapOpen] = useState(false)
 
-  // ONE-TIME location request for the entire page
   useEffect(() => {
-    // Only run once — no dependencies on listing
-    if (userLocation) return; // already have it
+    if (userLocation) return;
 
     const requestLocation = () => {
+      if (!navigator.geolocation) return;
+      
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          console.log("Location granted:", loc);
           setUserLocation(loc);
         },
         (err) => {
@@ -36,10 +42,8 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
       );
     };
 
-    // Ask immediately — since you already allowed it once in console, it will succeed silently
     requestLocation();
 
-    // Also allow fallback on first click if blocked
     const handleFirstClick = () => {
       requestLocation();
       document.removeEventListener("click", handleFirstClick);
@@ -47,7 +51,7 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
     document.addEventListener("click", handleFirstClick);
 
     return () => document.removeEventListener("click", handleFirstClick);
-  }, []); // ← EMPTY array = run once when component mounts
+  }, []);
 
   const distanceText = userLocation && listing.latitude && listing.longitude
     ? (() => {
@@ -68,12 +72,51 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
+  const handleEdit = () => {
+    navigate(`/edit/${listing.id}`)
+  }
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    try {
+      const actionMap: Record<string, string> = {
+        'ACTIVE': 'Reactivating',
+        'ON_HOLD': 'Putting on hold',
+        'SOLD': 'Marking as sold'
+      }
+
+      toast({
+        title: `${actionMap[newStatus]} listing...`,
+        description: 'Please wait while we update the listing status.',
+      })
+      
+      await apiClient.updateListing(listing.id, {
+        ...listing,
+        status: newStatus as 'ACTIVE' | 'ON_HOLD' | 'SOLD'
+      })
+
+      await queryClient.invalidateQueries({ queryKey: ['listings'] })
+      await queryClient.invalidateQueries({ queryKey: ['listings-stats'] })
+      
+      toast({
+        title: 'Success!',
+        description: `Listing has been ${newStatus === 'ACTIVE' ? 'reactivated' : newStatus === 'ON_HOLD' ? 'put on hold' : 'marked as sold'}.`,
+        variant: 'default',
+      })
+    } catch (error) {
+      console.error('Failed to update listing status:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update listing status. Please try again.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   return (
     <>
-      <Card className="hover:shadow-comic transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col">
-        {/* Image */}
+      <Card className="hover:shadow-lg transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col">
         <div
-          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-comic cursor-pointer hover:opacity-90 transition-opacity bg-muted flex items-center justify-center flex-shrink-0"
+          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-muted flex items-center justify-center flex-shrink-0"
           onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
         >
           {listing.imageUrl ? (
@@ -97,7 +140,6 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
 
         <CardContent className="pt-0 flex-1 flex flex-col justify-between">
           <div className="space-y-1.5 sm:space-y-2">
-            {/* Price + Distance */}
             <div className="flex items-center justify-between gap-2">
               <StickerBadge variant="price" className="text-xs sm:text-sm md:text-base px-1.5 sm:px-2 py-0.5 sm:py-1">
                 {formatPrice(listing.price)}
@@ -111,7 +153,6 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
               )}
             </div>
 
-            {/* Status + Date */}
             <div className="flex items-center justify-between text-xs">
               <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'}>
                 {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
@@ -122,7 +163,6 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
               </div>
             </div>
 
-            {/* Category/Condition */}
             <div className="flex flex-wrap gap-1.5 text-xs">
               {listing.category && (
                 <span className="px-2 py-0.5 rounded-full bg-secondary border border-foreground font-medium">
@@ -137,7 +177,6 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
             </div>
           </div>
 
-          {/* Action Button */}
           <div className="mt-3">
             {listing.latitude && listing.longitude ? (
               <Button variant="default" className="w-full" onClick={() => setMapOpen(true)}>
@@ -146,12 +185,23 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
               </Button>
             ) : showEditButtons ? (
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="flex-1 text-xs">
+                <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={handleEdit}>
                   Edit
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1 text-xs">
-                  {listing.status === 'ACTIVE' ? 'Mark Sold' : 'Reactivate'}
-                </Button>
+                {listing.status === 'ACTIVE' ? (
+                   <>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ON_HOLD')}>
+                      Hold
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('SOLD')}>
+                      Sold
+                    </Button>
+                   </>
+                ) : (
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ACTIVE')}>
+                    Reactivate
+                  </Button>
+                )}
               </div>
             ) : (
               <Button variant="outline" className="w-full" disabled>
@@ -162,26 +212,50 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
         </CardContent>
       </Card>
 
-      {/* Image Modal (same as before) */}
       {isImageModalOpen && listing.imageUrl && (
-        // ... (copy your existing image modal code here – I’ll give it below)
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setIsImageModalOpen(false)}>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setIsImageModalOpen(false)}
+        >
           <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
-            <button type="button" onClick={() => setIsImageModalOpen(false)} className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 rounded-full p-2" aria-label="Close image viewer">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <button
+              onClick={() => setIsImageModalOpen(false)}
+              className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 rounded-full p-2 transition-colors"
+              aria-label="Close image"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
-            < img src={listing.imageUrl} alt={listing.title} className="max-w-full max-h-full object-contain rounded-lg" onClick={e => e.stopPropagation()} />
+
+            <img
+              src={listing.imageUrl}
+              alt={listing.title}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+
             <div className="absolute bottom-4 left-4 right-4 bg-black/60 text-white rounded-lg p-3 backdrop-blur-sm">
               <h3 className="font-semibold text-lg mb-1">{listing.title}</h3>
-              <p className="text-sm text-gray-300">{formatPrice(listing.price)} • {listing.category || 'Uncategorized'}</p>
+              <p className="text-sm text-gray-300">
+                {formatPrice(listing.price)} • {listing.category || 'Uncategorized'}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Map Popup */}
       {listing.latitude && listing.longitude && (
         <LocationMapPopup
           open={mapOpen}

@@ -1,5 +1,35 @@
 // API Client for UMass Marketplace
 // Provides typed API calls to the Spring Boot backend with error handling
+
+export interface Message {
+  id: string
+  content: string
+  sender: {
+    id: string
+    name: string
+    pictureUrl?: string
+  }
+  createdAt: string
+}
+
+export interface Chat {
+  id: string
+  listing: Listing
+  buyer: {
+    id: string
+    name: string
+    pictureUrl?: string
+  }
+  seller: {
+    id: string
+    name: string
+    pictureUrl?: string
+  }
+  lastMessage?: Message
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Listing {
   id: string
   title: string
@@ -13,6 +43,8 @@ export interface Listing {
   status: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
   sellerId: string
   sellerName?: string
+  sellerEmail?: string
+  sellerPictureUrl?: string
   createdAt: string
   updatedAt: string
 }
@@ -24,6 +56,9 @@ export interface CreateListingRequest {
   category?: string
   condition?: string
   imageUrl?: string
+  status?: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
+  latitude?: number | null
+  longitude?: number | null
 }
 
 export interface ListingsResponse {
@@ -60,11 +95,15 @@ class ApiClient {
     const url = `${this.baseUrl}${endpoint}`
     console.log('🚀 API Request:', { url, options })
     
+    const token = localStorage.getItem('token');
+    
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
         ...options.headers,
       },
+      credentials: 'include', // Important for CORS
       ...options,
     })
 
@@ -142,6 +181,36 @@ class ApiClient {
   // Get listing statistics
   async getListingStats(): Promise<ListingStats> {
     return this.request<ListingStats>('/api/listings/stats')
+  }
+
+  // Chat-related endpoints
+  async startChat(listingId: string): Promise<Chat> {
+    return this.request<Chat>(`/api/chats/listing/${listingId}`, {
+      method: 'POST'
+    })
+  }
+
+  async getUserChats(): Promise<Chat[]> {
+    return this.request<Chat[]>('/api/chats')
+  }
+
+  async sendMessage(chatId: string, content: string): Promise<Message> {
+    return this.request<Message>(`/api/chats/${chatId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content })
+    })
+  }
+
+  async getChatMessages(chatId: string, page = 0, size = 20): Promise<{
+    content: Message[];
+    totalPages: number;
+    totalElements: number;
+  }> {
+    return this.request<{
+      content: Message[];
+      totalPages: number;
+      totalElements: number;
+    }>(`/api/chats/${chatId}/messages?page=${page}&size=${size}`)
   }
 }
 

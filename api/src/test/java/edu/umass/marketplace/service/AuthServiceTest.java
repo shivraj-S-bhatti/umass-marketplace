@@ -4,6 +4,7 @@ import edu.umass.marketplace.dto.LoginRequest;
 import edu.umass.marketplace.dto.RegisterRequest;
 import edu.umass.marketplace.model.User;
 import edu.umass.marketplace.response.AuthResponse;
+import edu.umass.marketplace.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,9 @@ class AuthServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private JwtUtil jwtUtil;
 
     @InjectMocks
     private AuthService authService;
@@ -55,6 +59,7 @@ class AuthServiceTest {
         // Given
         when(userService.userExistsByEmail("test@umass.edu")).thenReturn(false);
         when(userService.createUser(any(RegisterRequest.class))).thenReturn(testUser);
+        when(jwtUtil.generateToken(any(), anyString(), anyString())).thenReturn("mock-token");
 
         // When
         AuthResponse result = authService.register(registerRequest);
@@ -85,6 +90,7 @@ class AuthServiceTest {
         // Given
         when(userService.getUserByEmail("test@umass.edu"))
                 .thenReturn(Optional.of(testUser));
+        when(jwtUtil.generateToken(any(), anyString(), anyString())).thenReturn("mock-token");
 
         // When
         AuthResponse result = authService.login(loginRequest);

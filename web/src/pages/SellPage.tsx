@@ -26,7 +26,7 @@ const createListingSchema = z.object({
   price: z.number().min(0.01, 'Price must be greater than 0').max(999999.99, 'Price must be less than $999,999.99'),
   category: z.string().max(100, 'Category must be less than 100 characters').optional(),
   condition: z.string().max(50, 'Condition must be less than 50 characters').optional(),
-  imageUrl: z.string().max(1000000, 'Image data is too large').optional(),
+  imageUrl: z.string().max(6000000, 'Image data is too large').optional(),
 })
 
 type CreateListingForm = z.infer<typeof createListingSchema>

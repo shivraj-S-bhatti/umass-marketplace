@@ -47,7 +47,6 @@ public class Listing {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    @Lob
     @Column(name = "image_url")
     private String imageUrl;
 

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserService userService;
+    private final edu.umass.marketplace.security.JwtUtil jwtUtil;
 
     /**
      * Register a new user
@@ -33,11 +34,9 @@ public class AuthService {
         // Create new user
         User user = userService.createUser(request);
 
-        // For now, return a simple response - in real app, generate JWT token
-        AuthResponse response = AuthResponse.create(
-            "dummy-jwt-token-" + user.getId(),
-            UserResponse.fromEntity(user)
-        );
+        // Generate JWT token for the created user
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getName());
+        AuthResponse response = AuthResponse.create(token, UserResponse.fromEntity(user));
 
         log.debug("🔍 User registered successfully with ID: {}", user.getId());
         return response;
@@ -58,11 +57,8 @@ public class AuthService {
             throw new RuntimeException("Invalid email or password");
         }
 
-        // For now, return a simple response - in real app, generate JWT token
-        AuthResponse response = AuthResponse.create(
-            "dummy-jwt-token-" + user.getId(),
-            UserResponse.fromEntity(user)
-        );
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getName());
+        AuthResponse response = AuthResponse.create(token, UserResponse.fromEntity(user));
 
         log.debug("🔍 User logged in successfully with ID: {}", user.getId());
         return response;

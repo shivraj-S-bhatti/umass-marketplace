@@ -1,7 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ShoppingBag, Plus, LayoutDashboard, LogIn, Palette, ShoppingCart } from 'lucide-react'
+import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, Palette, ShoppingCart } from 'lucide-react'
 import { UserRole, useUser } from '@/contexts/UserContext'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Logo from '@/components/Logo'
 import { LeafWallpaper } from '@/components/ui/leaf-wallpaper'
 import { useEffect } from 'react'
@@ -15,7 +16,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { role, setRole, isSeller, isBuyer } = useUser()
+  const { role, setRole, isSeller, isBuyer, user } = useUser()
 
   // Navigation items - same for both modes, but will show/hide based on mode
   const allNavItems = [
@@ -23,6 +24,7 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as UserRole[] },
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as UserRole[] },
     { path: '/design-playground', label: 'Design', icon: Palette, showIn: ['buyer', 'seller'] as UserRole[] },
+    { path: '/messages', label: 'Messages', icon: MessageSquare, showIn: ['buyer', 'seller'] as UserRole[] },
   ]
 
   // Filter nav items based on current mode
@@ -100,10 +102,10 @@ export default function Layout({ children }: LayoutProps) {
               ))}
             </nav>
 
-            {/* Right Side: Toggle + Login */}
-            <div className="flex items-center space-x-2">
+            {/* Right Side: User Info or Login + Toggle */}
+            <div className="flex items-center space-x-3">
               {/* Buyer/Seller Toggle */}
-              <div className="flex items-center border-2 border-foreground rounded-comic overflow-hidden">
+              <div className="hidden md:flex items-center border-2 border-foreground rounded-comic overflow-hidden">
                 <button
                   onClick={() => handleRoleChange('buyer')}
                   className={`px-3 py-1.5 text-sm font-bold transition-all ${
@@ -126,13 +128,21 @@ export default function Layout({ children }: LayoutProps) {
                 </button>
               </div>
 
-              {/* Login Button */}
-              <Button variant="outline" size="sm" asChild>
+              {user ? (
                 <Link to="/login">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Login
+                  <Avatar className="cursor-pointer border-2 border-foreground">
+                    <AvatarImage src={user.pictureUrl} alt={user.name} />
+                    <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
+                  </Avatar>
                 </Link>
-              </Button>
+              ) : (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/login">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 
@@ -170,7 +180,7 @@ export default function Layout({ children }: LayoutProps) {
               ))}
             </div>
 
-            {/* Buyer/Seller Toggle + Login (Mobile) */}
+            {/* Buyer/Seller Toggle (Mobile) */}
             <div className="flex items-center gap-2">
               <div className="flex items-center border-2 border-foreground rounded-comic overflow-hidden flex-1">
                 <button
@@ -194,12 +204,6 @@ export default function Layout({ children }: LayoutProps) {
                   Seller
                 </button>
               </div>
-              <Button variant="outline" size="sm" asChild className="flex-shrink-0">
-                <Link to="/login">
-                  <LogIn className="h-4 w-4 md:mr-2" />
-                  <span className="hidden sm:inline">Login</span>
-                </Link>
-              </Button>
             </div>
           </nav>
         </div>

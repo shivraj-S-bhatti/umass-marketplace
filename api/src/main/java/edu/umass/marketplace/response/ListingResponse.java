@@ -29,7 +29,9 @@ public class ListingResponse {
     private String condition; // Store as String for API compatibility
     private String imageUrl;
     private String status;
-    private String sellerName; // Only seller name, not ID
+    private String sellerName;
+    private String sellerEmail;
+    private String sellerPictureUrl;
     private OffsetDateTime createdAt;
     private Double latitude;
     private Double longitude;
@@ -45,7 +47,9 @@ public class ListingResponse {
                 .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
                 .imageUrl(listing.getImageUrl())
                 .status(listing.getStatus())
-                .sellerName(listing.getSeller().getName())
+                .sellerName(listing.getSeller() != null ? listing.getSeller().getName() : null)
+                .sellerEmail(listing.getSeller() != null ? listing.getSeller().getEmail() : null)
+                .sellerPictureUrl(listing.getSeller() != null ? listing.getSeller().getPictureUrl() : null)
                 .createdAt(listing.getCreatedAt())
                 .latitude(listing.getLatitude())
                 .longitude(listing.getLongitude())

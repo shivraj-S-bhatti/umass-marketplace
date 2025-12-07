@@ -1,39 +1,50 @@
 # UMass Marketplace API Configuration
-# Spring Boot application configuration with profiles for different environments
 spring:
   application:
     name: umass-marketplace-api
 
   # Database configuration - connects to PostgreSQL
   datasource:
-    url: jdbc:postgresql://localhost:5432/umarket_dev
-    username: umarket_dev
-    password: umarket_dev_dev_password_2024
+    url: jdbc:postgresql://localhost:5432/umarket
+    username: umarket
+    password: umarket
     driver-class-name: org.postgresql.Driver
 
   # JPA/Hibernate configuration
   jpa:
     hibernate:
-      ddl-auto: update  # Create/update schema automatically
+      ddl-auto: update  # Prevent Hibernate from fighting with Flyway
     properties:
       hibernate:
-        format_sql: true  # Pretty print SQL queries in logs
+        format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false  # Set to true for debugging
+    show-sql: true
 
   # Flyway database migration configuration
   flyway:
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
     clean-disabled: false
 
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 12MB
+  # FIXED: Security is now properly indented under 'spring'
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - email
+              - profile
 
-  # OAuth2 configuration removed - using simple approach for now
+# FIXED: Added this section so Java can read your JWT_SECRET and FRONTEND_URL
+app:
+  jwt-secret: ${JWT_SECRET:default_secret_key_for_development_only_12345}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
 
 # Server configuration
 server:
@@ -41,9 +52,6 @@ server:
   servlet:
     context-path: /
 
-# JWT and Email configuration removed - using simple approach for now
-
-# SpringDoc OpenAPI configuration for Swagger UI
 springdoc:
   swagger-ui:
     path: /swagger-ui
@@ -53,7 +61,6 @@ springdoc:
     path: /v3/api-docs
   show-actuator: true
 
-# Logging configuration
 logging:
   level:
     edu.umass: DEBUG
@@ -68,12 +75,18 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: jdbc:postgresql://localhost:5432/umarket_dev
-    username: umarket_dev
-    password: umarket_dev_dev_password_2024
+    # FIXED: Pointing to your EXISTING 'umarket' database
+    url: jdbc:postgresql://localhost:5432/umarket
+    # NOTE: Ensure these credentials match your local postgres setup!
+    username: umarket 
+    password: umarket 
+  jpa:
+    hibernate:
+      # Changed to 'update' so it creates tables for you automatically in dev
+      ddl-auto: update
 
 ---
-# H2 Database profile (for development when PostgreSQL not available)
+# H2 Database profile (fallback)
 spring:
   config:
     activate:
@@ -89,14 +102,14 @@ spring:
       path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: create-drop  # For H2, use Hibernate schema creation
+      ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
     show-sql: false
   flyway:
-    enabled: false  # Disable Flyway for H2 profile
+    enabled: false
 
 ---
 # Test profile configuration
@@ -110,6 +123,6 @@ spring:
     password: umarket_test
   jpa:
     hibernate:
-      ddl-auto: create-drop  # For testing, recreate schema each time
+      ddl-auto: create-drop
   flyway:
-    enabled: false  # Disable Flyway for test profile
+    enabled: false

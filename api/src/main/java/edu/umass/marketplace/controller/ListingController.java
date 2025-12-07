@@ -52,8 +52,8 @@ public class ListingController {
 
     @PostMapping
     @Operation(summary = "Create listing", description = "Create a new marketplace listing")
-    public ResponseEntity<ListingResponse> createListing(@Valid @RequestBody CreateListingRequest request) {
-        ListingResponse listing = listingService.createListing(request);
+    public ResponseEntity<ListingResponse> createListing(@Valid @RequestBody CreateListingRequest request, java.security.Principal principal) {
+        ListingResponse listing = listingService.createListing(request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(listing);
     }
 

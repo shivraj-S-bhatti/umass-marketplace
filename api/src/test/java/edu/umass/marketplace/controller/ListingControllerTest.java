@@ -26,8 +26,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = ListingController.class,
-            excludeAutoConfiguration = {org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class})
+@WebMvcTest(controllers = ListingController.class)
+@org.springframework.context.annotation.Import(edu.umass.marketplace.security.SecurityConfig.class)
 class ListingControllerTest {
 
     @Autowired
@@ -35,6 +35,18 @@ class ListingControllerTest {
 
     @MockBean
     private ListingService listingService;
+
+    @MockBean
+    private edu.umass.marketplace.security.JwtUtil jwtUtil;
+
+    @MockBean
+    private edu.umass.marketplace.repository.UserRepository userRepository;
+
+    @MockBean
+    private edu.umass.marketplace.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+    @MockBean
+    private edu.umass.marketplace.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -44,7 +56,13 @@ class ListingControllerTest {
     private UUID testListingId;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
+        doAnswer(invocation -> {
+            jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
+
         testListingId = UUID.randomUUID();
         UUID testSellerId = UUID.randomUUID();
 
@@ -123,7 +141,7 @@ class ListingControllerTest {
     @Test
     void shouldCreateListing() throws Exception {
         // Given
-        when(listingService.createListing(any(CreateListingRequest.class)))
+        when(listingService.createListing(any(CreateListingRequest.class), any()))
                 .thenReturn(testListingResponse);
 
         // When & Then
@@ -134,7 +152,7 @@ class ListingControllerTest {
                 .andExpect(jsonPath("$.id").value(testListingId.toString()))
                 .andExpect(jsonPath("$.title").value("Test Laptop"));
 
-        verify(listingService, times(1)).createListing(any(CreateListingRequest.class));
+        verify(listingService, times(1)).createListing(any(CreateListingRequest.class), any());
     }
 
     @Test

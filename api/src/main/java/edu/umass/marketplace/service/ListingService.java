@@ -1,7 +1,6 @@
 package edu.umass.marketplace.service;
 
 import edu.umass.marketplace.dto.CreateListingRequest;
-import edu.umass.marketplace.dto.ListingDto;
 import edu.umass.marketplace.model.Condition;
 import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.model.Listing;
@@ -31,6 +30,76 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
+
+    /**
+     * Helper to get the current authenticated user from the security context
+     */
+    private User getCurrentAuthenticatedUser() {
+        // Uses Spring Security to get the current principal
+        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String email = null;
+        String name = null;
+        String pictureUrl = null;
+
+        if (principal instanceof edu.umass.marketplace.security.UserPrincipal userPrincipal) {
+            email = userPrincipal.getEmail();
+            name = userPrincipal.getName();
+            pictureUrl = userPrincipal.getPictureUrl();
+        } else if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
+            email = springUser.getUsername();
+        } else if (principal instanceof String principalStr) {
+            email = principalStr;
+        }
+
+        if (email == null) return null;
+
+        // Try to find existing user; if not found, create one from principal info
+        var opt = userRepository.findByEmail(email);
+        if (opt.isPresent()) return opt.get();
+
+        User u = new User();
+        u.setEmail(email);
+        u.setName(name != null ? name : "Unknown User");
+        u.setPictureUrl(pictureUrl);
+        return userRepository.save(u);
+    }
+
+    @Transactional
+    public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
+        // Get seller from authenticated principal
+        if (principal == null) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                "Authentication required to create a listing");
+        }
+        
+        String email = principal.getName();
+        if (email == null || email.trim().isEmpty()) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                "User email not found in authentication token");
+        }
+        
+        User seller = userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "User not found in database. Please try logging in again."));
+
+        Listing listing = new Listing();
+        listing.setTitle(request.getTitle());
+        listing.setDescription(request.getDescription());
+        listing.setPrice(request.getPrice());
+        listing.setCategory(request.getCategory());
+        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+        listing.setImageUrl(request.getImageUrl());
+        listing.setLatitude(request.getLatitude());
+        listing.setLongitude(request.getLongitude());
+        listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
+        listing.setSeller(seller);
+
+        Listing savedListing = listingRepository.save(listing);
+        log.debug("🔍 Created listing with ID: {}", savedListing.getId());
+
+        return ListingResponse.fromEntity(savedListing);
+    }
 
     /**
      * Get paginated listings with optional filtering and search
@@ -87,9 +156,9 @@ public class ListingService {
 
         if (hasQuery || hasCategory || hasStatus || hasCondition || hasMinPrice || hasMaxPrice) {
             // Pass null for empty strings to the repository
-            String queryParam = hasQuery ? query.trim() : null;
-            String categoryParam = hasCategory ? category.trim() : null;
-            String statusParam = hasStatus ? status.trim() : null;
+            String queryParam = hasQuery && query != null ? query.trim() : null;
+            String categoryParam = hasCategory && category != null ? category.trim() : null;
+            String statusParam = hasStatus && status != null ? status.trim() : null;
 
             log.debug("🔍 Using filtered query with params:");
             log.debug("  queryParam: '{}'", queryParam);
@@ -118,39 +187,6 @@ public class ListingService {
         return ListingResponse.fromEntity(listing);
     }
 
-    /**
-     * Create a new listing
-     */
-    @Transactional
-    public ListingResponse createListing(CreateListingRequest request) {
-        log.debug("🔍 Creating new listing: {}", request.getTitle());
-        
-        // For now, create a dummy seller - in real app, get from authenticated user
-        User dummySeller = userRepository.findByEmail("dummy@umass.edu")
-                .orElseGet(() -> {
-                    User user = new User();
-                    user.setEmail("dummy@umass.edu");
-                    user.setName("Dummy User");
-                    return userRepository.save(user);
-                });
-
-        Listing listing = new Listing();
-        listing.setTitle(request.getTitle());
-        listing.setDescription(request.getDescription());
-        listing.setPrice(request.getPrice());
-        listing.setCategory(request.getCategory());
-        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-        listing.setImageUrl(request.getImageUrl());
-        listing.setLatitude(request.getLatitude());
-        listing.setLongitude(request.getLongitude());
-        listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
-        listing.setSeller(dummySeller);
-
-        Listing savedListing = listingRepository.save(listing);
-        log.debug("🔍 Created listing with ID: {}", savedListing.getId());
-        
-        return ListingResponse.fromEntity(savedListing);
-    }
 
     /**
      * Create multiple listings in bulk
@@ -159,14 +195,11 @@ public class ListingService {
     public List<ListingResponse> createListingsBulk(List<CreateListingRequest> requests) {
         log.debug("🔍 Creating {} listings in bulk", requests.size());
         
-        // For now, create a dummy seller - in real app, get from authenticated user
-        User dummySeller = userRepository.findByEmail("dummy@umass.edu")
-                .orElseGet(() -> {
-                    User user = new User();
-                    user.setEmail("dummy@umass.edu");
-                    user.setName("Dummy User");
-                    return userRepository.save(user);
-                });
+        // Get seller from authenticated user context (OAuth2)
+        User seller = getCurrentAuthenticatedUser();
+        if (seller == null) {
+            throw new RuntimeException("Authenticated user not found. Cannot create listings in bulk.");
+        }
 
         List<Listing> listings = requests.stream()
                 .map(request -> {
@@ -180,7 +213,7 @@ public class ListingService {
                     listing.setLatitude(request.getLatitude());
                     listing.setLongitude(request.getLongitude());
                     listing.setStatus(Listing.STATUS_ACTIVE);
-                    listing.setSeller(dummySeller);
+                    listing.setSeller(seller);
                     return listing;
                 })
                 .collect(Collectors.toList());
@@ -203,14 +236,21 @@ public class ListingService {
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
 
-        listing.setTitle(request.getTitle());
-        listing.setDescription(request.getDescription());
-        listing.setPrice(request.getPrice());
-        listing.setCategory(request.getCategory());
-        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-        listing.setLatitude(request.getLatitude());
-        listing.setLongitude(request.getLongitude());
-        listing.setImageUrl(request.getImageUrl());
+        // Update status if provided
+        if (request.getStatus() != null) {
+            log.debug("🔍 Updating listing status from {} to {}", listing.getStatus(), request.getStatus());
+            listing.setStatus(request.getStatus());
+        }
+
+        // Update other fields if provided
+        if (request.getTitle() != null) listing.setTitle(request.getTitle());
+        if (request.getDescription() != null) listing.setDescription(request.getDescription());
+        if (request.getPrice() != null) listing.setPrice(request.getPrice());
+        if (request.getCategory() != null) listing.setCategory(request.getCategory());
+        if (request.getCondition() != null) listing.setCondition(Condition.fromDisplayName(request.getCondition()));
+        if (request.getImageUrl() != null) listing.setImageUrl(request.getImageUrl());
+        if (request.getLatitude() != null) listing.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) listing.setLongitude(request.getLongitude());
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());
