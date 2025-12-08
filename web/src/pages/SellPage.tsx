@@ -12,11 +12,12 @@ import { createListing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { Plus, DollarSign } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import Papa from 'papaparse'
 import { useState } from 'react'
-import { MapPin, Loader2 } from 'lucide-react'
+import { MapPin, Loader2, Download } from 'lucide-react'
 import { createBulkListings } from '@/lib/api'
 import { CATEGORIES, CONDITIONS } from '@/lib/constants'
+import { parseExcelFile, validateTemplateFormat, validateExcelStructure, downloadTemplate, convertToCreateListingForm } from '@/lib/excelTemplate'
+import LocationMapSelector from '@/components/LocationMapSelector'
 
 // Sell Page - form for creating new marketplace listings
 // Allows users to post items for sale with validation and error handling
@@ -411,6 +412,12 @@ function BulkUploadModal() {
   const navigate = useNavigate()
   const [file, setFile] = useState<File | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [useLocation, setUseLocation] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [latitude, setLatitude] = useState<number | null>(null)
+  const [longitude, setLongitude] = useState<number | null>(null)
+  const [showMapSelector, setShowMapSelector] = useState(false)
 
   const createBulkListingsMutation = useMutation({
     mutationFn: createBulkListings,
@@ -426,62 +433,122 @@ function BulkUploadModal() {
     },
   })
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!file) {
-      toast({ title: 'No File', description: 'Please select a CSV file.', variant: 'destructive' })
+      toast({ title: 'No File', description: 'Please select an Excel file.', variant: 'destructive' })
       return
     }
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const parsedData = results.data as any[]
-        const validListings: CreateListingForm[] = []
-        const invalidRows: string[] = []
+    // Validate file format
+    const formatValidation = validateTemplateFormat(file)
+    if (!formatValidation.valid) {
+      toast({ title: 'Invalid File', description: formatValidation.error, variant: 'destructive' })
+      return
+    }
 
-        parsedData.forEach((row, index) => {
-          const listing = {
-            title: row.title?.trim() || '',
-            description: row.description?.trim() || '',
-            price: parseFloat(row.price) || 0,
-          category: row.category?.trim() || '',
-          condition: row.condition?.trim() || '',
-          imageUrl: row.imageUrl?.trim() || '',
-        }
+    setIsProcessing(true)
+    try {
+      // Parse Excel file
+      const parsedRows = await parseExcelFile(file)
+      
+      // Validate structure
+      const structureValidation = validateExcelStructure(parsedRows)
+      if (!structureValidation.valid) {
+        toast({ title: 'Invalid Template', description: structureValidation.error, variant: 'destructive' })
+        setIsProcessing(false)
+        return
+      }
 
-          const result = createListingSchema.safeParse(listing)
-          if (result.success) {
-            validListings.push(result.data)
-          } else {
-            invalidRows.push(`Row ${index + 2}: ${result.error.issues.map(issue => issue.message).join(', ')}`)
-          }
-        })
+      // Convert to CreateListingForm and validate
+      const validListings: CreateListingForm[] = []
+      const invalidRows: string[] = []
 
-        if (invalidRows.length > 0) {
-          toast({
-            title: 'Validation Errors',
-            description: invalidRows.join('\n'),
-            variant: 'destructive',
-          })
-        }
-
-        if (validListings.length > 0) {
-          createBulkListingsMutation.mutate(validListings)
+      // Convert parsed rows to CreateListingForm using the conversion function
+      const convertedListings = convertToCreateListingForm(parsedRows)
+      
+      convertedListings.forEach((listing, index) => {
+        const result = createListingSchema.safeParse(listing)
+        if (result.success) {
+          validListings.push(result.data)
         } else {
-          toast({ title: 'No Valid Listings', description: 'No valid rows found in CSV.', variant: 'destructive' })
+          invalidRows.push(`Row ${index + 2}: ${result.error.issues.map(issue => issue.message).join(', ')}`)
         }
+      })
+
+      if (invalidRows.length > 0) {
+        toast({
+          title: 'Validation Errors',
+          description: `Found ${invalidRows.length} invalid row(s). First few: ${invalidRows.slice(0, 3).join('; ')}`,
+          variant: 'destructive',
+        })
+      }
+
+      if (validListings.length > 0) {
+        // Apply location to all listings if location is enabled
+        const listingsWithLocation = validListings.map(listing => ({
+          ...listing,
+          ...(useLocation && latitude && longitude
+            ? { latitude, longitude }
+            : { latitude: null, longitude: null }
+          ),
+        }))
+        createBulkListingsMutation.mutate(listingsWithLocation)
+      } else {
+        toast({ title: 'No Valid Listings', description: 'No valid rows found in Excel file.', variant: 'destructive' })
+      }
+    } catch (error: any) {
+      toast({ title: 'Excel Parse Error', description: error.message || 'Failed to parse Excel file', variant: 'destructive' })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleDownloadTemplate = () => {
+    try {
+      downloadTemplate()
+      toast({ title: 'Template Downloaded', description: 'Listing template downloaded successfully.' })
+    } catch (error) {
+      toast({ title: 'Download Error', description: 'Failed to download template.', variant: 'destructive' })
+    }
+  }
+
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: 'Geolocation not supported',
+        description: 'Your browser does not support location services.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setLocationLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude)
+        setLongitude(position.coords.longitude)
+        setLocationLoading(false)
+        toast({
+          title: 'Location captured!',
+          description: `Near UMass Amherst (~${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`,
+        })
       },
-      error: (error) => {
-        toast({ title: 'CSV Parse Error', description: error.message, variant: 'destructive' })
+      () => {
+        setLocationLoading(false)
+        setUseLocation(false)
+        toast({
+          title: 'Location access denied',
+          description: 'You can still create listings without location.',
+          variant: 'destructive',
+        })
       },
-    })
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Got a lot to sell? Bulk Uplaod via CSV</Button>
+        <Button variant="outline">Got a lot to sell? Bulk Upload via Excel</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -489,22 +556,121 @@ function BulkUploadModal() {
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="csvFile">Upload CSV File</Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="excelFile">Upload Excel File</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Template
+              </Button>
+            </div>
             <Input
-              id="csvFile"
+              id="excelFile"
               type="file"
-              accept=".csv"
+              accept=".xlsx,.xls"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
             <p className="text-sm text-muted-foreground mt-2">
-              CSV format: Headers - title,description,price,category,condition. Price as number (e.g., 99.99).
+              Excel format: Required columns - title, price. Optional - description, category, condition, image, link.
+              <br />
+              Download the template above to ensure correct format.
             </p>
           </div>
+          
+          {/* Location Assignment Section */}
+          <div className="space-y-3 rounded-lg border border-input bg-muted/20 p-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="bulkUseLocation"
+                checked={useLocation}
+                onChange={(e) => {
+                  setUseLocation(e.target.checked)
+                  if (!e.target.checked) {
+                    setLatitude(null)
+                    setLongitude(null)
+                    setShowMapSelector(false)
+                  }
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                aria-label="Share location with buyers for all listings"
+              />
+              <Label htmlFor="bulkUseLocation" className="cursor-pointer font-medium flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Assign location to all listings
+              </Label>
+            </div>
+
+            {useLocation && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={captureLocation}
+                    disabled={locationLoading}
+                    className="flex items-center gap-2"
+                  >
+                    {locationLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Getting your location...
+                      </>
+                    ) : latitude ? (
+                      <>
+                        <MapPin className="h-4 w-4" />
+                        Location captured
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="h-4 w-4" />
+                        Use my current location
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMapSelector(!showMapSelector)}
+                    className="flex items-center gap-2"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    {showMapSelector ? 'Hide Map' : 'Select on Map'}
+                  </Button>
+                </div>
+                
+                {latitude && longitude && (
+                  <p className="text-xs text-muted-foreground">
+                    Location set to: {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                  </p>
+                )}
+
+                {showMapSelector && (
+                  <LocationMapSelector
+                    onLocationSelect={(lat: number, lng: number) => {
+                      setLatitude(lat)
+                      setLongitude(lng)
+                    }}
+                    initialLat={latitude}
+                    initialLng={longitude}
+                    height="300px"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
           <Button
             onClick={handleSubmit}
-            disabled={createBulkListingsMutation.isPending || !file}
+            disabled={createBulkListingsMutation.isPending || isProcessing || !file}
           >
-            {createBulkListingsMutation.isPending ? 'Uploading...' : 'Upload Bulk Listings'}
+            {createBulkListingsMutation.isPending || isProcessing ? 'Processing...' : 'Upload Bulk Listings'}
           </Button>
         </div>
       </DialogContent>
