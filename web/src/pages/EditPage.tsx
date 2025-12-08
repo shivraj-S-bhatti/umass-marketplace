@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateListing, getListing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { Save, ArrowLeft } from 'lucide-react'
+import { Save, ArrowLeft, MapPin, Loader2 } from 'lucide-react'
 import { CATEGORIES, CONDITIONS } from '@/lib/constants'
+import LocationMapSelector from '@/components/LocationMapSelector'
 
 // Edit listing form schema
 const editListingSchema = z.object({
@@ -33,6 +34,11 @@ export default function EditPage() {
   const queryClient = useQueryClient()
   const [, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
+  const [useLocation, setUseLocation] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [latitude, setLatitude] = useState<number | null>(null)
+  const [longitude, setLongitude] = useState<number | null>(null)
+  const [showMapSelector, setShowMapSelector] = useState(false)
 
   // Fetch existing listing data
   const { data: listing, isLoading: isFetching } = useQuery({
@@ -69,6 +75,12 @@ export default function EditPage() {
       })
       if (listing.imageUrl) {
         setImagePreview(listing.imageUrl)
+      }
+      // Pre-populate location if it exists
+      if (listing.latitude != null && listing.longitude != null) {
+        setUseLocation(true)
+        setLatitude(listing.latitude)
+        setLongitude(listing.longitude)
       }
     }
   }, [listing, reset])
@@ -115,6 +127,39 @@ export default function EditPage() {
     setValue('imageUrl', '')
   }
 
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support location services.",
+        variant: "destructive",
+      })
+      return
+    }
+    setLocationLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude)
+        setLongitude(position.coords.longitude)
+        setLocationLoading(false)
+        toast({
+          title: "Location captured!",
+          description: `Near UMass Amherst (~${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`,
+        })
+      },
+      () => {
+        setLocationLoading(false)
+        setUseLocation(false)
+        toast({
+          title: "Location access denied",
+          description: "You can still update the listing without location.",
+          variant: "destructive",
+        })
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
   const updateListingMutation = useMutation({
     mutationFn: (data: EditListingForm) => updateListing(id!, data),
     onSuccess: () => {
@@ -137,17 +182,28 @@ export default function EditPage() {
 
   const onSubmit = (data: EditListingForm) => {
     // Clean up the data before sending - convert empty strings to null/undefined for optional fields
-    const cleanedData: EditListingForm = {
+    const locationData = useLocation && latitude && longitude
+      ? { latitude, longitude }
+      : { latitude: null, longitude: null }
+    
+    // Always include mustGoBy - convert datetime-local to ISO 8601 format, or empty string if empty
+    // Backend logic: if != null, then if empty string sets to null (clears), otherwise parses the date
+    // We send empty string (not null) so backend knows to update the field
+    const mustGoByValue = data.mustGoBy && data.mustGoBy.trim() 
+      ? new Date(data.mustGoBy).toISOString() 
+      : '' // Send empty string to clear, not null (null would skip the update)
+    
+    const cleanedData = {
       ...data,
       description: data.description?.trim() || undefined,
       category: data.category?.trim() || undefined,
       condition: data.condition?.trim() || undefined,
       imageUrl: data.imageUrl?.trim() || undefined,
-      // Convert datetime-local to ISO 8601 format, or undefined if empty
-      mustGoBy: data.mustGoBy && data.mustGoBy.trim() 
-        ? new Date(data.mustGoBy).toISOString() 
-        : undefined,
+      mustGoBy: mustGoByValue, // Always include (empty string or ISO date)
+      // Include location
+      ...locationData,
     }
+    
     updateListingMutation.mutate(cleanedData)
   }
 
@@ -327,6 +383,95 @@ export default function EditPage() {
               <p className="text-xs text-muted-foreground">
                 Set a deadline for when this item must be sold
               </p>
+            </div>
+
+            {/* Location Sharing Toggle */}
+            <div className="space-y-3 rounded-lg border border-input bg-muted/20 p-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="useLocation"
+                  checked={useLocation}
+                  onChange={(e) => {
+                    setUseLocation(e.target.checked)
+                    if (!e.target.checked) {
+                      setLatitude(null)
+                      setLongitude(null)
+                      setShowMapSelector(false)
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  aria-label="Share my location with buyers"
+                />
+                <Label htmlFor="useLocation" className="cursor-pointer font-medium flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Share my location with buyers
+                </Label>
+              </div>
+
+              {useLocation && (
+                <div className="ml-7 mt-2 space-y-3">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={captureLocation}
+                      disabled={locationLoading}
+                      className="flex items-center gap-2"
+                    >
+                      {locationLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Getting your location...
+                        </>
+                      ) : latitude ? (
+                        <>
+                          <MapPin className="h-4 w-4" />
+                          Location captured
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="h-4 w-4" />
+                          Use my current location
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowMapSelector(!showMapSelector)}
+                      className="flex items-center gap-2"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      {showMapSelector ? 'Hide Map' : 'Select on Map'}
+                    </Button>
+                  </div>
+                  
+                  {latitude && longitude && (
+                    <p className="text-xs text-muted-foreground">
+                      Location set to: {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                    </p>
+                  )}
+
+                  {showMapSelector && (
+                    <LocationMapSelector
+                      onLocationSelect={(lat: number, lng: number) => {
+                        setLatitude(lat)
+                        setLongitude(lng)
+                        // Ensure useLocation is enabled when location is selected
+                        if (!useLocation) {
+                          setUseLocation(true)
+                        }
+                      }}
+                      initialLat={latitude ?? undefined}
+                      initialLng={longitude ?? undefined}
+                      height="300px"
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}

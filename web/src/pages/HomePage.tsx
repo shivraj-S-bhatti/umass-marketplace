@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { StickerBadge } from '@/components/ui/sticker-badge'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
-import { Search, Calendar, XCircle } from 'lucide-react'
+import { Search, Calendar, XCircle, MapPin, Eye } from 'lucide-react'
 import { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
 import TwoTierNavbar from '@/components/TwoTierNavbar'
 import { useSearchParams } from 'react-router-dom'
 import { ListingDetailModal } from '@/components/ui/listing-detail-modal'
+import * as turf from '@turf/turf'
 
 // Home Page - displays listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
@@ -238,9 +240,59 @@ function HomeListingCard({ listing }: { listing: Listing }) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
 
   // Get the current user's ID from local storage or context
   const currentUserId = localStorage.getItem('userId') // This should match how you store the user ID
+
+  // Get user location for distance calculation
+  useEffect(() => {
+    if (userLocation) return;
+
+    const requestLocation = () => {
+      if (!navigator.geolocation) return;
+      
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setUserLocation(loc);
+        },
+        () => {
+          // Silently handle location denial
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    };
+
+    requestLocation();
+
+    const handleFirstClick = () => {
+      requestLocation();
+      document.removeEventListener("click", handleFirstClick);
+    };
+    document.addEventListener("click", handleFirstClick);
+
+    return () => document.removeEventListener("click", handleFirstClick);
+  }, []);
+
+  // Calculate distance
+  const distanceText = userLocation && listing.latitude != null && listing.longitude != null
+    ? (() => {
+        try {
+          const dist = turf.distance(
+            [userLocation.lng, userLocation.lat], 
+            [listing.longitude!, listing.latitude!], 
+            { units: "kilometers" }
+          );
+          return dist < 1
+            ? `${Math.round(dist * 1000)} m away`
+            : `${dist.toFixed(1)} km away`;
+        } catch (error) {
+          console.error("Error calculating distance", error);
+          return null;
+        }
+      })()
+    : null;
 
   const handleUpdateStatus = async (newStatus: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => {
     try {
@@ -287,63 +339,89 @@ function HomeListingCard({ listing }: { listing: Listing }) {
   return (
     <>
       <Card 
-      className="hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={() => setIsDetailModalOpen(true)}
-    >
-        {listing.imageUrl && (
-          <div 
-            className="w-full h-48 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
+        className="hover:shadow-comic transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col"
+        onClick={() => setIsDetailModalOpen(true)}
+      >
+        {/* Image Section - Always show, with default Eye icon if no image */}
+        <div 
+          className="w-full h-40 overflow-hidden rounded-t-comic cursor-pointer hover:opacity-90 transition-opacity bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 relative"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (listing.imageUrl) {
               setIsImageModalOpen(true);
-            }}
-          >
+            }
+          }}
+        >
+          {listing.imageUrl ? (
             <img
               src={listing.imageUrl}
               alt={listing.title}
               className="w-full h-full object-cover"
             />
-          </div>
-        )}
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            listing.status === 'ACTIVE' 
-              ? 'bg-green-100 text-green-800' 
-              : listing.status === 'ON_HOLD'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-red-100 text-red-800'
-          }`}>
-            {listing.status}
-          </span>
-        </div>
-        <CardDescription className="line-clamp-2">
-          {listing.description || 'No description provided'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center text-2xl font-bold text-primary">
-            {formatPrice(listing.price)}
-          </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
-            {formatDate(listing.createdAt)}
-          </div>
-          {listing.category && (
-            <div className="text-sm">
-              <span className="font-medium">Category:</span> {listing.category}
-            </div>
+          ) : (
+            <Eye className="h-12 w-12 text-primary/40" />
           )}
-          {listing.condition && (
-            <div className="text-sm">
-              <span className="font-medium">Condition:</span> {listing.condition}
+          {/* Must Go By Badge on Image */}
+          {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
+            <div className="absolute top-2 left-2 z-10">
+              <StickerBadge variant="new" className="bg-red-500 text-white text-xs px-2 py-1 border-2 border-white shadow-lg">
+                MUST GO
+              </StickerBadge>
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+
+        <CardHeader className="pb-2 flex-shrink-0">
+          <div className="flex justify-between items-start gap-2">
+            <CardTitle className="text-base font-bold line-clamp-2 flex-1">{listing.title}</CardTitle>
+            <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'} className="shrink-0 text-xs px-2 py-1">
+              {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
+            </StickerBadge>
+          </div>
+          <CardDescription className="line-clamp-2 mt-1 text-sm">
+            {listing.description || 'No description provided'}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pt-0 flex-1 flex flex-col justify-between">
+          <div className="space-y-2">
+            {/* Price - Centered */}
+            <div className="flex items-center justify-center">
+              <StickerBadge variant="price" className="text-lg px-3 py-1">
+                {formatPrice(listing.price)}
+              </StickerBadge>
+            </div>
+
+            {/* Distance - Centered below price */}
+            {distanceText && (
+              <div className="flex items-center justify-center gap-1 text-green-600 font-semibold text-xs">
+                <MapPin className="h-4 w-4" />
+                <span>{distanceText}</span>
+              </div>
+            )}
+
+            {/* Date - Centered */}
+            <div className="flex items-center justify-center text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3 mr-1" />
+              <span>{formatDate(listing.createdAt)}</span>
+            </div>
+
+            {/* Category and Condition as Bubbles - Centered */}
+            <div className="flex flex-wrap gap-1.5 justify-center text-xs">
+              {listing.category && (
+                <span className="px-2 py-0.5 rounded-comic bg-secondary border border-foreground font-medium">
+                  {listing.category}
+                </span>
+              )}
+              {listing.condition && (
+                <span className="px-2 py-0.5 rounded-comic bg-muted border border-foreground font-medium">
+                  {listing.condition}
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
     {/* Details Modal */}
     <ListingDetailModal

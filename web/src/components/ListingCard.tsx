@@ -31,7 +31,6 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
   }, [listing.id, listing.imageUrl])
 
   // Determine if we should show an image or the Eye icon
-  // imageUrl defaults to empty string "" when not set, so we check for non-empty string
   const hasValidImage = listing.imageUrl && 
     typeof listing.imageUrl === 'string' && 
     listing.imageUrl.trim() !== '' && 
@@ -49,15 +48,17 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setUserLocation(loc);
         },
-        (err) => {
-          console.log("Location denied:", err.message);
+        () => {
+          // Silently handle location denial
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     };
 
+    // Request location immediately
     requestLocation();
 
+    // Also allow fallback on first click if blocked
     const handleFirstClick = () => {
       requestLocation();
       document.removeEventListener("click", handleFirstClick);
@@ -67,16 +68,21 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
     return () => document.removeEventListener("click", handleFirstClick);
   }, []);
 
-  const distanceText = userLocation && listing.latitude && listing.longitude
+  const distanceText = userLocation && listing.latitude != null && listing.longitude != null
     ? (() => {
-        const dist = turf.distance(
-          [userLocation.lng, userLocation.lat], 
-          [listing.longitude, listing.latitude], 
-          { units: "kilometers" }
-        );
-        return dist < 1
-          ? `${Math.round(dist * 1000)} m away`
-          : `${dist.toFixed(1)} km away`;
+        try {
+          const dist = turf.distance(
+            [userLocation.lng, userLocation.lat], 
+            [listing.longitude!, listing.latitude!], 
+            { units: "kilometers" }
+          );
+          return dist < 1
+            ? `${Math.round(dist * 1000)} m away`
+            : `${dist.toFixed(1)} km away`;
+        } catch (error) {
+          console.error("Error calculating distance", error);
+          return null;
+        }
       })()
     : null;
 
@@ -146,7 +152,6 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
               alt={listing.title} 
               className="w-full h-full object-cover"
               onError={() => {
-                console.log('Image failed to load:', listing.imageUrl)
                 setImageError(true)
               }}
               onLoad={() => setImageError(false)}
@@ -188,7 +193,9 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
               </StickerBadge>
 
               {distanceText && (
-                <div className="flex items-center gap-2 text-green-600 font-bold text-sm sm:text-base animate-fade-in">
+                <div 
+                  className="flex items-center gap-2 text-green-600 font-bold text-sm sm:text-base animate-fade-in"
+                >
                   <MapPin className="h-5 w-5" />
                   <span>{distanceText}</span>
                 </div>

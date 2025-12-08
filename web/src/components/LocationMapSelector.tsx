@@ -24,10 +24,20 @@ interface LocationMapSelectorProps {
 function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
   useMapEvents({
     click: (e) => {
-      const { lat, lng } = e.latlng
-      onLocationSelect(lat, lng)
+      try {
+        const { lat, lng } = e.latlng
+        console.log("🗺️ MapClickHandler: Map clicked", { lat, lng });
+        if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
+          onLocationSelect(lat, lng)
+        } else {
+          console.error("❌ MapClickHandler: Invalid coordinates", { lat, lng });
+        }
+      } catch (error) {
+        console.error("❌ MapClickHandler: Error handling click", error);
+      }
     },
   })
+  
   return null
 }
 
@@ -37,9 +47,14 @@ export default function LocationMapSelector({
   initialLng,
   height = '400px'
 }: LocationMapSelectorProps) {
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
-    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
-  )
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(() => {
+    if (initialLat != null && initialLng != null && 
+        typeof initialLat === 'number' && typeof initialLng === 'number' &&
+        !isNaN(initialLat) && !isNaN(initialLng)) {
+      return { lat: initialLat, lng: initialLng }
+    }
+    return null
+  })
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
 
@@ -51,10 +66,30 @@ export default function LocationMapSelector({
     ? [userLocation.lat, userLocation.lng]
     : defaultCenter
 
+  // Ensure center is always valid numbers
+  const validCenter: [number, number] = [
+    typeof center[0] === 'number' && !isNaN(center[0]) && isFinite(center[0]) ? center[0] : defaultCenter[0],
+    typeof center[1] === 'number' && !isNaN(center[1]) && isFinite(center[1]) ? center[1] : defaultCenter[1]
+  ]
+
+  // Log for debugging
+  useEffect(() => {
+    console.log("🗺️ LocationMapSelector Debug:", {
+      initialLat,
+      initialLng,
+      selectedLocation,
+      userLocation,
+      validCenter,
+      hasSelectedLocation: !!selectedLocation
+    });
+  }, [initialLat, initialLng, selectedLocation, userLocation, validCenter]);
+
   const handleMapClick = (lat: number, lng: number) => {
+    console.log("🗺️ Map clicked at:", { lat, lng });
     const location = { lat, lng }
     setSelectedLocation(location)
     onLocationSelect(lat, lng)
+    console.log("✅ Location selected and callback called");
   }
 
   const getCurrentLocation = () => {
@@ -82,8 +117,13 @@ export default function LocationMapSelector({
   }
 
   useEffect(() => {
-    if (initialLat && initialLng) {
+    if (initialLat != null && initialLng != null && 
+        typeof initialLat === 'number' && typeof initialLng === 'number' &&
+        !isNaN(initialLat) && !isNaN(initialLng)) {
       setSelectedLocation({ lat: initialLat, lng: initialLng })
+    } else if (initialLat == null && initialLng == null) {
+      // Clear selection if both are null
+      setSelectedLocation(null)
     }
   }, [initialLat, initialLng])
 
@@ -106,27 +146,45 @@ export default function LocationMapSelector({
         </Button>
       </div>
       <div className="border-2 border-foreground rounded-comic overflow-hidden" style={{ height }}>
-        <MapContainer
-          center={center}
-          zoom={selectedLocation || userLocation ? 15 : 13}
-          style={{ height: '100%', width: '100%' }}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-          />
-          <MapClickHandler onLocationSelect={handleMapClick} />
-          {selectedLocation && (
-            <Marker position={[selectedLocation.lat, selectedLocation.lng]}>
-              <L.Popup>
-                Selected Location
-                <br />
-                {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
-              </L.Popup>
-            </Marker>
-          )}
-        </MapContainer>
+        {validCenter[0] != null && validCenter[1] != null && 
+         typeof validCenter[0] === 'number' && typeof validCenter[1] === 'number' &&
+         !isNaN(validCenter[0]) && !isNaN(validCenter[1]) ? (
+          <MapContainer
+            key={`map-${validCenter[0]}-${validCenter[1]}-${selectedLocation ? 'selected' : 'default'}`}
+            center={validCenter}
+            zoom={selectedLocation || userLocation ? 15 : 13}
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
+            />
+            <MapClickHandler onLocationSelect={handleMapClick} />
+            {/* Always show a marker - either selected location or center point */}
+            {selectedLocation ? (
+              <Marker position={[selectedLocation.lat, selectedLocation.lng]}>
+                <L.Popup>
+                  Selected Location
+                  <br />
+                  {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
+                </L.Popup>
+              </Marker>
+            ) : (
+              <Marker position={validCenter}>
+                <L.Popup>
+                  Click to select location
+                  <br />
+                  {validCenter[0].toFixed(4)}, {validCenter[1].toFixed(4)}
+                </L.Popup>
+              </Marker>
+            )}
+          </MapContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full bg-muted">
+            <p className="text-sm text-muted-foreground">Loading map...</p>
+          </div>
+        )}
       </div>
       {selectedLocation && (
         <p className="text-xs text-muted-foreground text-center">

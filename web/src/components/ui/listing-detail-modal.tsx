@@ -1,16 +1,15 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog'
 import { Button } from './button'
-import { Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User } from 'lucide-react'
+import { Calendar, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User, Navigation } from 'lucide-react'
 import { formatPrice, formatDate } from '@/lib/utils'
 import type { Listing } from '@/lib/api'
-import { apiClient } from '@/lib/api'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useChat } from '@/contexts/ChatContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { SellerReviews } from '@/components/SellerReviews'
 import { CreateReview } from '@/components/CreateReview'
+import LocationMapPopup from '@/components/LocationMapPopup'
 
 interface ListingDetailModalProps {
   listing: Listing | null
@@ -29,6 +28,7 @@ export function ListingDetailModal({
 }: ListingDetailModalProps) {
   const { toast } = useToast()
   const [isUpdating, setIsUpdating] = useState(false)
+  const [mapOpen, setMapOpen] = useState(false)
   const navigate = useNavigate()
   const { startChat } = useChat()
 
@@ -114,6 +114,30 @@ export function ListingDetailModal({
                     <p className="text-muted-foreground">{listing.condition}</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Must Go By Date */}
+            {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-red-700 font-semibold">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Must go by: {new Date(listing.mustGoBy).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Location / Show on Map */}
+            {listing.latitude && listing.longitude && (
+              <div>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setMapOpen(true)}
+                >
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Show on Map
+                </Button>
               </div>
             )}
 
@@ -221,6 +245,17 @@ export function ListingDetailModal({
           </div>
         </DialogContent>
     </Dialog>
+
+    {/* Map Popup */}
+    {listing.latitude && listing.longitude && (
+      <LocationMapPopup
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        lat={listing.latitude}
+        lng={listing.longitude}
+        title={listing.title}
+      />
+    )}
   </>
   )
 }
