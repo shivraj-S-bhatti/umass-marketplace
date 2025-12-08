@@ -3,6 +3,7 @@ package edu.umass.marketplace.controller;
 // Listing Controller - handles all listing-related API endpoints
 // Provides CRUD operations for marketplace listings with pagination and filtering
 import edu.umass.marketplace.dto.CreateListingRequest;
+import edu.umass.marketplace.dto.BulkListingRequest;
 import edu.umass.marketplace.response.ListingResponse;
 import edu.umass.marketplace.response.StatsResponse;
 import edu.umass.marketplace.service.ListingService;
@@ -59,8 +60,10 @@ public class ListingController {
 
     @PostMapping("/bulk")
     @Operation(summary = "Create multiple listings", description = "Create multiple marketplace listings in bulk")
-    public ResponseEntity<List<ListingResponse>> createListingsBulk(@Valid @RequestBody List<CreateListingRequest> requests) {
-        List<ListingResponse> listings = listingService.createListingsBulk(requests);
+    public ResponseEntity<List<ListingResponse>> createListingsBulk(
+            @RequestBody BulkListingRequest bulkRequest, 
+            java.security.Principal principal) {
+        List<ListingResponse> listings = listingService.createListingsBulk(bulkRequest.getListings(), principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(listings);
     }
 

@@ -11,6 +11,7 @@ import TwoTierNavbar from '@/components/TwoTierNavbar'
 import { useSearchParams } from 'react-router-dom'
 import { ListingDetailModal } from '@/components/ui/listing-detail-modal'
 import * as turf from '@turf/turf'
+import { useUser } from '@/contexts/UserContext'
 
 // Home Page - displays listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
@@ -241,9 +242,10 @@ function HomeListingCard({ listing }: { listing: Listing }) {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const { user } = useUser()
 
-  // Get the current user's ID from local storage or context
-  const currentUserId = localStorage.getItem('userId') // This should match how you store the user ID
+  // Get the current user's ID from context
+  const currentUserId = user?.id
 
   // Get user location for distance calculation
   useEffect(() => {

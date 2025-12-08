@@ -1,30 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react'
+import { ShoppingCart, Trash2 } from 'lucide-react'
 import { StickerBadge } from '@/components/ui/sticker-badge'
+import { useCart } from '@/contexts/CartContext'
+import { useNavigate } from 'react-router-dom'
 
 // Cart Page - Shopping cart for buyers
-// TODO: Implement actual cart functionality with backend integration
+// Allows users to manage items in their cart
 export default function CartPage() {
-  // Placeholder cart items - will be replaced with actual cart state
-  const cartItems: Array<{
-    id: string
-    title: string
-    price: number
-    quantity: number
-    imageUrl?: string
-  }> = []
+  const { items, removeFromCart, cartTotal } = useCart()
+  const navigate = useNavigate()
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | string) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(price)
+    }).format(numPrice)
   }
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const tax = subtotal * 0.0625 // MA state tax (6.25%)
-  const total = subtotal + tax
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -37,7 +30,7 @@ export default function CartPage() {
           </p>
         </div>
 
-        {cartItems.length === 0 ? (
+        {items.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
@@ -45,8 +38,8 @@ export default function CartPage() {
               <p className="text-muted-foreground mb-6 text-center">
                 Start shopping to add items to your cart
               </p>
-              <Button asChild>
-                <a href="/">Browse Listings</a>
+              <Button onClick={() => navigate('/')}>
+                Browse Listings
               </Button>
             </CardContent>
           </Card>
@@ -54,17 +47,17 @@ export default function CartPage() {
           <>
             {/* Cart Items */}
             <div className="space-y-3">
-              {cartItems.map((item) => (
-                <Card key={item.id} className="hover:shadow-comic transition-all">
+              {items.map((item) => (
+                <Card key={item.id} className="hover:shadow-lg transition-all">
                   <CardContent className="p-4">
                     <div className="flex gap-4">
                       {/* Item Image */}
-                      <div className="w-24 h-24 rounded-comic bg-muted flex items-center justify-center flex-shrink-0">
+                      <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
                             alt={item.title}
-                            className="w-full h-full object-cover rounded-comic"
+                            className="w-full h-full object-cover rounded-lg"
                           />
                         ) : (
                           <ShoppingCart className="h-8 w-8 text-muted-foreground opacity-50" />
@@ -82,49 +75,21 @@ export default function CartPage() {
                           </div>
                         </div>
 
-                        {/* Quantity Controls */}
-                        <div className="flex items-center justify-between mt-4">
-                          <div className="flex items-center gap-2 border-2 border-foreground rounded-comic">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-none rounded-l-comic"
-                              onClick={() => {
-                                // TODO: Decrease quantity
-                              }}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="px-3 font-bold">{item.quantity}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-none rounded-r-comic"
-                              onClick={() => {
-                                // TODO: Increase quantity
-                              }}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              // TODO: Remove item from cart
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive w-fit mt-4"
+                          onClick={() => removeFromCart(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remove
+                        </Button>
                       </div>
 
-                      {/* Item Total */}
+                      {/* Item Price */}
                       <div className="text-right">
                         <p className="text-lg font-bold">
-                          {formatPrice(item.price * item.quantity)}
+                          {formatPrice(item.price)}
                         </p>
                       </div>
                     </div>
@@ -140,24 +105,20 @@ export default function CartPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-bold">{formatPrice(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax (6.25%)</span>
-                  <span className="font-bold">{formatPrice(tax)}</span>
+                  <span className="text-muted-foreground">Total ({items.length} items)</span>
+                  <span className="font-bold">{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="border-t-2 border-foreground pt-3 flex justify-between">
-                  <span className="font-bold text-lg">Total</span>
+                  <span className="font-bold text-lg">Amount</span>
                   <StickerBadge variant="price" className="text-xl">
-                    {formatPrice(total)}
+                    {formatPrice(cartTotal)}
                   </StickerBadge>
                 </div>
                 <Button className="w-full mt-4" size="lg">
                   Proceed to Checkout
                 </Button>
-                <Button variant="outline" className="w-full" asChild>
-                  <a href="/">Continue Shopping</a>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/')}>
+                  Continue Shopping
                 </Button>
               </CardContent>
             </Card>

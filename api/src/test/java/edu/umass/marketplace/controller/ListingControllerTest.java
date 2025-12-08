@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.List;
 import java.util.UUID;
 
@@ -172,18 +173,18 @@ class ListingControllerTest {
     void shouldCreateBulkListings() throws Exception {
         // Given
         List<CreateListingRequest> requests = List.of(testCreateRequest);
-        when(listingService.createListingsBulk(anyList()))
+        when(listingService.createListingsBulk(anyList(), any()))
                 .thenReturn(List.of(testListingResponse));
 
         // When & Then
         mockMvc.perform(post("/api/listings/bulk")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requests)))
+                        .content(objectMapper.writeValueAsString(Map.of("listings", requests))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].title").value("Test Laptop"));
 
-        verify(listingService, times(1)).createListingsBulk(anyList());
+        verify(listingService, times(1)).createListingsBulk(anyList(), any());
     }
 
     @Test

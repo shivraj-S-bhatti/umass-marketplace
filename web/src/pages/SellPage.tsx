@@ -18,6 +18,7 @@ import { createBulkListings } from '@/lib/api'
 import { CATEGORIES, CONDITIONS } from '@/lib/constants'
 import { parseExcelFile, validateTemplateFormat, validateExcelStructure, downloadTemplate, convertToCreateListingForm } from '@/lib/excelTemplate'
 import LocationMapSelector from '@/components/LocationMapSelector'
+import { compressImage } from '@/lib/imageCompression'
 
 // Sell Page - form for creating new marketplace listings
 // Allows users to post items for sale with validation and error handling
@@ -54,7 +55,7 @@ export default function SellPage() {
     resolver: zodResolver(createListingSchema),
   })
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // Validate file type
@@ -79,12 +80,20 @@ export default function SellPage() {
 
       setImageFile(file)
 
-      // Create preview
+      // Create preview and compress image
       const reader = new FileReader()
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64String = reader.result as string
-        setImagePreview(base64String)
-        setValue('imageUrl', base64String)
+        const originalSizeKB = (base64String.length * 0.75) / 1024
+        
+        // Compress image to fit within size limits
+        const compressedBase64 = await compressImage(base64String, 400)
+        const compressedSizeKB = (compressedBase64.length * 0.75) / 1024
+        
+        console.log(`📸 Image compression: ${originalSizeKB.toFixed(2)}KB → ${compressedSizeKB.toFixed(2)}KB`)
+        
+        setImagePreview(compressedBase64)
+        setValue('imageUrl', compressedBase64)
       }
       reader.readAsDataURL(file)
     }
@@ -162,6 +171,7 @@ export default function SellPage() {
 
   const onSubmit = (data: CreateListingForm) => {
     console.log('📝 Form submitted with data:', data)
+    console.log('📍 Location state:', { useLocation, latitude, longitude })
     const finalData = {
       ...data,
       ...(useLocation && latitude && longitude
@@ -170,6 +180,7 @@ export default function SellPage() {
       // Convert datetime-local to ISO 8601 format
       ...(data.mustGoBy ? { mustGoBy: new Date(data.mustGoBy).toISOString() } : {}),
     }
+    console.log('🔄 Final data being sent to API:', finalData)
     console.log('🔄 Calling createListingMutation.mutate...')
     createListingMutation.mutate(finalData)
   }

@@ -220,7 +220,7 @@ class ApiClient {
   async createBulkListings(data: CreateListingRequest[]): Promise<Listing[]> {
     return this.request<Listing[]>('/api/listings/bulk', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ listings: data }),
     })
   }
 

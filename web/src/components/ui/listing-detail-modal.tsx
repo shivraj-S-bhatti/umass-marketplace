@@ -1,11 +1,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog'
 import { Button } from './button'
-import { Calendar, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User, Navigation } from 'lucide-react'
+import { Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User, Navigation, ShoppingCart } from 'lucide-react'
 import { formatPrice, formatDate } from '@/lib/utils'
 import type { Listing } from '@/lib/api'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useChat } from '@/contexts/ChatContext'
+import { useCart } from '@/contexts/CartContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { SellerReviews } from '@/components/SellerReviews'
 import { CreateReview } from '@/components/CreateReview'
@@ -31,6 +32,16 @@ export function ListingDetailModal({
   const [mapOpen, setMapOpen] = useState(false)
   const navigate = useNavigate()
   const { startChat } = useChat()
+  const { addToCart } = useCart()
+
+  const handleAddToCart = () => {
+    if (!listing) return
+    addToCart(listing)
+    toast({
+      title: 'Added to cart!',
+      description: `${listing.title} has been added to your cart.`,
+    })
+  }
 
   if (!listing) return null
 
@@ -100,7 +111,7 @@ export function ListingDetailModal({
               </p>
             </div>
 
-            {(listing.category || listing.condition) && (
+            {(listing.category || listing.condition || (listing.latitude && listing.longitude)) && (
               <div className="grid grid-cols-2 gap-4">
                 {listing.category && (
                   <div>
@@ -112,6 +123,17 @@ export function ListingDetailModal({
                   <div>
                     <h4 className="font-semibold">Condition</h4>
                     <p className="text-muted-foreground">{listing.condition}</p>
+                  </div>
+                )}
+                {listing.latitude && listing.longitude && (
+                  <div>
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Location
+                    </h4>
+                    <p className="text-muted-foreground text-sm">
+                      {listing.latitude.toFixed(4)}, {listing.longitude.toFixed(4)}
+                    </p>
                   </div>
                 )}
               </div>
@@ -215,6 +237,10 @@ export function ListingDetailModal({
                 </div>
               ) : (
                 <>
+                  <Button onClick={handleAddToCart} className="flex-1">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
                   <Button onClick={handleContactSeller} className="flex-1">
                     <Mail className="h-4 w-4 mr-2" />
                     Contact Seller

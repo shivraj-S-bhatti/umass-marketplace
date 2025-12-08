@@ -233,25 +233,31 @@ public class ListingService {
      * Create multiple listings in bulk
      */
     @Transactional
-    public List<ListingResponse> createListingsBulk(List<CreateListingRequest> requests) {
+    public List<ListingResponse> createListingsBulk(List<CreateListingRequest> requests, java.security.Principal principal) {
         log.debug("🔍 Creating {} listings in bulk", requests.size());
 
-        // Get seller from authenticated user context (OAuth2), or use QA Testing user if not authenticated
+        if (requests == null || requests.isEmpty()) {
+            throw new RuntimeException("Request list cannot be empty");
+        }
+
+        // Get seller from authenticated user context (OAuth2)
         User seller = getCurrentAuthenticatedUser();
-        final User finalSeller; // Make it effectively final for lambda
         if (seller == null) {
-            // Use QA Testing user for unauthenticated requests
-            String qaEmail = "qa-testing@umass.edu";
-            finalSeller = userRepository.findByEmail(qaEmail)
-                .orElseGet(() -> {
-                    User qaUser = new User();
-                    qaUser.setEmail(qaEmail);
-                    qaUser.setName("QA Testing");
-                    return userRepository.save(qaUser);
-                });
-            log.debug("🔍 Using QA Testing user for unauthenticated bulk listing creation");
-        } else {
-            finalSeller = seller;
+            throw new RuntimeException("User not authenticated");
+        }
+
+        // Validate each request
+        for (int i = 0; i < requests.size(); i++) {
+            CreateListingRequest req = requests.get(i);
+            if (req.getTitle() == null || req.getTitle().trim().isEmpty()) {
+                throw new RuntimeException("Row " + (i + 1) + ": Title is required");
+            }
+            if (req.getPrice() == null) {
+                throw new RuntimeException("Row " + (i + 1) + ": Price is required");
+            }
+            if (req.getPrice().doubleValue() <= 0) {
+                throw new RuntimeException("Row " + (i + 1) + ": Price must be greater than 0");
+            }
         }
 
         List<Listing> listings = requests.stream()
@@ -282,7 +288,7 @@ public class ListingService {
                         }
                     }
                     listing.setStatus(Listing.STATUS_ACTIVE);
-                    listing.setSeller(finalSeller);
+                    listing.setSeller(seller);
                     return listing;
                 })
                 .collect(Collectors.toList());

@@ -107,6 +107,60 @@ export function validateExcelStructure(data: any[]): { valid: boolean; error?: s
 }
 
 /**
+ * Compresses an image by converting it to a canvas and reducing quality
+ * Returns a promise that resolves to compressed base64 data URL
+ */
+function compressImage(dataUrl: string, maxSizeKB: number = 500): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+      let quality = 0.9
+
+      // Compress by reducing quality until size is acceptable
+      while (quality > 0.1) {
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(dataUrl) // Fallback to original if compression fails
+          return
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height)
+        const compressed = canvas.toDataURL('image/jpeg', quality)
+        
+        // Check if size is acceptable (rough estimate: base64 is ~33% larger)
+        const sizeKB = (compressed.length * 0.75) / 1024
+        if (sizeKB <= maxSizeKB) {
+          resolve(compressed)
+          return
+        }
+        
+        // Reduce quality if still too large
+        quality -= 0.1
+        
+        // If quality is too low, reduce dimensions instead
+        if (quality < 0.3) {
+          width = Math.floor(width * 0.8)
+          height = Math.floor(height * 0.8)
+          quality = 0.9
+        }
+      }
+      
+      // Last resort: return the smallest possible version
+      resolve(canvas.toDataURL('image/jpeg', 0.1))
+    }
+    img.onerror = () => {
+      resolve(dataUrl) // Fallback to original if image fails to load
+    }
+    img.src = dataUrl
+  })
+}
+
+/**
  * Extracts images from Excel file and converts them to base64 data URLs
  * Uses ExcelJS to extract embedded images from Excel files
  */
@@ -166,12 +220,17 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
         const base64 = btoa(binaryString)
         const dataUrl = `data:${mimeType};base64,${base64}`
         
+        // Compress the image to reduce size
+        const compressedDataUrl = await compressImage(dataUrl, 400) // Max 400KB per image
+        
         // Map image to row number (range.tl.nativeRow is 0-indexed, we want 1-indexed for row number)
         // Add 1 because Excel rows are 1-indexed and we want to match the data row
         const rowNumber = image.range.tl.nativeRow + 1
-        imageMap.set(rowNumber, dataUrl)
+        imageMap.set(rowNumber, compressedDataUrl)
         
-        console.log(`✅ Extracted image for row ${rowNumber}, size: ${buffer.length} bytes, type: ${mimeType}`)
+        const originalSizeKB = (dataUrl.length * 0.75) / 1024
+        const compressedSizeKB = (compressedDataUrl.length * 0.75) / 1024
+        console.log(`✅ Extracted image for row ${rowNumber}, original: ${originalSizeKB.toFixed(1)}KB, compressed: ${compressedSizeKB.toFixed(1)}KB, type: ${mimeType}`)
       } catch (error) {
         console.warn(`Failed to extract image ${image.imageId}:`, error)
       }
