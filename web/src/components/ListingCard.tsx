@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StickerBadge } from '@/components/ui/sticker-badge'
-import { Calendar, Image as ImageIcon, MapPin, Navigation } from 'lucide-react'
+import { Calendar, Eye, MapPin, Navigation } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient, type Listing } from '@/lib/api'
 import * as turf from '@turf/turf'
@@ -23,6 +23,18 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [mapOpen, setMapOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  // Reset image error when listing changes
+  useEffect(() => {
+    setImageError(false)
+  }, [listing.id, listing.imageUrl])
+
+  // Determine if we should show an image or the Eye icon
+  const hasValidImage = listing.imageUrl && 
+    typeof listing.imageUrl === 'string' && 
+    listing.imageUrl.trim() !== '' && 
+    !imageError
 
   useEffect(() => {
     if (userLocation) return;
@@ -116,15 +128,23 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
     <>
       <Card className="hover:shadow-lg transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col">
         <div
-          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-muted flex items-center justify-center flex-shrink-0"
-          onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
+          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0"
+          onClick={() => hasValidImage && setIsImageModalOpen(true)}
         >
-          {listing.imageUrl ? (
-            <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
+          {hasValidImage ? (
+            <img 
+              src={listing.imageUrl!} 
+              alt={listing.title} 
+              className="w-full h-full object-cover"
+              onError={() => {
+                console.log('Image failed to load:', listing.imageUrl)
+                setImageError(true)
+              }}
+              onLoad={() => setImageError(false)}
+            />
           ) : (
-            <div className="flex flex-col items-center justify-center text-muted-foreground">
-              <ImageIcon className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mb-1 sm:mb-2 opacity-50" />
-              <span className="text-xs sm:text-sm font-medium">No Image</span>
+            <div className="flex items-center justify-center w-full h-full">
+              <Eye className="h-12 w-12 text-primary/40" />
             </div>
           )}
         </div>
@@ -141,9 +161,9 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
         <CardContent className="pt-0 flex-1 flex flex-col justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <StickerBadge variant="price" className="text-xs sm:text-sm md:text-base px-1.5 sm:px-2 py-0.5 sm:py-1">
+              <span className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-orange-500 text-white font-bold text-base sm:text-lg md:text-xl shadow-sm">
                 {formatPrice(listing.price)}
-              </StickerBadge>
+              </span>
 
               {distanceText && (
                 <div className="flex items-center gap-2 text-green-600 font-bold text-sm sm:text-base animate-fade-in">

@@ -130,7 +130,15 @@ export default function EditPage() {
   })
 
   const onSubmit = (data: EditListingForm) => {
-    updateListingMutation.mutate(data)
+    // Clean up the data before sending - convert empty strings to null/undefined for optional fields
+    const cleanedData: EditListingForm = {
+      ...data,
+      description: data.description?.trim() || undefined,
+      category: data.category?.trim() || undefined,
+      condition: data.condition?.trim() || undefined,
+      imageUrl: data.imageUrl?.trim() || undefined,
+    }
+    updateListingMutation.mutate(cleanedData)
   }
 
   if (isFetching) {

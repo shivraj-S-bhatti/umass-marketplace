@@ -242,14 +242,33 @@ public class ListingService {
         }
 
         // Update other fields if provided
-        if (request.getTitle() != null) listing.setTitle(request.getTitle());
-        if (request.getDescription() != null) listing.setDescription(request.getDescription());
-        if (request.getPrice() != null) listing.setPrice(request.getPrice());
-        if (request.getCategory() != null) listing.setCategory(request.getCategory());
-        if (request.getCondition() != null) listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-        if (request.getImageUrl() != null) listing.setImageUrl(request.getImageUrl());
-        if (request.getLatitude() != null) listing.setLatitude(request.getLatitude());
-        if (request.getLongitude() != null) listing.setLongitude(request.getLongitude());
+        if (request.getTitle() != null && !request.getTitle().trim().isEmpty()) {
+            listing.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+            listing.setDescription(request.getDescription().trim().isEmpty() ? null : request.getDescription());
+        }
+        if (request.getPrice() != null) {
+            listing.setPrice(request.getPrice());
+        }
+        if (request.getCategory() != null) {
+            listing.setCategory(request.getCategory().trim().isEmpty() ? null : request.getCategory());
+        }
+        if (request.getCondition() != null && !request.getCondition().trim().isEmpty()) {
+            Condition condition = Condition.fromDisplayName(request.getCondition());
+            listing.setCondition(condition);
+        }
+        if (request.getImageUrl() != null) {
+            // Allow empty string to clear image, or set new image
+            String imageUrl = request.getImageUrl().trim();
+            listing.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
+        }
+        if (request.getLatitude() != null) {
+            listing.setLatitude(request.getLatitude());
+        }
+        if (request.getLongitude() != null) {
+            listing.setLongitude(request.getLongitude());
+        }
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());
