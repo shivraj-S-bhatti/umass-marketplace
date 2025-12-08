@@ -1,7 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { UserProvider } from '@/contexts/UserContext'
-import { ChatProvider } from '@/contexts/ChatContext' // <-- import ChatProvider
+import { ChatProvider } from '@/contexts/ChatContext'
+import { CartProvider } from '@/contexts/CartContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Layout from '@/components/Layout'
 import HomePage from '@/pages/HomePage'
@@ -20,8 +21,8 @@ import SellerProfilePage from '@/pages/SellerProfilePage'
 function App() {
   return (
     <UserProvider>
-      <ChatProvider>  {/* <-- Wrap everything that uses useChat */}
-        <div className="min-h-screen bg-background">
+      <CartProvider>
+        <ChatProvider>
           <Layout>
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -63,10 +64,10 @@ function App() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/profile/:sellerId" element={<SellerProfilePage />} />
             </Routes>
+            <Toaster />
           </Layout>
-          <Toaster />
-        </div>
-      </ChatProvider>
+        </ChatProvider>
+      </CartProvider>
     </UserProvider>
   )
 }

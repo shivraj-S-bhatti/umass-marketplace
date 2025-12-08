@@ -162,6 +162,7 @@ export default function SellPage() {
 
   const onSubmit = (data: CreateListingForm) => {
     console.log('📝 Form submitted with data:', data)
+    console.log('📍 Location state:', { useLocation, latitude, longitude })
     const finalData = {
       ...data,
       ...(useLocation && latitude && longitude
@@ -170,6 +171,7 @@ export default function SellPage() {
       // Convert datetime-local to ISO 8601 format
       ...(data.mustGoBy ? { mustGoBy: new Date(data.mustGoBy).toISOString() } : {}),
     }
+    console.log('🔄 Final data being sent to API:', finalData)
     console.log('🔄 Calling createListingMutation.mutate...')
     createListingMutation.mutate(finalData)
   }

@@ -1,13 +1,14 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
 import { Button } from './button'
-import { Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User } from 'lucide-react'
+import { Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User, ShoppingCart } from 'lucide-react'
 import { formatPrice, formatDate } from '@/lib/utils'
 import type { Listing } from '@/lib/api'
 import { apiClient } from '@/lib/api'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useChat } from '@/contexts/ChatContext'
+import { useCart } from '@/contexts/CartContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { SellerReviews } from '@/components/SellerReviews'
 import { CreateReview } from '@/components/CreateReview'
@@ -31,6 +32,16 @@ export function ListingDetailModal({
   const [isUpdating, setIsUpdating] = useState(false)
   const navigate = useNavigate()
   const { startChat } = useChat()
+  const { addToCart } = useCart()
+
+  const handleAddToCart = () => {
+    if (!listing) return
+    addToCart(listing, 1)
+    toast({
+      title: 'Added to cart!',
+      description: `${listing.title} has been added to your cart.`,
+    })
+  }
 
   if (!listing) return null
 
@@ -191,6 +202,10 @@ export function ListingDetailModal({
                 </div>
               ) : (
                 <>
+                  <Button onClick={handleAddToCart} className="flex-1">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
                   <Button onClick={handleContactSeller} className="flex-1">
                     <Mail className="h-4 w-4 mr-2" />
                     Contact Seller
