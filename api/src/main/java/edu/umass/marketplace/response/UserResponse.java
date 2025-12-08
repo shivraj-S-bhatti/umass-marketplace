@@ -22,6 +22,7 @@ public class UserResponse {
     private UUID id;
     private String name;
     private String email;
+    private String pictureUrl;
     private OffsetDateTime createdAt;
 
     // Static factory method to convert from entity
@@ -30,6 +31,7 @@ public class UserResponse {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .pictureUrl(user.getPictureUrl())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

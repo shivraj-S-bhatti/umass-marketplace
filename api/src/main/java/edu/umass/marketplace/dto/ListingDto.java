@@ -15,29 +15,29 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListingDTO {
+public class ListingDto {
     private UUID id;
-    
+
     @NotBlank(message = "Title is required")
     @Size(min = 3, max = 100, message = "Title must be between 3 and 100 characters")
     private String title;
-    
+
     @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
-    
+
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be greater than 0")
     private BigDecimal price;
-    
+
     private String category;
     private String condition;
     private String imageUrl;
-    
+
     @NotBlank(message = "Status is required")
     @Builder.Default
     private String status = "ACTIVE";
-    
-    private UserDTO seller;
+
+    private UserDto seller;
     private UUID sellerId;
     private Double latitude;
     private Double longitude;
