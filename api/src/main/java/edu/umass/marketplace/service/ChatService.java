@@ -1,9 +1,9 @@
 package edu.umass.marketplace.service;
 
 import edu.umass.marketplace.dto.ChatDTO;
-import edu.umass.marketplace.dto.ListingDTO;
+import edu.umass.marketplace.dto.ListingDto;
 import edu.umass.marketplace.dto.MessageDTO;
-import edu.umass.marketplace.dto.UserDTO;
+import edu.umass.marketplace.dto.UserDto;
 import edu.umass.marketplace.model.Chat;
 import edu.umass.marketplace.model.Listing;
 import edu.umass.marketplace.model.Message;
@@ -126,8 +126,8 @@ public class ChatService {
         return dto;
     }
 
-    private UserDTO convertToUserDTO(User user) {
-        UserDTO dto = new UserDTO();
+    private UserDto convertToUserDTO(User user) {
+        UserDto dto = new UserDto();
         dto.setId(user.getId());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
@@ -135,8 +135,8 @@ public class ChatService {
         return dto;
     }
 
-    private ListingDTO convertToListingDTO(Listing listing) {
-        ListingDTO dto = new ListingDTO();
+    private ListingDto convertToListingDTO(Listing listing) {
+        ListingDto dto = new ListingDto();
         dto.setId(listing.getId());
         dto.setTitle(listing.getTitle());
         dto.setDescription(listing.getDescription());

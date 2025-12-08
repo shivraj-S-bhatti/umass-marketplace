@@ -15,7 +15,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListingDTO {
+public class ListingDto {
     private UUID id;
     
     @NotBlank(message = "Title is required")
@@ -37,7 +37,7 @@ public class ListingDTO {
     @Builder.Default
     private String status = "ACTIVE";
     
-    private UserDTO seller;
+    private UserDto seller;
     private UUID sellerId;
     private Double latitude;
     private Double longitude;

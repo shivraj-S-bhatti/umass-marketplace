@@ -13,9 +13,9 @@ import java.util.UUID;
 public class ChatDTO {
     private UUID id;
     private UUID listingId;
-    private ListingDTO listing;
-    private UserDTO buyer;
-    private UserDTO seller;
+    private ListingDto listing;
+    private UserDto buyer;
+    private UserDto seller;
     private MessageDTO lastMessage;
     private OffsetDateTime createdAt;
 }

@@ -158,11 +158,13 @@ class ListingServiceTest {
     @Test
     void shouldCreateListing() {
         // Given
+        java.security.Principal mockPrincipal = mock(java.security.Principal.class);
+        when(mockPrincipal.getName()).thenReturn("dummy@umass.edu");
         when(userRepository.findByEmail("dummy@umass.edu")).thenReturn(Optional.of(testSeller));
         when(listingRepository.save(any(Listing.class))).thenReturn(testListing);
 
         // When
-        ListingResponse result = listingService.createListing(testRequest);
+        ListingResponse result = listingService.createListing(testRequest, mockPrincipal);
 
         // Then
         assertThat(result).isNotNull();
