@@ -240,7 +240,6 @@ export default function HomePage() {
 function HomeListingCard({ listing }: { listing: Listing }) {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [isUpdating, setIsUpdating] = useState(false)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const { user } = useUser()
 
@@ -298,7 +297,6 @@ function HomeListingCard({ listing }: { listing: Listing }) {
 
   const handleUpdateStatus = async (newStatus: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => {
     try {
-      setIsUpdating(true)
       await apiClient.updateListing(listing.id, {
         ...listing,
         status: newStatus,
@@ -308,8 +306,6 @@ function HomeListingCard({ listing }: { listing: Listing }) {
     } catch (error) {
       console.error('Failed to update listing status:', error)
       throw error
-    } finally {
-      setIsUpdating(false)
     }
   }
 

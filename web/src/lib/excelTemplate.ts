@@ -228,9 +228,6 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
         const rowNumber = image.range.tl.nativeRow + 1
         imageMap.set(rowNumber, compressedDataUrl)
         
-        const originalSizeKB = (dataUrl.length * 0.75) / 1024
-        const compressedSizeKB = (compressedDataUrl.length * 0.75) / 1024
-        console.log(`✅ Extracted image for row ${rowNumber}, original: ${originalSizeKB.toFixed(1)}KB, compressed: ${compressedSizeKB.toFixed(1)}KB, type: ${mimeType}`)
       } catch (error) {
         console.warn(`Failed to extract image ${image.imageId}:`, error)
       }

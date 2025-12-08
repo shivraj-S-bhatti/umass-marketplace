@@ -147,17 +147,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('token')
       if (!token) {
-        console.log('No auth token found, skipping chat load')
         return
       }
       
-      console.log('Loading chats...')
       const apiChats = await apiClient.getUserChats()
-      console.log('Received chats:', apiChats)
-      
       const transformedChats = await Promise.all(apiChats.map(transformChat))
-      console.log('Transformed chats:', transformedChats)
-      
       setChats(transformedChats)
     } catch (error) {
       console.error('Failed to load chats:', error)

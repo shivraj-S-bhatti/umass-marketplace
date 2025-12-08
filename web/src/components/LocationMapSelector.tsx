@@ -26,14 +26,11 @@ function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number,
     click: (e) => {
       try {
         const { lat, lng } = e.latlng
-        console.log("🗺️ MapClickHandler: Map clicked", { lat, lng });
         if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
           onLocationSelect(lat, lng)
-        } else {
-          console.error("❌ MapClickHandler: Invalid coordinates", { lat, lng });
         }
       } catch (error) {
-        console.error("❌ MapClickHandler: Error handling click", error);
+        console.error("Error handling map click", error);
       }
     },
   })
@@ -72,24 +69,10 @@ export default function LocationMapSelector({
     typeof center[1] === 'number' && !isNaN(center[1]) && isFinite(center[1]) ? center[1] : defaultCenter[1]
   ]
 
-  // Log for debugging
-  useEffect(() => {
-    console.log("🗺️ LocationMapSelector Debug:", {
-      initialLat,
-      initialLng,
-      selectedLocation,
-      userLocation,
-      validCenter,
-      hasSelectedLocation: !!selectedLocation
-    });
-  }, [initialLat, initialLng, selectedLocation, userLocation, validCenter]);
-
   const handleMapClick = (lat: number, lng: number) => {
-    console.log("🗺️ Map clicked at:", { lat, lng });
     const location = { lat, lng }
     setSelectedLocation(location)
     onLocationSelect(lat, lng)
-    console.log("✅ Location selected and callback called");
   }
 
   const getCurrentLocation = () => {

@@ -119,15 +119,11 @@ export interface User {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
-console.log('🌐 API Base URL:', API_BASE_URL)
-console.log('🌐 Environment variables:', import.meta.env)
-
 class ApiClient {
   private baseUrl: string
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
-    console.log('🔧 ApiClient initialized with baseUrl:', this.baseUrl)
   }
 
   private async request<T>(
@@ -135,7 +131,6 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
-    console.log('🚀 API Request:', { url, options })
     
     const token = localStorage.getItem('token');
     
@@ -148,8 +143,6 @@ class ApiClient {
       credentials: 'include', // Important for CORS
       ...options,
     })
-
-    console.log('📡 API Response:', { status: response.status, statusText: response.statusText })
 
     if (!response.ok) {
       // Try to extract error message from response body

@@ -38,13 +38,11 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
   // Sync with parent when initialFilters change
   React.useEffect(() => {
     if (initialFilters) {
-      console.log('🔍 SearchFilters: Syncing with parent filters:', initialFilters)
       setFilters(initialFilters)
     }
   }, [initialFilters])
 
   const handleSearch = () => {
-    console.log('🔍 SearchFilters: handleSearch called with filters:', filters)
     onSearch(filters)
   }
 

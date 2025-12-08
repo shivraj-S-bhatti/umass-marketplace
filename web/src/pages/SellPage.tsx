@@ -88,9 +88,6 @@ export default function SellPage() {
         
         // Compress image to fit within size limits
         const compressedBase64 = await compressImage(base64String, 400)
-        const compressedSizeKB = (compressedBase64.length * 0.75) / 1024
-        
-        console.log(`📸 Image compression: ${originalSizeKB.toFixed(2)}KB → ${compressedSizeKB.toFixed(2)}KB`)
         
         setImagePreview(compressedBase64)
         setValue('imageUrl', compressedBase64)
@@ -107,8 +104,7 @@ export default function SellPage() {
 
   const createListingMutation = useMutation({
     mutationFn: createListing,
-    onSuccess: (data) => {
-      console.log('✅ Create listing success:', data)
+    onSuccess: () => {
       toast({
         title: 'Success!',
         description: 'Your listing has been created successfully.',
@@ -162,16 +158,7 @@ export default function SellPage() {
     )
   }
 
-  console.log('🔍 Form errors:', errors)
-  console.log('🔍 Mutation state:', { 
-    isPending: createListingMutation.isPending, 
-    isError: createListingMutation.isError,
-    error: createListingMutation.error 
-  })
-
   const onSubmit = (data: CreateListingForm) => {
-    console.log('📝 Form submitted with data:', data)
-    console.log('📍 Location state:', { useLocation, latitude, longitude })
     const finalData = {
       ...data,
       ...(useLocation && latitude && longitude
@@ -180,8 +167,6 @@ export default function SellPage() {
       // Convert datetime-local to ISO 8601 format
       ...(data.mustGoBy ? { mustGoBy: new Date(data.mustGoBy).toISOString() } : {}),
     }
-    console.log('🔄 Final data being sent to API:', finalData)
-    console.log('🔄 Calling createListingMutation.mutate...')
     createListingMutation.mutate(finalData)
   }
 
@@ -208,9 +193,7 @@ export default function SellPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log('❌ Form validation errors:', errors)
-          })} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
@@ -413,7 +396,6 @@ export default function SellPage() {
                 type="submit"
                 disabled={createListingMutation.isPending}
                 className="flex-1"
-                onClick={() => console.log('🖱️ Create Listing button clicked!')}
               >
                 {createListingMutation.isPending ? 'Creating...' : 'Create Listing'}
               </Button>
@@ -497,8 +479,6 @@ function BulkUploadModal() {
       
       // Debug: Log first listing to check imageUrl
       if (convertedListings.length > 0) {
-        console.log('First converted listing:', convertedListings[0])
-        console.log('ImageUrl in first listing:', convertedListings[0].imageUrl)
       }
       
       convertedListings.forEach((listing, index) => {
