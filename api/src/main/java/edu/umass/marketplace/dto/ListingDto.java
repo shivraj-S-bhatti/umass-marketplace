@@ -36,7 +36,7 @@ public class ListingDto {
     @NotBlank(message = "Status is required")
     @Builder.Default
     private String status = "ACTIVE";
-
+    
     private UserDto seller;
     private UUID sellerId;
     private Double latitude;

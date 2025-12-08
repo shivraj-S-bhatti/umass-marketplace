@@ -27,6 +27,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(readOnly = true)
 public class ListingService {
+
+    private final ListingRepository listingRepository;
+    private final UserRepository userRepository;
+
     /**
      * Helper to get the current authenticated user from the security context
      */
@@ -97,9 +101,6 @@ public class ListingService {
         return ListingResponse.fromEntity(savedListing);
     }
 
-    private final ListingRepository listingRepository;
-    private final UserRepository userRepository;
-
     /**
      * Get paginated listings with optional filtering and search
      */
@@ -155,9 +156,9 @@ public class ListingService {
 
         if (hasQuery || hasCategory || hasStatus || hasCondition || hasMinPrice || hasMaxPrice) {
             // Pass null for empty strings to the repository
-            String queryParam = hasQuery ? query.trim() : null;
-            String categoryParam = hasCategory ? category.trim() : null;
-            String statusParam = hasStatus ? status.trim() : null;
+            String queryParam = hasQuery && query != null ? query.trim() : null;
+            String categoryParam = hasCategory && category != null ? category.trim() : null;
+            String statusParam = hasStatus && status != null ? status.trim() : null;
 
             log.debug("🔍 Using filtered query with params:");
             log.debug("  queryParam: '{}'", queryParam);
@@ -184,38 +185,6 @@ public class ListingService {
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
         return ListingResponse.fromEntity(listing);
-    }
-
-    /**
-     * Create a new listing
-     */
-    @Transactional
-    public ListingResponse createListing(CreateListingRequest request) {
-        log.debug("🔍 Creating new listing: {}", request.getTitle());
-
-        // Get seller from authenticated user context (OAuth2)
-        // This assumes a method getCurrentAuthenticatedUser() exists and returns the User
-        User seller = getCurrentAuthenticatedUser();
-        if (seller == null) {
-            throw new RuntimeException("Authenticated user not found. Cannot create listing.");
-        }
-
-        Listing listing = new Listing();
-        listing.setTitle(request.getTitle());
-        listing.setDescription(request.getDescription());
-        listing.setPrice(request.getPrice());
-        listing.setCategory(request.getCategory());
-        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-        listing.setImageUrl(request.getImageUrl());
-        listing.setLatitude(request.getLatitude());
-        listing.setLongitude(request.getLongitude());
-        listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
-        listing.setSeller(seller);
-
-        Listing savedListing = listingRepository.save(listing);
-        log.debug("🔍 Created listing with ID: {}", savedListing.getId());
-
-        return ListingResponse.fromEntity(savedListing);
     }
 
     /**
@@ -279,14 +248,8 @@ public class ListingService {
         if (request.getCategory() != null) listing.setCategory(request.getCategory());
         if (request.getCondition() != null) listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         if (request.getImageUrl() != null) listing.setImageUrl(request.getImageUrl());
-        listing.setTitle(request.getTitle());
-        listing.setDescription(request.getDescription());
-        listing.setPrice(request.getPrice());
-        listing.setCategory(request.getCategory());
-        listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-        listing.setLatitude(request.getLatitude());
-        listing.setLongitude(request.getLongitude());
-        listing.setImageUrl(request.getImageUrl());
+        if (request.getLatitude() != null) listing.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) listing.setLongitude(request.getLongitude());
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Updated listing with ID: {}", savedListing.getId());
