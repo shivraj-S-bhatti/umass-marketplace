@@ -36,7 +36,7 @@ export function ListingDetailModal({
 
   const handleAddToCart = () => {
     if (!listing) return
-    addToCart(listing, 1)
+    addToCart(listing)
     toast({
       title: 'Added to cart!',
       description: `${listing.title} has been added to your cart.`,
