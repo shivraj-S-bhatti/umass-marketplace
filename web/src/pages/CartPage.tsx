@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react'
+import { ShoppingCart, Trash2 } from 'lucide-react'
 import { StickerBadge } from '@/components/ui/sticker-badge'
 import { useCart } from '@/contexts/CartContext'
 import { useNavigate } from 'react-router-dom'
@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 // Cart Page - Shopping cart for buyers
 // Allows users to manage items in their cart
 export default function CartPage() {
-  const { items, removeFromCart, updateQuantity, cartTotal } = useCart()
+  const { items, removeFromCart, cartTotal } = useCart()
   const navigate = useNavigate()
 
   const formatPrice = (price: number | string) => {
@@ -75,43 +75,21 @@ export default function CartPage() {
                           </div>
                         </div>
 
-                        {/* Quantity Controls */}
-                        <div className="flex items-center justify-between mt-4">
-                          <div className="flex items-center gap-2 border-2 border-foreground rounded-lg">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-none rounded-l-lg"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="px-3 font-bold">{item.quantity}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-none rounded-r-lg"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => removeFromCart(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive w-fit mt-4"
+                          onClick={() => removeFromCart(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remove
+                        </Button>
                       </div>
 
-                      {/* Item Total */}
+                      {/* Item Price */}
                       <div className="text-right">
                         <p className="text-lg font-bold">
-                          {formatPrice(Number(item.price) * item.quantity)}
+                          {formatPrice(item.price)}
                         </p>
                       </div>
                     </div>
@@ -127,11 +105,11 @@ export default function CartPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal ({items.length} items)</span>
+                  <span className="text-muted-foreground">Total ({items.length} items)</span>
                   <span className="font-bold">{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="border-t-2 border-foreground pt-3 flex justify-between">
-                  <span className="font-bold text-lg">Total</span>
+                  <span className="font-bold text-lg">Amount</span>
                   <StickerBadge variant="price" className="text-xl">
                     {formatPrice(cartTotal)}
                   </StickerBadge>
