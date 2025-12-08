@@ -9,7 +9,7 @@ interface StickerBadgeProps {
 
 export function StickerBadge({ children, className = '', variant = 'price' }: StickerBadgeProps) {
   const variantStyles = {
-    price: 'bg-accent text-accent-foreground',
+    price: 'bg-orange-500 text-white',
     status: 'bg-secondary text-secondary-foreground',
     new: 'bg-primary text-primary-foreground'
   }

@@ -45,4 +45,7 @@ public class CreateListingRequest {
 
     private Double latitude;
     private Double longitude;
+
+    @Schema(description = "Must go by date (ISO 8601 format)", example = "2024-12-31T23:59:59Z")
+    private String mustGoBy;
 }

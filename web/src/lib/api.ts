@@ -47,6 +47,7 @@ export interface Listing {
   sellerPictureUrl?: string
   createdAt: string
   updatedAt: string
+  mustGoBy?: string
 }
 
 export interface CreateListingRequest {
@@ -59,6 +60,7 @@ export interface CreateListingRequest {
   status?: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
   latitude?: number | null
   longitude?: number | null
+  mustGoBy?: string
 }
 
 export interface ListingsResponse {

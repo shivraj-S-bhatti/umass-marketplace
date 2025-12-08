@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { CreateListingForm } from '@/pages/SellPage'
 
 // Template column headers - must match exactly
@@ -107,16 +108,77 @@ export function validateExcelStructure(data: any[]): { valid: boolean; error?: s
 
 /**
  * Extracts images from Excel file and converts them to base64 data URLs
- * Note: Image extraction from Excel files in the browser is limited.
- * Users should provide image URLs in the 'image' column instead.
+ * Uses ExcelJS to extract embedded images from Excel files
  */
 async function extractImagesFromExcel(file: File): Promise<Map<number, string>> {
   const imageMap = new Map<number, string>()
   
-  // Image extraction from Excel files requires server-side processing
-  // For now, we'll rely on image URLs provided in the 'image' column
-  // This function is kept for future server-side implementation
-  console.log('Image extraction from Excel files is not available in the browser. Please provide image URLs in the "image" column.')
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.load(arrayBuffer)
+    
+    const worksheet = workbook.worksheets[0]
+    if (!worksheet) {
+      console.warn('No worksheet found in Excel file')
+      return imageMap
+    }
+    
+    // Get all images from the worksheet
+    const images = worksheet.getImages()
+    
+    for (const image of images) {
+      try {
+        // Get the image from workbook media
+        const excelImage = workbook.model.media?.find(m => m.index === image.imageId)
+        if (!excelImage || !excelImage.buffer) {
+          console.warn(`Image ${image.imageId} not found in media`)
+          continue
+        }
+        
+        // Get buffer - handle both Buffer (Node.js) and ArrayBuffer/Uint8Array (browser)
+        let buffer: Uint8Array
+        if (excelImage.buffer instanceof Uint8Array) {
+          buffer = excelImage.buffer
+        } else if (excelImage.buffer instanceof ArrayBuffer) {
+          buffer = new Uint8Array(excelImage.buffer)
+        } else if (Buffer && excelImage.buffer instanceof Buffer) {
+          // Node.js Buffer - convert to Uint8Array
+          buffer = new Uint8Array(excelImage.buffer)
+        } else {
+          // Try to convert to Uint8Array
+          buffer = new Uint8Array(excelImage.buffer as any)
+        }
+        
+        // Determine image type from extension
+        let mimeType = 'image/png' // default
+        const extension = excelImage.extension || excelImage.name?.split('.').pop()?.toLowerCase()
+        if (extension === 'jpg' || extension === 'jpeg') {
+          mimeType = 'image/jpeg'
+        } else if (extension === 'gif') {
+          mimeType = 'image/gif'
+        } else if (extension === 'webp') {
+          mimeType = 'image/webp'
+        }
+        
+        // Convert buffer to base64 data URL (browser-compatible)
+        const binaryString = Array.from(buffer, byte => String.fromCharCode(byte)).join('')
+        const base64 = btoa(binaryString)
+        const dataUrl = `data:${mimeType};base64,${base64}`
+        
+        // Map image to row number (range.tl.nativeRow is 0-indexed, we want 1-indexed for row number)
+        // Add 1 because Excel rows are 1-indexed and we want to match the data row
+        const rowNumber = image.range.tl.nativeRow + 1
+        imageMap.set(rowNumber, dataUrl)
+        
+        console.log(`✅ Extracted image for row ${rowNumber}, size: ${buffer.length} bytes, type: ${mimeType}`)
+      } catch (error) {
+        console.warn(`Failed to extract image ${image.imageId}:`, error)
+      }
+    }
+  } catch (error) {
+    console.error('Error extracting images from Excel:', error)
+  }
   
   return imageMap
 }
@@ -194,14 +256,23 @@ export async function parseExcelFile(file: File): Promise<TemplateRow[]> {
             const rowObj: any = {}
             normalizedHeaders.forEach((header, index) => {
               const value = row[index]
-              if (value !== null && value !== undefined && value !== '') {
-                rowObj[header] = value
+              // Always set the value, even if empty, so we can check for it later
+              // Convert to string and trim whitespace
+              if (value !== null && value !== undefined) {
+                rowObj[header] = String(value).trim()
               }
             })
             
             // Check if there's an embedded image for this row (row number is i+1 because header is row 1)
             const rowNumber = i + 1
-            let image = rowObj.image || rowObj.imageurl || rowObj.imageUrl
+            // Check for image in various possible column names, and ensure it's not empty
+            let image = (rowObj.image && rowObj.image.trim() !== '') 
+              ? rowObj.image.trim() 
+              : (rowObj.imageurl && rowObj.imageurl.trim() !== '') 
+                ? rowObj.imageurl.trim() 
+                : (rowObj.imageUrl && rowObj.imageUrl.trim() !== '') 
+                  ? rowObj.imageUrl.trim() 
+                  : null
             if (!image) {
               // Check if there's an extracted image for this row
               const extractedImage = imageMap.get(rowNumber)
@@ -245,12 +316,20 @@ export async function parseExcelFile(file: File): Promise<TemplateRow[]> {
  * Converts template rows to CreateListingForm format
  */
 export function convertToCreateListingForm(rows: TemplateRow[]): CreateListingForm[] {
-  return rows.map((row) => ({
-    title: row.title,
-    price: row.price,
-    description: row.description || '',
-    category: row.category || '',
-    condition: row.condition || '',
-    imageUrl: row.image?.trim() || '', // Map 'image' to 'imageUrl' for API, ensure it's a string
-  }))
+  return rows.map((row) => {
+    // Ensure image is properly converted - if it exists and is not empty, use it, otherwise use empty string
+    const imageValue = row.image && typeof row.image === 'string' && row.image.trim() !== '' 
+      ? row.image.trim() 
+      : ''
+    
+    return {
+      title: row.title,
+      price: row.price,
+      // Send undefined instead of empty string for optional fields to match backend validation
+      description: row.description && row.description.trim() !== '' ? row.description.trim() : undefined,
+      category: row.category && row.category.trim() !== '' ? row.category.trim() : undefined,
+      condition: row.condition && row.condition.trim() !== '' ? row.condition.trim() : undefined,
+      imageUrl: imageValue || undefined, // Send undefined if empty string
+    }
+  })
 }

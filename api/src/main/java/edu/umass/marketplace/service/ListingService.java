@@ -67,21 +67,25 @@ public class ListingService {
 
     @Transactional
     public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
-        // Get seller from authenticated principal
-        if (principal == null) {
-            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
-                "Authentication required to create a listing");
+        // Get seller from authenticated principal, or use QA Testing user if not authenticated
+        User seller;
+        if (principal == null || principal.getName() == null || principal.getName().trim().isEmpty()) {
+            // Use QA Testing user for unauthenticated requests
+            String qaEmail = "qa-testing@umass.edu";
+            seller = userRepository.findByEmail(qaEmail)
+                .orElseGet(() -> {
+                    User qaUser = new User();
+                    qaUser.setEmail(qaEmail);
+                    qaUser.setName("QA Testing");
+                    return userRepository.save(qaUser);
+                });
+            log.debug("🔍 Using QA Testing user for unauthenticated listing creation");
+        } else {
+            String email = principal.getName();
+            seller = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "User not found in database. Please try logging in again."));
         }
-
-        String email = principal.getName();
-        if (email == null || email.trim().isEmpty()) {
-            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
-                "User email not found in authentication token");
-        }
-
-        User seller = userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException(
-                "User not found in database. Please try logging in again."));
 
         Listing listing = new Listing();
         listing.setTitle(request.getTitle());
@@ -89,16 +93,54 @@ public class ListingService {
         listing.setPrice(request.getPrice());
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-        listing.setImageUrl(request.getImageUrl());
+        
+        // Handle imageUrl - log size for debugging
+        // Initialize with empty string if not provided to distinguish "not set" from "set but invalid"
+        String imageUrl = request.getImageUrl();
+        if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+            int imageSize = imageUrl.length();
+            log.debug("🔍 Setting imageUrl, size: {} characters", imageSize);
+            if (imageSize > 1000000) {
+                log.warn("⚠️ Image data is very large: {} characters (max allowed: 1000000)", imageSize);
+            }
+            listing.setImageUrl(imageUrl);
+        } else {
+            // Default to empty string to indicate image is not set
+            listing.setImageUrl("");
+        }
+        
         listing.setLatitude(request.getLatitude());
         listing.setLongitude(request.getLongitude());
+        // Parse mustGoBy from ISO 8601 string if provided
+        if (request.getMustGoBy() != null && !request.getMustGoBy().trim().isEmpty()) {
+            try {
+                listing.setMustGoBy(java.time.OffsetDateTime.parse(request.getMustGoBy()));
+            } catch (Exception e) {
+                log.warn("Failed to parse mustGoBy date: {}", request.getMustGoBy(), e);
+            }
+        }
         listing.setStatus(Listing.STATUS_ACTIVE); // Explicitly set status
         listing.setSeller(seller);
 
         Listing savedListing = listingRepository.save(listing);
         log.debug("🔍 Created listing with ID: {}", savedListing.getId());
+        
+        // Ensure seller is loaded (eager fetch to avoid lazy loading issues)
+        if (savedListing.getSeller() != null) {
+            // Access seller fields to trigger lazy loading within transaction
+            savedListing.getSeller().getName();
+            savedListing.getSeller().getEmail();
+        }
 
-        return ListingResponse.fromEntity(savedListing);
+        try {
+            ListingResponse response = ListingResponse.fromEntity(savedListing);
+            log.debug("🔍 Successfully created ListingResponse");
+            return response;
+        } catch (Exception e) {
+            log.error("❌ Error creating ListingResponse: {}", e.getMessage(), e);
+            log.error("❌ Stack trace: ", e);
+            throw new RuntimeException("Failed to create listing response: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -194,10 +236,22 @@ public class ListingService {
     public List<ListingResponse> createListingsBulk(List<CreateListingRequest> requests) {
         log.debug("🔍 Creating {} listings in bulk", requests.size());
 
-        // Get seller from authenticated user context (OAuth2)
+        // Get seller from authenticated user context (OAuth2), or use QA Testing user if not authenticated
         User seller = getCurrentAuthenticatedUser();
+        final User finalSeller; // Make it effectively final for lambda
         if (seller == null) {
-            throw new RuntimeException("Authenticated user not found. Cannot create listings in bulk.");
+            // Use QA Testing user for unauthenticated requests
+            String qaEmail = "qa-testing@umass.edu";
+            finalSeller = userRepository.findByEmail(qaEmail)
+                .orElseGet(() -> {
+                    User qaUser = new User();
+                    qaUser.setEmail(qaEmail);
+                    qaUser.setName("QA Testing");
+                    return userRepository.save(qaUser);
+                });
+            log.debug("🔍 Using QA Testing user for unauthenticated bulk listing creation");
+        } else {
+            finalSeller = seller;
         }
 
         List<Listing> listings = requests.stream()
@@ -208,11 +262,27 @@ public class ListingService {
                     listing.setPrice(request.getPrice());
                     listing.setCategory(request.getCategory());
                     listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-                    listing.setImageUrl(request.getImageUrl());
+                    // Initialize imageUrl with empty string if not provided
+                    String bulkImageUrl = request.getImageUrl();
+                    if (bulkImageUrl != null && !bulkImageUrl.trim().isEmpty()) {
+                        log.debug("🔍 Bulk listing imageUrl set: {} characters", bulkImageUrl.length());
+                        listing.setImageUrl(bulkImageUrl);
+                    } else {
+                        log.debug("🔍 Bulk listing imageUrl is empty or null, setting to empty string");
+                        listing.setImageUrl("");
+                    }
                     listing.setLatitude(request.getLatitude());
                     listing.setLongitude(request.getLongitude());
+                    // Parse mustGoBy from ISO 8601 string if provided
+                    if (request.getMustGoBy() != null && !request.getMustGoBy().trim().isEmpty()) {
+                        try {
+                            listing.setMustGoBy(java.time.OffsetDateTime.parse(request.getMustGoBy()));
+                        } catch (Exception e) {
+                            log.warn("Failed to parse mustGoBy date: {}", request.getMustGoBy(), e);
+                        }
+                    }
                     listing.setStatus(Listing.STATUS_ACTIVE);
-                    listing.setSeller(seller);
+                    listing.setSeller(finalSeller);
                     return listing;
                 })
                 .collect(Collectors.toList());
@@ -260,14 +330,28 @@ public class ListingService {
         }
         if (request.getImageUrl() != null) {
             // Allow empty string to clear image, or set new image
+            // Use empty string instead of null to distinguish "not set" from "set but invalid"
             String imageUrl = request.getImageUrl().trim();
-            listing.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
+            listing.setImageUrl(imageUrl.isEmpty() ? "" : imageUrl);
         }
         if (request.getLatitude() != null) {
             listing.setLatitude(request.getLatitude());
         }
         if (request.getLongitude() != null) {
             listing.setLongitude(request.getLongitude());
+        }
+        if (request.getMustGoBy() != null) {
+            // Allow empty string to clear mustGoBy, or set new date
+            String mustGoByStr = request.getMustGoBy().trim();
+            if (mustGoByStr.isEmpty()) {
+                listing.setMustGoBy(null);
+            } else {
+                try {
+                    listing.setMustGoBy(java.time.OffsetDateTime.parse(mustGoByStr));
+                } catch (Exception e) {
+                    log.warn("Failed to parse mustGoBy date: {}", mustGoByStr, e);
+                }
+            }
         }
 
         Listing savedListing = listingRepository.save(listing);

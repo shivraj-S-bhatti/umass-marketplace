@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './dialog'
 import { Button } from './button'
-import { DollarSign, Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User } from 'lucide-react'
+import { Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User } from 'lucide-react'
 import { formatPrice, formatDate } from '@/lib/utils'
 import type { Listing } from '@/lib/api'
 import { apiClient } from '@/lib/api'
@@ -85,7 +85,6 @@ export function ListingDetailModal({
               <div className="space-y-4 flex-shrink-0 relative z-10">
             <div>
               <div className="flex items-center text-3xl font-bold text-primary mb-2">
-                <DollarSign className="h-6 w-6 mr-1" />
                 {formatPrice(listing.price)}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">

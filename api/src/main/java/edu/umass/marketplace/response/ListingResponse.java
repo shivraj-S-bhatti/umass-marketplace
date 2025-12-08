@@ -36,25 +36,49 @@ public class ListingResponse {
     private OffsetDateTime createdAt;
     private Double latitude;
     private Double longitude;
+    private OffsetDateTime mustGoBy;
 
     // Static factory method to convert from entity
     public static ListingResponse fromEntity(Listing listing) {
-        return ListingResponse.builder()
-                .id(listing.getId())
-                .title(listing.getTitle())
-                .description(listing.getDescription())
-                .price(listing.getPrice())
-                .category(listing.getCategory())
-                .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
-                .imageUrl(listing.getImageUrl())
-                .status(listing.getStatus())
-                .sellerId(listing.getSeller() != null ? listing.getSeller().getId() : null)
-                .sellerName(listing.getSeller() != null ? listing.getSeller().getName() : null)
-                .sellerEmail(listing.getSeller() != null ? listing.getSeller().getEmail() : null)
-                .sellerPictureUrl(listing.getSeller() != null ? listing.getSeller().getPictureUrl() : null)
-                .createdAt(listing.getCreatedAt())
-                .latitude(listing.getLatitude())
-                .longitude(listing.getLongitude())
-                .build();
+        try {
+            // Safely get seller info to avoid lazy loading issues
+            UUID sellerId = null;
+            String sellerName = null;
+            String sellerEmail = null;
+            String sellerPictureUrl = null;
+            
+            if (listing.getSeller() != null) {
+                try {
+                    sellerId = listing.getSeller().getId();
+                    sellerName = listing.getSeller().getName();
+                    sellerEmail = listing.getSeller().getEmail();
+                    sellerPictureUrl = listing.getSeller().getPictureUrl();
+                } catch (Exception e) {
+                    // If seller is lazy-loaded and session is closed, sellerId might still work
+                    sellerId = listing.getSeller().getId();
+                }
+            }
+            
+            return ListingResponse.builder()
+                    .id(listing.getId())
+                    .title(listing.getTitle())
+                    .description(listing.getDescription())
+                    .price(listing.getPrice())
+                    .category(listing.getCategory())
+                    .condition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null)
+                    .imageUrl(listing.getImageUrl()) // This might be large - handle carefully
+                    .status(listing.getStatus())
+                    .sellerId(sellerId)
+                    .sellerName(sellerName)
+                    .sellerEmail(sellerEmail)
+                    .sellerPictureUrl(sellerPictureUrl)
+                    .createdAt(listing.getCreatedAt())
+                    .latitude(listing.getLatitude())
+                    .longitude(listing.getLongitude())
+                    .mustGoBy(listing.getMustGoBy())
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating ListingResponse: " + e.getMessage(), e);
+        }
     }
 }

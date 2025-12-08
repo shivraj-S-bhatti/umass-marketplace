@@ -31,9 +31,11 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
   }, [listing.id, listing.imageUrl])
 
   // Determine if we should show an image or the Eye icon
+  // imageUrl defaults to empty string "" when not set, so we check for non-empty string
   const hasValidImage = listing.imageUrl && 
     typeof listing.imageUrl === 'string' && 
     listing.imageUrl.trim() !== '' && 
+    listing.imageUrl.trim() !== 'null' &&
     !imageError
 
   useEffect(() => {
@@ -78,8 +80,15 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
       })()
     : null;
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price)
+  const formatPrice = (price: number | string) => {
+    // Ensure price is a number, not a string
+    if (typeof price === 'string') {
+      const cleaned = price.replace(/[^0-9.-]/g, '')
+      const numPrice = parseFloat(cleaned)
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(numPrice)
+    }
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price)
+  }
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -128,7 +137,7 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
     <>
       <Card className="hover:shadow-lg transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col">
         <div
-          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0"
+          className="w-full h-32 sm:h-36 md:h-40 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 relative"
           onClick={() => hasValidImage && setIsImageModalOpen(true)}
         >
           {hasValidImage ? (
@@ -143,8 +152,21 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
               onLoad={() => setImageError(false)}
             />
           ) : (
-            <div className="flex items-center justify-center w-full h-full">
-              <Eye className="h-12 w-12 text-primary/40" />
+            <div 
+              className="flex items-center justify-center w-full h-full"
+              style={{
+                backgroundColor: '#FFE5D9',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23FFB4A2' fill-opacity='0.4'%3E%3Cpath d='M10 10h.01M3 10h.01M17 10h.01M10 3h.01M10 17h.01M3 3h.01M17 17h.01M17 3h.01M3 17h.01'/%3E%3C/g%3E%3C/svg%3E")`
+              }}
+            >
+              <Eye className="h-12 w-12" style={{ color: '#D4A574' }} />
+            </div>
+          )}
+          {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
+            <div className="absolute top-2 left-2 z-10">
+              <StickerBadge variant="new" className="bg-red-500 text-white text-xs px-2 py-1 border-2 border-white shadow-lg">
+                MUST GO
+              </StickerBadge>
             </div>
           )}
         </div>
@@ -161,9 +183,9 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
         <CardContent className="pt-0 flex-1 flex flex-col justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-orange-500 text-white font-bold text-base sm:text-lg md:text-xl shadow-sm">
+              <StickerBadge variant="price" className="px-3 sm:px-4 py-1.5 sm:py-2 text-base sm:text-lg md:text-xl shadow-sm">
                 {formatPrice(listing.price)}
-              </span>
+              </StickerBadge>
 
               {distanceText && (
                 <div className="flex items-center gap-2 text-green-600 font-bold text-sm sm:text-base animate-fade-in">

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { LayoutDashboard, Plus, DollarSign, Calendar, Eye } from 'lucide-react'
+import { LayoutDashboard, Plus, Calendar, Eye } from 'lucide-react'
 
 // Dashboard Page - displays user's listings and statistics
 // Shows seller's own listings with management options and overview stats
@@ -93,7 +93,6 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base font-bold">Sold Items</CardTitle>
-            <DollarSign className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-primary mb-1">{soldListingsCount}</div>
@@ -304,7 +303,6 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
       <CardContent>
         <div className="space-y-2">
           <div className="flex items-center text-2xl font-bold text-primary">
-            <DollarSign className="h-5 w-5 mr-1" />
             {formatPrice(listing.price)}
           </div>
           <div className="flex items-center text-sm text-muted-foreground">

@@ -23,7 +23,7 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/', label: 'Explore', icon: ShoppingBag, showIn: ['buyer', 'seller'] as UserRole[] },
     { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as UserRole[] },
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as UserRole[] },
-    { path: '/design-playground', label: 'Design', icon: Palette, showIn: ['buyer', 'seller'] as UserRole[] },
+    // { path: '/design-playground', label: 'Design', icon: Palette, showIn: ['buyer', 'seller'] as UserRole[] }, // Hidden for demo
     { path: '/messages', label: 'Messages', icon: MessageSquare, showIn: ['buyer', 'seller'] as UserRole[] },
   ]
 

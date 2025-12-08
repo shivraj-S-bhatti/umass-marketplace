@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createListing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, DollarSign } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useState } from 'react'
 import { MapPin, Loader2, Download } from 'lucide-react'
@@ -28,9 +28,10 @@ const createListingSchema = z.object({
   category: z.string().max(100, 'Category must be less than 100 characters').optional(),
   condition: z.string().max(50, 'Condition must be less than 50 characters').optional(),
   imageUrl: z.string().max(6000000, 'Image data is too large').optional(),
+  mustGoBy: z.string().optional(),
 })
 
-type CreateListingForm = z.infer<typeof createListingSchema>
+export type CreateListingForm = z.infer<typeof createListingSchema>
 
 export default function SellPage() {
   const navigate = useNavigate()
@@ -166,6 +167,8 @@ export default function SellPage() {
       ...(useLocation && latitude && longitude
         ? { latitude, longitude }
         : {}),
+      // Convert datetime-local to ISO 8601 format
+      ...(data.mustGoBy ? { mustGoBy: new Date(data.mustGoBy).toISOString() } : {}),
     }
     console.log('🔄 Calling createListingMutation.mutate...')
     createListingMutation.mutate(finalData)
@@ -228,7 +231,6 @@ export default function SellPage() {
             <div className="space-y-2">
               <Label htmlFor="price">Price *</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="price"
                   type="number"
@@ -236,7 +238,6 @@ export default function SellPage() {
                   min="0.01"
                   max="999999.99"
                   placeholder="0.00"
-                  className="pl-10"
                   {...register('price', { valueAsNumber: true })}
                 />
               </div>
@@ -320,6 +321,22 @@ export default function SellPage() {
                 </div>
               )}
             </div>
+            {/* Must Go By Date */}
+            <div className="space-y-2">
+              <Label htmlFor="mustGoBy">Must Go By (Optional)</Label>
+              <Input
+                id="mustGoBy"
+                type="datetime-local"
+                {...register('mustGoBy')}
+              />
+              {errors.mustGoBy && (
+                <p className="text-sm text-destructive">{errors.mustGoBy.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Set a deadline for when this item must be sold
+              </p>
+            </div>
+
             {/* Location Sharing Toggle */}
             <div className="space-y-3 rounded-lg border border-input bg-muted/20 p-4">
               <div className="flex items-center gap-3">
@@ -418,6 +435,7 @@ function BulkUploadModal() {
   const [latitude, setLatitude] = useState<number | null>(null)
   const [longitude, setLongitude] = useState<number | null>(null)
   const [showMapSelector, setShowMapSelector] = useState(false)
+  const [mustGoBy, setMustGoBy] = useState<string>('')
 
   const createBulkListingsMutation = useMutation({
     mutationFn: createBulkListings,
@@ -466,6 +484,12 @@ function BulkUploadModal() {
       // Convert parsed rows to CreateListingForm using the conversion function
       const convertedListings = convertToCreateListingForm(parsedRows)
       
+      // Debug: Log first listing to check imageUrl
+      if (convertedListings.length > 0) {
+        console.log('First converted listing:', convertedListings[0])
+        console.log('ImageUrl in first listing:', convertedListings[0].imageUrl)
+      }
+      
       convertedListings.forEach((listing, index) => {
         const result = createListingSchema.safeParse(listing)
         if (result.success) {
@@ -484,13 +508,14 @@ function BulkUploadModal() {
       }
 
       if (validListings.length > 0) {
-        // Apply location to all listings if location is enabled
+        // Apply location and mustGoBy to all listings if enabled
         const listingsWithLocation = validListings.map(listing => ({
           ...listing,
           ...(useLocation && latitude && longitude
             ? { latitude, longitude }
             : { latitude: null, longitude: null }
           ),
+          ...(mustGoBy ? { mustGoBy: new Date(mustGoBy).toISOString() } : {}),
         }))
         createBulkListingsMutation.mutate(listingsWithLocation)
       } else {
@@ -664,6 +689,20 @@ function BulkUploadModal() {
                 )}
               </div>
             )}
+          </div>
+
+          {/* Must Go By Date */}
+          <div className="space-y-2">
+            <Label htmlFor="bulkMustGoBy">Must Go By (Optional - applies to all listings)</Label>
+            <Input
+              id="bulkMustGoBy"
+              type="datetime-local"
+              value={mustGoBy}
+              onChange={(e) => setMustGoBy(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Set a deadline for when all items must be sold
+            </p>
           </div>
 
           <Button

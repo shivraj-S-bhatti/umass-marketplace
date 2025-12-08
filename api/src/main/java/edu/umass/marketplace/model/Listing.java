@@ -47,7 +47,7 @@ public class Listing {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
     @Column(name = "latitude")
@@ -55,6 +55,9 @@ public class Listing {
 
     @Column(name = "longitude")
     private Double longitude;
+
+    @Column(name = "must_go_by")
+    private OffsetDateTime mustGoBy;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

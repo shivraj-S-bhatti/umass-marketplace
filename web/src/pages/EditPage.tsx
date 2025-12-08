@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateListing, getListing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { Save, DollarSign, ArrowLeft } from 'lucide-react'
+import { Save, ArrowLeft } from 'lucide-react'
 import { CATEGORIES, CONDITIONS } from '@/lib/constants'
 
 // Edit listing form schema
@@ -21,6 +21,7 @@ const editListingSchema = z.object({
   category: z.string().max(100, 'Category must be less than 100 characters').optional(),
   condition: z.string().max(50, 'Condition must be less than 50 characters').optional(),
   imageUrl: z.string().max(1000000, 'Image data is too large').optional(),
+  mustGoBy: z.string().optional(),
 })
 
 type EditListingForm = z.infer<typeof editListingSchema>
@@ -53,6 +54,10 @@ export default function EditPage() {
   // Pre-populate form when listing data is loaded
   useEffect(() => {
     if (listing) {
+      // Convert ISO 8601 date to datetime-local format
+      const mustGoByValue = listing.mustGoBy 
+        ? new Date(listing.mustGoBy).toISOString().slice(0, 16)
+        : ''
       reset({
         title: listing.title,
         description: listing.description || '',
@@ -60,6 +65,7 @@ export default function EditPage() {
         category: listing.category || '',
         condition: listing.condition || '',
         imageUrl: listing.imageUrl || '',
+        mustGoBy: mustGoByValue,
       })
       if (listing.imageUrl) {
         setImagePreview(listing.imageUrl)
@@ -137,6 +143,10 @@ export default function EditPage() {
       category: data.category?.trim() || undefined,
       condition: data.condition?.trim() || undefined,
       imageUrl: data.imageUrl?.trim() || undefined,
+      // Convert datetime-local to ISO 8601 format, or undefined if empty
+      mustGoBy: data.mustGoBy && data.mustGoBy.trim() 
+        ? new Date(data.mustGoBy).toISOString() 
+        : undefined,
     }
     updateListingMutation.mutate(cleanedData)
   }
@@ -212,7 +222,6 @@ export default function EditPage() {
             <div className="space-y-2">
               <Label htmlFor="price">Price *</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   id="price"
                   type="number"
@@ -220,7 +229,6 @@ export default function EditPage() {
                   min="0.01"
                   max="999999.99"
                   placeholder="0.00"
-                  className="pl-10"
                   {...register('price', { valueAsNumber: true })}
                 />
               </div>
@@ -303,6 +311,22 @@ export default function EditPage() {
                   />
                 </div>
               )}
+            </div>
+
+            {/* Must Go By Date */}
+            <div className="space-y-2">
+              <Label htmlFor="mustGoBy">Must Go By (Optional)</Label>
+              <Input
+                id="mustGoBy"
+                type="datetime-local"
+                {...register('mustGoBy')}
+              />
+              {errors.mustGoBy && (
+                <p className="text-sm text-destructive">{errors.mustGoBy.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Set a deadline for when this item must be sold
+              </p>
             </div>
 
             {/* Submit Button */}

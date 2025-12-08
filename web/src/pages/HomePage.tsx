@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/lib/api'
-import { Search, DollarSign, Calendar, XCircle } from 'lucide-react'
+import { Search, Calendar, XCircle } from 'lucide-react'
 import { type SearchFilters as SearchFiltersType } from '@/components/SearchFilters'
 import TwoTierNavbar from '@/components/TwoTierNavbar'
 import { useSearchParams } from 'react-router-dom'
@@ -325,7 +325,6 @@ function HomeListingCard({ listing }: { listing: Listing }) {
       <CardContent>
         <div className="space-y-2">
           <div className="flex items-center text-2xl font-bold text-primary">
-            <DollarSign className="h-5 w-5 mr-1" />
             {formatPrice(listing.price)}
           </div>
           <div className="flex items-center text-sm text-muted-foreground">

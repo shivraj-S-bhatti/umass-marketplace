@@ -51,6 +51,9 @@ server:
   port: 8080
   servlet:
     context-path: /
+  # Increase max HTTP header and request body size for large base64 images
+  max-http-header-size: 1MB
+  max-http-post-size: 10MB
 
 springdoc:
   swagger-ui:
