@@ -198,3 +198,7 @@ lerna-debug.log*
 # Temporary files
 tmp/
 temp/
+
+# Sample files (shared outside of GitHub)
+samples/
+sample_sale.xlsx
