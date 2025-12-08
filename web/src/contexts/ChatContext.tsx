@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { apiClient } from '../lib/api'
 import { Chat, Message, User } from '../types'
 import { useToast } from '../hooks/use-toast'
@@ -35,6 +35,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [hasMoreMessages, setHasMoreMessages] = useState(false)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+  const latestMessageTimeRef = useRef<number>(0)
 
   useEffect(() => {
     loadChats()
@@ -43,6 +44,80 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (activeChat) {
       loadMessages(true)
+    } else {
+      // Reset messages when no active chat
+      setMessages([])
+      setCurrentPage(0)
+      latestMessageTimeRef.current = 0
+    }
+  }, [activeChat])
+
+  // Poll for new messages when a chat is active
+  useEffect(() => {
+    if (!activeChat) {
+      latestMessageTimeRef.current = 0
+      return
+    }
+
+    // Poll interval: check for new messages every 2 seconds
+    const pollInterval = setInterval(async () => {
+      try {
+        // Fetch the latest page of messages (page 0, which contains the newest messages)
+        const response = await apiClient.getChatMessages(activeChat.id, 0, 20)
+        
+        if (response.content.length === 0) return
+
+        const transformedMessages = await Promise.all(
+          response.content.map(msg => transformMessage(msg, activeChat.id))
+        )
+
+        // Get the latest message timestamp from ref
+        const latestMessageTime = latestMessageTimeRef.current
+
+        // Find new messages (messages created after our latest message)
+        const newMessages = transformedMessages
+          .reverse() // Reverse to get chronological order (oldest first)
+          .filter(msg => {
+            const msgTime = new Date(msg.createdAt).getTime()
+            // Only include messages newer than our latest
+            return msgTime > latestMessageTime
+          })
+
+        if (newMessages.length > 0) {
+          // Add new messages to the end of the list
+          setMessages(prev => {
+            // Get existing message IDs to avoid duplicates
+            const existingMessageIds = new Set(prev.map(m => m.id))
+            const uniqueNewMessages = newMessages.filter(msg => !existingMessageIds.has(msg.id))
+            
+            if (uniqueNewMessages.length > 0) {
+              // Update the latest message timestamp ref
+              const newestMessage = uniqueNewMessages[uniqueNewMessages.length - 1]
+              latestMessageTimeRef.current = new Date(newestMessage.createdAt).getTime()
+              
+              // Update the last message in the chat list
+              setChats(prevChats =>
+                prevChats.map(chat =>
+                  chat.id === activeChat.id
+                    ? { ...chat, lastMessage: newestMessage }
+                    : chat
+                )
+              )
+              
+              return [...prev, ...uniqueNewMessages]
+            }
+            return prev
+          })
+        }
+      } catch (error) {
+        // Silently fail polling errors to avoid spam in console
+        console.error('Failed to poll for new messages:', error)
+      }
+    }, 2000) // Poll every 2 seconds
+
+    // Cleanup interval on unmount or when activeChat changes
+    return () => {
+      clearInterval(pollInterval)
     }
   }, [activeChat])
 
@@ -124,6 +199,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       if (reset) {
         // For initial load, show the most recent page (reversed so oldest of that page is first)
         setMessages(ordered)
+        // Update the latest message timestamp ref
+        if (ordered.length > 0) {
+          latestMessageTimeRef.current = new Date(ordered[ordered.length - 1].createdAt).getTime()
+        }
       } else {
         // When loading older pages, prepend them above the current messages
         setMessages(prev => [...ordered, ...prev])
@@ -151,6 +230,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const transformedMessage = await transformMessage(apiMessage, activeChat.id)
       // New outgoing message should appear at the end (bottom)
       setMessages(prev => [...prev, transformedMessage])
+      
+      // Update the latest message timestamp ref
+      latestMessageTimeRef.current = new Date(transformedMessage.createdAt).getTime()
       
       // Update the last message in the chat list
       setChats(prev =>
