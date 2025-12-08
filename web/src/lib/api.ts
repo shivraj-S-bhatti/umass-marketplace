@@ -1,4 +1,4 @@
-// API Client for UMass Marketplace
+// API Client for Everything UMass
 // Provides typed API calls to the Spring Boot backend with error handling
 
 export interface Message {

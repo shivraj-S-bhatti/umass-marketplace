@@ -1,4 +1,4 @@
-// Constants for the UMass Marketplace application
+// Constants for the Everything UMass application
 
 export enum Condition {
   NEW = 'New',

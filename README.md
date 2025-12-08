@@ -1,10 +1,10 @@
-# UMass Marketplace
+# Everything UMass
 
 A student-only marketplace for buying and selling items on campus. Built with Spring Boot and React.
 
 ## 🎯 Overview
 
-UMass Marketplace is a closed, student-only marketplace designed to help UMass students buy and sell items safely on campus. The MVP focuses on creating listings, browsing items, and basic seller management.
+Everything UMass is a closed, student-only marketplace designed to help UMass students buy and sell items safely on campus. Features include marketplace listings, chat functionality, location-based maps, and trust scores. The platform serves as a Craigslist alternative specifically for the UMass community.
 
 ## 🏗️ Architecture
 
@@ -28,8 +28,8 @@ This is a monorepo containing:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/umass-marketplace.git
-cd umass-marketplace
+git clone https://github.com/your-org/everything-umass.git
+cd everything-umass
 
 # Copy environment variables
 cp deploy/env.example deploy/.env
@@ -137,7 +137,7 @@ The application uses PostgreSQL with Flyway for database migrations.
 ### Schema
 
 - **Users**: Student information (id, email, name, picture_url)
-- **Listings**: Marketplace items (id, title, description, price, category, condition, status, seller_id)
+- **Listings**: Items for sale (id, title, description, price, category, condition, status, seller_id)
 
 ### Migrations
 
@@ -253,9 +253,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/umass-marketplace/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/umass-marketplace/discussions)
-- **Email**: marketplace@umass.edu
+- **Issues**: [GitHub Issues](https://github.com/your-org/everything-umass/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/everything-umass/discussions)
+- **Email**: everything@umass.edu
 
 ---
 

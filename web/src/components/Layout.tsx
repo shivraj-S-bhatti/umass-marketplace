@@ -7,7 +7,7 @@ import Logo from '@/components/Logo'
 import { LeafWallpaper } from '@/components/ui/leaf-wallpaper'
 import { useEffect } from 'react'
 
-// Layout component for UMass Marketplace
+// Layout component for Everything UMass
 // Provides consistent navigation and page structure across the application
 interface LayoutProps {
   children: React.ReactNode
@@ -218,7 +218,7 @@ export default function Layout({ children }: LayoutProps) {
       <footer className="border-t-4 border-foreground bg-card mt-auto paper-texture relative z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="text-center text-xs text-muted-foreground">
-            <p className="font-medium">&copy; 2024 UMass Marketplace. Built for students, by students. 🍂</p>
+            <p className="font-medium">&copy; 2025 Everything UMass. Built for students, by students. 🍂</p>
           </div>
         </div>
       </footer>

@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 
-// Main entry point for UMass Marketplace React application
+// Main entry point for Everything UMass React application
 // Sets up React Query for API state management and React Router for navigation
 const queryClient = new QueryClient({
   defaultOptions: {

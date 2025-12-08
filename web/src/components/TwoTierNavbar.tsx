@@ -74,7 +74,7 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
             </select>
             <div className="flex-1 relative">
               <Input
-                placeholder="Search marketplace..."
+                placeholder="Search listings..."
                 value={filters.query}
                 onChange={(e) => setFilters({ ...filters, query: e.target.value })}
                 onKeyPress={handleKeyPress}

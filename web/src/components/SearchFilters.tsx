@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Search, Filter, X } from 'lucide-react'
 import { CONDITIONS, CATEGORIES, STATUSES } from '@/lib/constants'
 
-// Search Filters Component for UMass Marketplace
-// Provides advanced filtering options for marketplace listings
+// Search Filters Component for Everything UMass
+// Provides advanced filtering options for listings
 export interface SearchFilters {
   query: string
   category: string
@@ -75,7 +75,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
       <CardHeader>
         <CardTitle className="flex items-center">
           <Search className="h-5 w-5 mr-2" />
-          Search Marketplace
+          Search Listings
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">

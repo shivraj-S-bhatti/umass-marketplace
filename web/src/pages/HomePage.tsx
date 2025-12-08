@@ -10,7 +10,7 @@ import TwoTierNavbar from '@/components/TwoTierNavbar'
 import { useSearchParams } from 'react-router-dom'
 import { ListingDetailModal } from '@/components/ui/listing-detail-modal'
 
-// Home Page - displays marketplace listings with search and filter capabilities
+// Home Page - displays listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
 export default function HomePage() {
   const [searchParams] = useSearchParams()

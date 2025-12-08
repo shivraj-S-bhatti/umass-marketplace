@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global CSS for UMass Marketplace - Warm, nostalgic Archie-era comic aesthetic */
+/* Global CSS for Everything UMass - Warm, nostalgic Archie-era comic aesthetic */
 @layer base {
   :root {
     /* Warm autumn color palette - cozy reds/oranges/yellows */

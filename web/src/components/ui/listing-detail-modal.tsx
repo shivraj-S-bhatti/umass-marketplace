@@ -37,7 +37,7 @@ export function ListingDetailModal({
   const handleContactSeller = () => {
     const emailSubject = encodeURIComponent(`Interest in your listing: ${listing.title}`)
     const emailBody = encodeURIComponent(
-      `Hi ${listing.sellerName},\n\nI'm interested in your listing "${listing.title}" on UMass Marketplace.`
+      `Hi ${listing.sellerName},\n\nI'm interested in your listing "${listing.title}" on Everything UMass.`
     )
     window.location.href = `mailto:${listing.sellerEmail}?subject=${emailSubject}&body=${emailBody}`
   }

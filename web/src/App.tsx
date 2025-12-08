@@ -15,7 +15,7 @@ import DesignPlaygroundPage from '@/pages/DesignPlaygroundPage'
 import CartPage from '@/pages/CartPage'
 import SellerProfilePage from '@/pages/SellerProfilePage'
 
-// Main App component for UMass Marketplace
+// Main App component for Everything UMass
 // Sets up routing and provides global layout with navigation
 function App() {
   return (

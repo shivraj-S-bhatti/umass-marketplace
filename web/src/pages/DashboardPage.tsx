@@ -7,7 +7,7 @@ import { apiClient, type Listing } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { LayoutDashboard, Plus, DollarSign, Calendar, Eye } from 'lucide-react'
 
-// Dashboard Page - displays user's listings and marketplace statistics
+// Dashboard Page - displays user's listings and statistics
 // Shows seller's own listings with management options and overview stats
 export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(0)
@@ -29,7 +29,7 @@ export default function DashboardPage() {
       <div className="space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">My Dashboard</h1>
-          <p className="text-muted-foreground">Manage your marketplace listings</p>
+          <p className="text-muted-foreground">Manage your listings</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -72,7 +72,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="text-center py-3">
         <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">My Dashboard</h1>
-        <p className="text-base text-muted-foreground">Manage your marketplace listings 🍂</p>
+        <p className="text-base text-muted-foreground">Manage your listings 🍂</p>
       </div>
 
       {/* Stats Cards */}

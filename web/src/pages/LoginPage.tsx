@@ -41,11 +41,12 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-[calc(100vh-200px)] flex items-center justify-center py-8"
+      className="flex items-center justify-center py-8 flex-1"
       style={{
         backgroundImage: `url(${scrapBookImage})`,
         backgroundRepeat: 'repeat',
         backgroundSize: 'auto',
+        minHeight: '100%',
       }}
     >
       <Card className="w-full max-w-md mx-4">
@@ -57,11 +58,11 @@ export default function LoginPage() {
               <LogIn className="h-6 w-6 text-primary" />
             )}
           </div>
-          <CardTitle className="text-2xl">Welcome to UMass Marketplace</CardTitle>
+          <CardTitle className="text-2xl">Welcome to Everything UMass</CardTitle>
           <CardDescription>
             {isAuthenticated
               ? `Hello, ${user?.name || user?.email}!`
-              : 'Sign in with your UMass email to start buying and selling'}
+              : 'Sign in with your UMass email to access marketplace, chat, maps, and trust scores'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -110,57 +111,8 @@ export default function LoginPage() {
                   Only @umass.edu email addresses are allowed.
                 </p>
               </div>
-              <div className="border-t pt-4">
-                <p className="text-center text-sm font-medium text-foreground mb-3">
-                  Or continue as:
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleRoleSelection('buyer')}
-                    className="flex flex-col items-center justify-center h-24 space-y-2"
-                  >
-                    <ShoppingBag className="h-6 w-6 text-primary" />
-                    <span className="font-medium">Buyer</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleRoleSelection('seller')}
-                    className="flex flex-col items-center justify-center h-24 space-y-2"
-                  >
-                    <Store className="h-6 w-6 text-primary" />
-                    <span className="font-medium">Seller</span>
-                  </Button>
-                </div>
-              </div>
             </>
           )}
-          <Button 
-            onClick={handleGoogleLogin}
-            className="w-full"
-            size="lg"
-          >
-            <Mail className="h-4 w-4 mr-2" />
-            Sign in with Google
-          </Button>
-          
-          <div className="text-center text-sm text-muted-foreground">
-            <p>
-              You'll be redirected to Google to sign in with your UMass email address.
-              Only @umass.edu email addresses are allowed.
-            </p>
-          </div>
-          
-          <div className="border-t pt-4">
-            <div className="text-center text-sm text-muted-foreground">
-              <p className="font-medium mb-2">For now, you can:</p>
-              <ul className="space-y-1 text-left">
-                <li>• Browse all listings without signing in</li>
-                <li>• Create listings (will be associated with a dummy account)</li>
-                <li>• View your dashboard</li>
-              </ul>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

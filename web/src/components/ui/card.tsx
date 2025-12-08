@@ -3,7 +3,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 // Card component for displaying content in containers
-// Provides consistent styling for marketplace listings and other content
+// Provides consistent styling for listings and other content
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>

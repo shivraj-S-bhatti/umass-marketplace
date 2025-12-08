@@ -78,7 +78,7 @@ export default function RegisterPage() {
       <Card>
         <CardHeader>
           <CardTitle>Register</CardTitle>
-          <CardDescription>Create your UMass Marketplace account</CardDescription>
+          <CardDescription>Create your Everything UMass account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
