@@ -111,7 +111,7 @@ export function ListingDetailModal({
               </p>
             </div>
 
-            {(listing.category || listing.condition) && (
+            {(listing.category || listing.condition || (listing.latitude && listing.longitude)) && (
               <div className="grid grid-cols-2 gap-4">
                 {listing.category && (
                   <div>
@@ -123,6 +123,17 @@ export function ListingDetailModal({
                   <div>
                     <h4 className="font-semibold">Condition</h4>
                     <p className="text-muted-foreground">{listing.condition}</p>
+                  </div>
+                )}
+                {listing.latitude && listing.longitude && (
+                  <div>
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Location
+                    </h4>
+                    <p className="text-muted-foreground text-sm">
+                      {listing.latitude.toFixed(4)}, {listing.longitude.toFixed(4)}
+                    </p>
                   </div>
                 )}
               </div>
