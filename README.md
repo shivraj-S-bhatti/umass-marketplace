@@ -46,7 +46,7 @@ Everything UMass follows a modern three-tier architecture designed for scalabili
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Client Layer                            │
+│                      Client Layer                           │
 │                   (Web/Mobile Browser)                      │
 └───────────────────────────┬─────────────────────────────────┘
                             │
@@ -54,10 +54,10 @@ Everything UMass follows a modern three-tier architecture designed for scalabili
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
 │                  Frontend Application                       │
-│  ┌──────────────┐         ┌──────────────┐                │
-│  │ React 18 SPA │ ◄─────► │ Vite Builder │                │
-│  │ TypeScript   │         │ Dev Server   │                │
-│  └──────────────┘         └──────────────┘                │
+│  ┌──────────────┐         ┌──────────────┐                  │
+│  │ React 18 SPA │ ◄─────► │ Vite Builder │                  │
+│  │ TypeScript   │         │ Dev Server   │                  │
+│  └──────────────┘         └──────────────┘                  │
 │                                                             │
 │  Tech Stack:                                                │
 │  - React 18 + TypeScript                                    │
@@ -70,36 +70,36 @@ Everything UMass follows a modern three-tier architecture designed for scalabili
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
 │                    REST API Layer                           │
-│  ┌──────────────────────────────────────────────┐          │
-│  │         Spring Boot 3 Application            │          │
-│  │  - REST Controllers                          │          │
-│  │  - Service Layer                             │          │
-│  │  - Repository Layer (JPA/Hibernate)         │          │
-│  │  - Security (OAuth2 + JWT)                  │          │
-│  └──────────────────────────────────────────────┘          │
+│  ┌──────────────────────────────────────────────┐           │
+│  │         Spring Boot 3 Application            │           │
+│  │  - REST Controllers                          │           │
+│  │  - Service Layer                             │           │
+│  │  - Repository Layer (JPA/Hibernate)         │            │
+│  │  - Security (OAuth2 + JWT)                  │            │
+│  └──────────────────────────────────────────────┘           │
 │                                                             │
 │  Tech Stack:                                                │
 │  - Spring Boot 3.5.6                                        │
 │  - Java 21                                                  │
-│  - OpenAPI/Swagger Documentation                           │
+│  - OpenAPI/Swagger Documentation                            │
 └───────────────────────────┬─────────────────────────────────┘
                             │
                             │ JDBC
                             │
 ┌───────────────────────────▼─────────────────────────────────┐
 │                    Database Layer                           │
-│  ┌──────────────────────────────────────────────┐          │
-│  │            PostgreSQL 16                     │          │
-│  │  - User Management                           │          │
-│  │  - Listing Storage                           │          │
-│  │  - Chat Messages                             │          │
-│  │  - Reviews & Ratings                         │          │
-│  └──────────────────────────────────────────────┘          │
+│  ┌──────────────────────────────────────────────┐           │
+│  │            PostgreSQL 16                     │           │
+│  │  - User Management                           │           │
+│  │  - Listing Storage                           │           │
+│  │  - Chat Messages                             │           │
+│  │  - Reviews & Ratings                         │           │
+│  └──────────────────────────────────────────────┘           │
 │                                                             │
 │  Features:                                                  │
-│  - Flyway Database Migrations                              │
-│  - JPA/Hibernate ORM                                       │
-│  - ACID Transactions                                       │
+│  - Flyway Database Migrations                               │
+│  - JPA/Hibernate ORM                                        │
+│  - ACID Transactions                                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
