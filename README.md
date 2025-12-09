@@ -74,8 +74,8 @@ Everything UMass follows a modern three-tier architecture designed for scalabili
 │  │         Spring Boot 3 Application            │           │
 │  │  - REST Controllers                          │           │
 │  │  - Service Layer                             │           │
-│  │  - Repository Layer (JPA/Hibernate)          │            │
-│  │  - Security (OAuth2 + JWT)                   │            │
+│  │  - Repository Layer (JPA/Hibernate)          │           │
+│  │  - Security (OAuth2 + JWT)                   │           │
 │  └──────────────────────────────────────────────┘           │
 │                                                             │
 │  Tech Stack:                                                │
