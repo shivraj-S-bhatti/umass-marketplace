@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, Palette, ShoppingCart } from 'lucide-react'
+import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, Palette, ShoppingCart, Calendar, Users, Trophy, Store } from 'lucide-react'
 import { UserRole, useUser } from '@/contexts/UserContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Logo from '@/components/Logo'
@@ -56,12 +56,48 @@ export default function Layout({ children }: LayoutProps) {
     }
   }
 
+  // Top-tier navigation items for future enhancements
+  const topTierNavItems = [
+    { path: '/', label: 'Marketplace', icon: Store },
+    { path: '/events', label: 'Event Hub', icon: Calendar },
+    { path: '/common-room', label: 'Common Room', icon: MessageSquare },
+    { path: '/clubs', label: 'Clubs', icon: Users },
+    { path: '/sports', label: 'Sports', icon: Trophy },
+  ]
+
   return (
     <div className="min-h-screen bg-background relative flex flex-col">
       {/* Leaf wallpaper background */}
       <LeafWallpaper />
       
-      {/* Header Navigation - Tier 1 */}
+      {/* Top-Tier Navigation - Future Enhancements */}
+      <nav className="border-b-4 border-foreground bg-primary/10 paper-texture relative z-10">
+        <div className="container mx-auto px-2 sm:px-4 py-2">
+          <div className="flex items-center justify-center gap-1 md:gap-2 overflow-x-auto scrollbar-hide">
+            {topTierNavItems.map(({ path, label, icon: Icon }) => {
+              const isActive = location.pathname === path || 
+                (path === '/' && location.pathname === '/') ||
+                (path !== '/' && location.pathname.startsWith(path))
+              return (
+                <Link
+                  key={path}
+                  to={path}
+                  className={`flex items-center space-x-1.5 px-2 sm:px-3 py-1.5 rounded-comic text-xs md:text-sm font-bold transition-all border-2 whitespace-nowrap flex-shrink-0 ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground border-foreground shadow-comic'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent border-transparent hover:border-foreground'
+                  }`}
+                >
+                  <Icon className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">{label}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </nav>
+      
+      {/* Header Navigation - Tier 2 */}
       <header className="border-b-4 border-foreground bg-card paper-texture relative z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">

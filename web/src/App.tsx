@@ -15,6 +15,7 @@ import OAuthSuccessPage from '@/pages/OAuthSuccessPage'
 import DesignPlaygroundPage from '@/pages/DesignPlaygroundPage'
 import CartPage from '@/pages/CartPage'
 import SellerProfilePage from '@/pages/SellerProfilePage'
+import LandingPage from '@/pages/LandingPage'
 
 // Main App component for Everything UMass
 // Sets up routing and provides global layout with navigation
@@ -26,6 +27,12 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/landing" element={<LandingPage />} />
+              {/* Future enhancement routes - currently show landing page */}
+              <Route path="/events" element={<LandingPage />} />
+              <Route path="/common-room" element={<LandingPage />} />
+              <Route path="/clubs" element={<LandingPage />} />
+              <Route path="/sports" element={<LandingPage />} />
               <Route
                 path="/sell"
                 element={
