@@ -1,21 +1,175 @@
 # Everything UMass
 
-A student-only marketplace for buying and selling items on campus. Built with Spring Boot and React.
+**Your All-in-One Campus Platform - Launching Next Semester**
 
-## 🎯 Overview
+Everything UMass is a student-only platform designed to transform how UMass students connect, buy, sell, and engage with campus life. Built specifically for the UMass community, we're creating a safer, more organized alternative to scattered Facebook groups, chaotic WhatsApp chats, and impersonal marketplaces.
 
-Everything UMass is a closed, student-only marketplace designed to help UMass students buy and sell items safely on campus. Features include marketplace listings, chat functionality, location-based maps, and trust scores. The platform serves as a Craigslist alternative specifically for the UMass community.
+## Elevator Pitch
 
-## 🏗️ Architecture
+**Everything UMass: We've Got You**
 
-This is a monorepo containing:
+Starting next semester, UMass students will have access to a unified platform that brings together marketplace commerce, event organization, club management, sports coordination, and community forums—all in one verified, student-only space.
 
-- **`api/`** - Spring Boot 3 API with Java 21, PostgreSQL, and Flyway migrations
-- **`web/`** - React + TypeScript frontend with Vite, Tailwind CSS, and shadcn/ui
-- **`deploy/`** - Docker Compose setup for local development
-- **`.github/workflows/`** - CI/CD pipeline with GitHub Actions
+Unlike eBay, we charge zero transaction fees. Unlike Facebook Marketplace, every user is verified as a UMass student. Unlike WhatsApp groups, everything is searchable and organized. Unlike Craigslist, you see real-time distance to items on campus.
 
-## 🚀 Quick Start
+This is more than a marketplace—it's your complete campus hub. Host your clubs, organize events, join pickup games, or engage in commerce. Everything UMass, all in one place.
+
+## Platform Overview
+
+### Marketplace
+
+Buy and sell with verified UMass students. Zero fees, campus proximity tracking, and real-time distance calculations make transactions convenient and safe.
+
+![Marketplace Explore](screenshots/market-explore.png)
+
+### Seller Dashboard
+
+Manage your listings, track sales, and monitor your marketplace activity from a centralized dashboard designed for student sellers.
+
+![Seller Dashboard](screenshots/seller-dashboard.png)
+
+### Future Vision
+
+The platform is architected to expand beyond marketplace functionality, with planned features for events, clubs, sports, and community forums.
+
+![Future Scope](screenshots/future-scope.png)
+
+### Landing Experience
+
+A welcoming entry point that showcases all platform capabilities and guides students to the features they need.
+
+![Landing Page](screenshots/landing-page.png)
+
+## Application Architecture
+
+Everything UMass follows a modern three-tier architecture designed for scalability and maintainability:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Client Layer                            │
+│                   (Web/Mobile Browser)                      │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ HTTP/HTTPS
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│                  Frontend Application                       │
+│  ┌──────────────┐         ┌──────────────┐                │
+│  │ React 18 SPA │ ◄─────► │ Vite Builder │                │
+│  │ TypeScript   │         │ Dev Server   │                │
+│  └──────────────┘         └──────────────┘                │
+│                                                             │
+│  Tech Stack:                                                │
+│  - React 18 + TypeScript                                    │
+│  - Tailwind CSS + shadcn/ui                                 │
+│  - React Query (API state)                                  │
+│  - React Router (navigation)                                │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ REST API
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│                    REST API Layer                           │
+│  ┌──────────────────────────────────────────────┐          │
+│  │         Spring Boot 3 Application            │          │
+│  │  - REST Controllers                          │          │
+│  │  - Service Layer                             │          │
+│  │  - Repository Layer (JPA/Hibernate)         │          │
+│  │  - Security (OAuth2 + JWT)                  │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  Tech Stack:                                                │
+│  - Spring Boot 3.5.6                                        │
+│  - Java 21                                                  │
+│  - OpenAPI/Swagger Documentation                           │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            │ JDBC
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│                    Database Layer                           │
+│  ┌──────────────────────────────────────────────┐          │
+│  │            PostgreSQL 16                     │          │
+│  │  - User Management                           │          │
+│  │  - Listing Storage                           │          │
+│  │  - Chat Messages                             │          │
+│  │  - Reviews & Ratings                         │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  Features:                                                  │
+│  - Flyway Database Migrations                              │
+│  - JPA/Hibernate ORM                                       │
+│  - ACID Transactions                                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Architectural Decisions
+
+**Monorepo Structure**: All code lives in a single repository, enabling shared types, consistent tooling, and simplified deployment.
+
+**API-First Design**: RESTful API with OpenAPI documentation ensures clear contracts between frontend and backend.
+
+**Containerized Deployment**: Docker Compose setup allows consistent development and production environments.
+
+**Type Safety**: TypeScript on the frontend and strong typing in Java ensure fewer runtime errors.
+
+**Modern React Patterns**: React Query for server state, React Router for navigation, and component-based architecture.
+
+## Core Features
+
+### Verified Student Community
+
+All users must authenticate with a @umass.edu email address, ensuring a closed, trusted community of verified students.
+
+### Zero-Fee Marketplace
+
+Unlike eBay or Facebook Marketplace, we charge no transaction fees. Students keep 100% of their sale price.
+
+### Campus Proximity
+
+Real-time distance calculations show exactly how far items are from your location, making meetups convenient and safe.
+
+### Organized Listings
+
+Searchable, filterable marketplace with categories, conditions, and price ranges. No more scrolling through endless chat messages.
+
+### Seller Dashboard
+
+Comprehensive dashboard for managing listings, tracking sales, and monitoring marketplace activity.
+
+### Future Expansion
+
+The platform architecture supports expansion into:
+- Event Hub: Campus event discovery and organization
+- Common Room: Community forums and discussions
+- Clubs: Student organization management
+- Sports: Pickup game coordination and team finding
+
+## Technical Stack
+
+### Frontend
+- React 18 with TypeScript
+- Vite for build tooling and dev server
+- Tailwind CSS for styling
+- shadcn/ui component library
+- React Query for API state management
+- React Router for navigation
+
+### Backend
+- Spring Boot 3.5.6
+- Java 21
+- PostgreSQL 16
+- JPA/Hibernate ORM
+- Flyway for database migrations
+- OAuth2 + JWT authentication
+- OpenAPI/Swagger documentation
+
+### Infrastructure
+- Docker and Docker Compose
+- GitHub Actions for CI/CD
+- PostgreSQL for data persistence
+
+## Getting Started
 
 ### Prerequisites
 
@@ -24,12 +178,12 @@ This is a monorepo containing:
 - Java 21+ (for local development)
 - Maven 3.8+ (for local development)
 
-### One-Command Setup
+### Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/everything-umass.git
-cd everything-umass
+git clone https://github.com/shivraj-S-bhatti/umass-marketplace.git
+cd umass-marketplace
 
 # Copy environment variables
 cp deploy/env.example deploy/.env
@@ -37,7 +191,7 @@ cp deploy/env.example deploy/.env
 # Start all services
 docker compose -f deploy/docker-compose.yml up -d
 
-# Install frontend dependencies (for local development)
+# Install frontend dependencies
 npm install -C web
 
 # Start frontend development server
@@ -49,214 +203,42 @@ mvn spring-boot:run -f api
 
 ### Access Points
 
-- **Frontend**: http://localhost:5173
-- **API**: http://localhost:8080
-- **Swagger UI**: http://localhost:8080/swagger-ui
-- **Database**: localhost:5432 (umarket/umarket/umarket)
+- Frontend: http://localhost:5173
+- API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui
+- Database: localhost:5432 (umarket/umarket/umarket)
 
-## 📚 API Documentation
+## Launch Timeline
 
-The API is fully documented with OpenAPI/Swagger:
+**Current Status**: MVP Complete
 
-- **Swagger UI**: http://localhost:8080/swagger-ui
-- **OpenAPI Spec**: http://localhost:8080/v3/api-docs
+The marketplace core functionality is complete and tested. We're preparing for a full launch next semester with:
 
-### Key Endpoints
+- Complete OAuth2 authentication flow
+- Enhanced search and filtering
+- Image upload capabilities
+- Real-time messaging between buyers and sellers
+- Mobile-responsive optimizations
 
-```bash
-# Health check
-GET /health
+**Next Semester Goals**:
+- Public beta launch for UMass students
+- Expansion to Event Hub and Common Room features
+- Club and Sports module development
+- Mobile app development (React Native)
 
-# Listings
-GET /api/listings?page=0&size=20&q=laptop&category=Electronics
-POST /api/listings
-GET /api/listings/{id}
-```
+## Development
 
-### Example API Usage
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines, code standards, and contribution instructions.
 
-```bash
-# Create a listing
-curl -X POST http://localhost:8080/api/listings \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "MacBook Pro 13-inch",
-    "description": "Great condition, barely used",
-    "price": 1200.00,
-    "category": "Electronics",
-    "condition": "Like New"
-  }'
+## Support
 
-# Get listings
-curl "http://localhost:8080/api/listings?page=0&size=10"
-```
+- Issues: [GitHub Issues](https://github.com/shivraj-S-bhatti/umass-marketplace/issues)
+- Discussions: [GitHub Discussions](https://github.com/shivraj-S-bhatti/umass-marketplace/discussions)
 
-## 🛠️ Development
+## License
 
-### Local Development Setup
-
-1. **Database**: Start PostgreSQL with Docker Compose
-2. **API**: Run Spring Boot application locally
-3. **Frontend**: Use Vite dev server with hot reload
-
-```bash
-# Start database only
-docker compose -f deploy/docker-compose.yml up db -d
-
-# Run API locally
-mvn spring-boot:run -f api
-
-# Run frontend locally
-npm run dev -C web
-```
-
-### Code Generation
-
-```bash
-# Generate TypeScript API client from OpenAPI spec
-npm run gen:api -C web
-```
-
-### Testing
-
-```bash
-# Run API tests
-mvn test -f api
-
-# Run frontend tests
-npm test -C web
-
-# Run integration tests with Testcontainers
-mvn verify -f api
-```
-
-## 🗄️ Database
-
-The application uses PostgreSQL with Flyway for database migrations.
-
-### Schema
-
-- **Users**: Student information (id, email, name, picture_url)
-- **Listings**: Items for sale (id, title, description, price, category, condition, status, seller_id)
-
-### Migrations
-
-Database schema is managed with Flyway migrations in `api/src/main/resources/db/migration/`.
-
-## 🔐 Authentication
-
-Currently, the application allows anonymous access for MVP. OAuth2 Google integration is prepared but not yet implemented.
-
-### Planned Authentication Flow
-
-1. Google OAuth2 with @umass.edu domain restriction
-2. JWT token-based authentication
-3. User session management
-
-## 🎨 Frontend
-
-Built with modern React stack:
-
-- **React 18** with TypeScript
-- **Vite** for fast development and building
-- **Tailwind CSS** for styling
-- **shadcn/ui** for component library
-- **React Query** for API state management
-- **React Router** for navigation
-
-### Key Features
-
-- Responsive design for mobile and desktop
-- Dark theme support
-- Real-time form validation
-- Toast notifications
-- Loading states and error handling
-
-## 🐳 Deployment
-
-### Docker Compose
-
-The `deploy/` directory contains production-ready Docker Compose configuration:
-
-```bash
-# Production deployment
-docker compose -f deploy/docker-compose.yml up -d
-```
-
-### Environment Variables
-
-Copy `deploy/env.example` to `deploy/.env` and configure:
-
-```bash
-# Database
-POSTGRES_DB=umarket
-POSTGRES_USER=umarket
-POSTGRES_PASSWORD=umarket
-
-# OAuth2 (when implemented)
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-
-# Frontend
-VITE_API_BASE_URL=http://localhost:8080
-```
-
-## 🧪 Testing
-
-### API Testing
-
-- **Unit Tests**: JUnit 5 with Mockito
-- **Integration Tests**: Testcontainers with PostgreSQL
-- **API Tests**: Spring Boot Test with MockMvc
-
-### Frontend Testing
-
-- **Unit Tests**: Jest with React Testing Library
-- **E2E Tests**: Playwright (planned)
-- **Linting**: ESLint with TypeScript rules
-
-## 📋 Project Status
-
-### ✅ Completed (MVP)
-
-- [x] Monorepo structure with API and frontend
-- [x] Spring Boot API with PostgreSQL and Flyway
-- [x] React frontend with modern tooling
-- [x] Docker Compose for local development
-- [x] CI/CD pipeline with GitHub Actions
-- [x] Swagger/OpenAPI documentation
-- [x] Basic CRUD operations for listings
-- [x] Responsive UI with dark theme
-
-### 🚧 In Progress
-
-- [ ] Google OAuth2 authentication
-- [ ] User dashboard with listing management
-- [ ] Image upload for listings
-- [ ] Search and filtering improvements
-
-### 📅 Planned
-
-- [ ] Real-time messaging between buyers and sellers
-- [ ] Price comparison features
-- [ ] Mobile app (React Native)
-- [ ] Admin moderation tools
-- [ ] Multi-campus support
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and code standards.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-org/everything-umass/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/everything-umass/discussions)
-- **Email**: everything@umass.edu
+This project is licensed under the MIT License.
 
 ---
 
-Built with ❤️ for UMass students
+Built for UMass students, by UMass students.
