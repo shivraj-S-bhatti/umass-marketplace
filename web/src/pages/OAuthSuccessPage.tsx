@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/shared/contexts/UserContext'
 
 export default function OAuthSuccessPage() {
   const [searchParams] = useSearchParams()

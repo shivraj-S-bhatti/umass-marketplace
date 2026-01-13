@@ -2,11 +2,11 @@ package edu.umass.marketplace.integration;
 
 // Integration Test for Listing Repository using Testcontainers
 // Tests CRUD operations against a real PostgreSQL database in a container
-import edu.umass.marketplace.model.Condition;
-import edu.umass.marketplace.model.Listing;
-import edu.umass.marketplace.model.User;
-import edu.umass.marketplace.repository.ListingRepository;
-import edu.umass.marketplace.repository.UserRepository;
+import edu.umass.marketplace.marketplace.model.Condition;
+import edu.umass.marketplace.marketplace.model.Listing;
+import edu.umass.marketplace.marketplace.model.User;
+import edu.umass.marketplace.marketplace.repository.ListingRepository;
+import edu.umass.marketplace.marketplace.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import edu.umass.marketplace.model.Condition;
 import java.math.BigDecimal;
 import java.util.List;
 

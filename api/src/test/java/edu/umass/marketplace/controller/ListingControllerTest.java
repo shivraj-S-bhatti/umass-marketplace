@@ -1,10 +1,10 @@
 package edu.umass.marketplace.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umass.marketplace.dto.CreateListingRequest;
-import edu.umass.marketplace.response.ListingResponse;
-import edu.umass.marketplace.response.StatsResponse;
-import edu.umass.marketplace.service.ListingService;
+import edu.umass.marketplace.marketplace.dto.CreateListingRequest;
+import edu.umass.marketplace.marketplace.response.ListingResponse;
+import edu.umass.marketplace.marketplace.response.StatsResponse;
+import edu.umass.marketplace.marketplace.service.ListingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +27,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = ListingController.class)
-@org.springframework.context.annotation.Import(edu.umass.marketplace.security.SecurityConfig.class)
+@WebMvcTest(controllers = edu.umass.marketplace.marketplace.controller.ListingController.class)
+@org.springframework.context.annotation.Import(edu.umass.marketplace.common.security.SecurityConfig.class)
 class ListingControllerTest {
 
     @Autowired
@@ -38,16 +38,16 @@ class ListingControllerTest {
     private ListingService listingService;
 
     @MockBean
-    private edu.umass.marketplace.security.JwtUtil jwtUtil;
+    private edu.umass.marketplace.common.security.JwtUtil jwtUtil;
 
     @MockBean
-    private edu.umass.marketplace.repository.UserRepository userRepository;
+    private edu.umass.marketplace.marketplace.repository.UserRepository userRepository;
 
     @MockBean
-    private edu.umass.marketplace.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private edu.umass.marketplace.common.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @MockBean
-    private edu.umass.marketplace.security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private edu.umass.marketplace.common.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
     private ObjectMapper objectMapper;

@@ -1,10 +1,10 @@
 package edu.umass.marketplace.service;
 
-import edu.umass.marketplace.dto.LoginRequest;
-import edu.umass.marketplace.dto.RegisterRequest;
-import edu.umass.marketplace.model.User;
-import edu.umass.marketplace.response.AuthResponse;
-import edu.umass.marketplace.security.JwtUtil;
+import edu.umass.marketplace.marketplace.dto.LoginRequest;
+import edu.umass.marketplace.marketplace.dto.RegisterRequest;
+import edu.umass.marketplace.marketplace.model.User;
+import edu.umass.marketplace.marketplace.response.AuthResponse;
+import edu.umass.marketplace.common.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,13 +25,13 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     @Mock
-    private UserService userService;
+    private edu.umass.marketplace.marketplace.service.UserService userService;
 
     @Mock
     private JwtUtil jwtUtil;
 
     @InjectMocks
-    private AuthService authService;
+    private edu.umass.marketplace.marketplace.service.AuthService authService;
 
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;

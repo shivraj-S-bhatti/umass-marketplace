@@ -1,11 +1,11 @@
 package edu.umass.marketplace.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umass.marketplace.dto.LoginRequest;
-import edu.umass.marketplace.dto.RegisterRequest;
-import edu.umass.marketplace.response.AuthResponse;
-import edu.umass.marketplace.response.UserResponse;
-import edu.umass.marketplace.service.AuthService;
+import edu.umass.marketplace.marketplace.dto.LoginRequest;
+import edu.umass.marketplace.marketplace.dto.RegisterRequest;
+import edu.umass.marketplace.marketplace.response.AuthResponse;
+import edu.umass.marketplace.marketplace.response.UserResponse;
+import edu.umass.marketplace.marketplace.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration;
@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
-    controllers = AuthController.class,
+    controllers = edu.umass.marketplace.marketplace.controller.AuthController.class,
     excludeAutoConfiguration = {
         OAuth2ClientAutoConfiguration.class,
         OAuth2ResourceServerAutoConfiguration.class,
@@ -43,10 +43,10 @@ public class AuthControllerTest {
     private AuthService authService;
 
     @MockBean
-    private edu.umass.marketplace.security.JwtUtil jwtUtil;
+    private edu.umass.marketplace.common.security.JwtUtil jwtUtil;
 
     @MockBean
-    private edu.umass.marketplace.repository.UserRepository userRepository;
+    private edu.umass.marketplace.marketplace.repository.UserRepository userRepository;
 
     @Autowired
     private ObjectMapper objectMapper;

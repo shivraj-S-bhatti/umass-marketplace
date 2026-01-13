@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
 import { Store, Calendar, MessageSquare, Users, Trophy, ArrowRight, ShoppingBag, Sparkles } from 'lucide-react'
 
 // Landing Page - Hero section showcasing the platform's future vision

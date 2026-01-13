@@ -1,5 +1,8 @@
 package edu.umass.marketplace.security;
 
+import edu.umass.marketplace.common.security.JwtUtil;
+import edu.umass.marketplace.common.security.OAuth2LoginSuccessHandler;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

@@ -1,13 +1,13 @@
 package edu.umass.marketplace.service;
 
-import edu.umass.marketplace.dto.CreateListingRequest;
-import edu.umass.marketplace.model.Condition;
-import edu.umass.marketplace.model.Listing;
-import edu.umass.marketplace.model.User;
-import edu.umass.marketplace.repository.ListingRepository;
-import edu.umass.marketplace.repository.UserRepository;
-import edu.umass.marketplace.response.ListingResponse;
-import edu.umass.marketplace.response.StatsResponse;
+import edu.umass.marketplace.marketplace.dto.CreateListingRequest;
+import edu.umass.marketplace.marketplace.model.Condition;
+import edu.umass.marketplace.marketplace.model.Listing;
+import edu.umass.marketplace.marketplace.model.User;
+import edu.umass.marketplace.marketplace.repository.ListingRepository;
+import edu.umass.marketplace.marketplace.repository.UserRepository;
+import edu.umass.marketplace.marketplace.response.ListingResponse;
+import edu.umass.marketplace.marketplace.response.StatsResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class ListingServiceTest {
     private Authentication authentication;
 
     @InjectMocks
-    private ListingService listingService;
+    private edu.umass.marketplace.marketplace.service.ListingService listingService;
 
     private User testSeller;
     private Listing testListing;

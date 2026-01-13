@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { StickerBadge } from '@/components/ui/sticker-badge'
-import { LeafDecoration } from '@/components/ui/leaf-decoration'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
+import { StickerBadge } from '@/shared/components/ui/sticker-badge'
+import { LeafDecoration } from '@/shared/components/ui/leaf-decoration'
 import { Search, Calendar, Eye, Plus } from 'lucide-react'
 
 // Design Playground Page - Isolated UI/UX testing environment

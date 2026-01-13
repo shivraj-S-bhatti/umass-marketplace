@@ -8,24 +8,24 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = HealthController.class)
-@org.springframework.context.annotation.Import(edu.umass.marketplace.security.SecurityConfig.class)
+@WebMvcTest(controllers = edu.umass.marketplace.marketplace.controller.HealthController.class)
+@org.springframework.context.annotation.Import(edu.umass.marketplace.common.security.SecurityConfig.class)
 class HealthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @org.springframework.boot.test.mock.mockito.MockBean
-    private edu.umass.marketplace.security.JwtUtil jwtUtil;
+    private edu.umass.marketplace.common.security.JwtUtil jwtUtil;
 
     @org.springframework.boot.test.mock.mockito.MockBean
-    private edu.umass.marketplace.repository.UserRepository userRepository;
+    private edu.umass.marketplace.marketplace.repository.UserRepository userRepository;
 
     @org.springframework.boot.test.mock.mockito.MockBean
-    private edu.umass.marketplace.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private edu.umass.marketplace.common.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @org.springframework.boot.test.mock.mockito.MockBean
-    private edu.umass.marketplace.security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private edu.umass.marketplace.common.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() throws Exception {

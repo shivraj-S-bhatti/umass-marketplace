@@ -1,10 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
 import { LogIn, Mail, ShoppingBag, Store } from 'lucide-react'
-import { useUser } from '@/contexts/UserContext'
+import { useUser } from '@/shared/contexts/UserContext'
 import { useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/shared/hooks/use-toast'
 import scrapBookImage from '@/assets/scrap_book.png'
 
 // Login Page - placeholder for OAuth authentication
