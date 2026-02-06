@@ -2,35 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global CSS for Everything UMass - Warm, nostalgic Archie-era comic aesthetic */
+/* Swiss design – light/dark themes, Inter, minimal chrome */
 @layer base {
   :root {
-    /* Warm autumn color palette - cozy reds/oranges/yellows */
-    --background: 35 100% 97%; /* Warm cream/yellow */
-    --foreground: 15 85% 20%; /* Deep brown for text */
-    --card: 35 100% 99%; /* Slightly off-white cream */
-    --card-foreground: 15 85% 20%;
-    --popover: 35 100% 99%;
-    --popover-foreground: 15 85% 20%;
-    --primary: 15 85% 45%; /* Warm orange-red */
-    --primary-foreground: 35 100% 98%;
-    --secondary: 25 90% 92%; /* Light orange */
-    --secondary-foreground: 15 85% 20%;
-    --muted: 30 80% 95%; /* Warm beige */
-    --muted-foreground: 15 60% 40%;
-    --accent: 20 95% 55%; /* Bright orange */
-    --accent-foreground: 35 100% 98%;
-    --destructive: 0 84.2% 60.2%;
+    /* Light mode */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    --primary: 48 96% 53%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 48 96% 53%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 15 85% 30%; /* Dark brown for thick borders */
-    --input: 15 85% 30%;
-    --ring: 20 95% 55%;
-    --radius: 1rem; /* More rounded for comic panels */
-    --chart-1: 15 85% 45%;
-    --chart-2: 25 90% 55%;
-    --chart-3: 35 95% 60%;
-    --chart-4: 20 95% 55%;
-    --chart-5: 15 85% 50%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 48 96% 53%;
+    --radius: 0.5rem;
+    --chart-1: 48 96% 53%;
+    --chart-2: 0 0% 45%;
+    --chart-3: 0 0% 60%;
+    --chart-4: 0 0% 75%;
+    --chart-5: 0 0% 90%;
+  }
+
+  .dark {
+    /* Dark mode – marko.ch style */
+    --background: 0 0% 7%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 48 96% 53%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 48 96% 53%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 48 96% 53%;
+    --chart-1: 48 96% 53%;
+    --chart-2: 0 0% 60%;
+    --chart-3: 0 0% 40%;
+    --chart-4: 0 0% 30%;
+    --chart-5: 0 0% 20%;
   }
 }
 
@@ -39,63 +67,32 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
-  
-  /* Custom scrollbar - matches theme */
+
+  /* Scrollbar – theme-aware */
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+    scrollbar-color: hsl(var(--border)) hsl(var(--muted));
   }
-  
+
   *::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
   }
-  
+
   *::-webkit-scrollbar-track {
     background: hsl(var(--muted));
-    border-radius: 6px;
+    border-radius: 4px;
   }
-  
-  *::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
-    border-radius: 6px;
-    border: 2px solid hsl(var(--muted));
-  }
-  
-  *::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--accent));
-  }
-}
 
-/* Comic panel style - rounded with thick border */
-@layer components {
-  .comic-panel {
-    @apply rounded-2xl border-4 border-foreground bg-card;
-    box-shadow: 
-      4px 4px 0px rgba(0, 0, 0, 0.2),
-      8px 8px 0px rgba(0, 0, 0, 0.1);
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
   }
-  
-  .comic-card {
-    @apply comic-panel p-4;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  
-  /* Warm paper texture */
-  .paper-texture {
-    background-color: hsl(var(--card));
-    background-image: 
-      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-  
-  /* Leaf decoration component */
-  .leaf-decoration {
-    position: absolute;
-    opacity: 0.3;
-    pointer-events: none;
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
   }
 }

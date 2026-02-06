@@ -1,6 +1,6 @@
 // Image handling utilities
 // Centralized functions for image validation, compression, and conversion
-import { compressImage } from '../imageCompression'
+import { compressImage } from './imageCompression'
 
 export interface ImageValidationResult {
   valid: boolean

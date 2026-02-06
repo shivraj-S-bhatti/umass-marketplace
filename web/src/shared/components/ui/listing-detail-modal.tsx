@@ -141,8 +141,8 @@ export function ListingDetailModal({
 
             {/* Must Go By Date */}
             {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-red-700 font-semibold">
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-destructive font-semibold">
                   <AlertCircle className="h-4 w-4" />
                   <span>Must go by: {new Date(listing.mustGoBy).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
@@ -206,8 +206,7 @@ export function ListingDetailModal({
                     <Button
                       onClick={() => handleStatusUpdate('SOLD')}
                       disabled={isUpdating}
-                      className="flex-1"
-                      variant="default"
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
                     >
                       <CheckCircle2 className="h-4 w-4 mr-2" />
                       Mark as Sold
@@ -217,8 +216,7 @@ export function ListingDetailModal({
                     <Button
                       onClick={() => handleStatusUpdate('ON_HOLD')}
                       disabled={isUpdating}
-                      className="flex-1"
-                      variant="secondary"
+                      className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-0"
                     >
                       <AlertCircle className="h-4 w-4 mr-2" />
                       Put on Hold
@@ -227,8 +225,7 @@ export function ListingDetailModal({
                     <Button
                       onClick={() => handleStatusUpdate('ACTIVE')}
                       disabled={isUpdating}
-                      className="flex-1"
-                      variant="secondary"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
                     >
                       <Tags className="h-4 w-4 mr-2" />
                       Make Active

@@ -73,7 +73,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="text-center py-3">
         <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">My Dashboard</h1>
-        <p className="text-base text-muted-foreground">Manage your listings 🍂</p>
+        <p className="text-base text-muted-foreground">Manage your listings.</p>
       </div>
 
       {/* Stats Cards */}
@@ -272,12 +272,12 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
             listing.status === 'ACTIVE' 
-              ? 'bg-green-100 text-green-800' 
+              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/40' 
               : listing.status === 'ON_HOLD'
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-gray-100 text-gray-800'
+              ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/40'
+              : 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/40'
           }`}>
             {listing.status}
           </span>
@@ -318,7 +318,7 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="flex-1"
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-0"
                   onClick={async () => {
                     try {
                       toast({
@@ -354,7 +354,7 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="flex-1"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
                   onClick={async () => {
                     try {
                       toast({
@@ -393,7 +393,7 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
               <Button 
                 size="sm" 
                 variant="outline" 
-                className="flex-1"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
                 onClick={async () => {
                   try {
                     toast({

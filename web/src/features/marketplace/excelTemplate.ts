@@ -44,7 +44,7 @@ export function generateTemplate(): XLSX.WorkBook {
   
   // Convert to worksheet
   const worksheet = XLSX.utils.json_to_sheet(exampleData, {
-    header: TEMPLATE_COLUMNS,
+    header: [...TEMPLATE_COLUMNS],
     skipHeader: false,
   })
   
@@ -184,7 +184,7 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
     for (const image of images) {
       try {
         // Get the image from workbook media
-        const excelImage = workbook.model.media?.find(m => m.index === image.imageId)
+        const excelImage = workbook.model.media?.find((m: unknown) => String((m as { index?: number }).index) === String(image.imageId))
         if (!excelImage || !excelImage.buffer) {
           console.warn(`Image ${image.imageId} not found in media`)
           continue
@@ -196,7 +196,7 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
           buffer = excelImage.buffer
         } else if (excelImage.buffer instanceof ArrayBuffer) {
           buffer = new Uint8Array(excelImage.buffer)
-        } else if (Buffer && excelImage.buffer instanceof Buffer) {
+        } else if (typeof Buffer !== 'undefined' && (excelImage.buffer as any) instanceof Buffer) {
           // Node.js Buffer - convert to Uint8Array
           buffer = new Uint8Array(excelImage.buffer)
         } else {
@@ -275,11 +275,6 @@ export async function parseExcelFile(file: File): Promise<TemplateRow[]> {
           
           // Get headers from first row
           const headers = jsonData[0].map((h: any) => String(h).toLowerCase().trim())
-          
-          // Find image column index (if exists)
-          const imageColIndex = headers.findIndex((h: string) => 
-            h.includes('image') || h === 'imageurl' || h === 'image'
-          )
           
           // Map old column names to new template format
           const columnMapping: Record<string, string> = {

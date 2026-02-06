@@ -4,27 +4,26 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/shared/lib/utils/utils"
 
-// Button component with multiple variants and sizes
-// Based on shadcn/ui design system for consistent UI components
+// Button – Swiss design: minimal chrome, primary = accent (yellow) CTA
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-comic text-sm font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-foreground shadow-comic hover:shadow-lg hover:translate-x-0.5 hover:translate-y-0.5",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 border border-transparent",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-transparent",
         outline:
-          "border-2 border-foreground bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-border bg-transparent hover:bg-secondary hover:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "border-2 border-transparent hover:bg-accent hover:text-accent-foreground hover:border-foreground",
-        link: "border-2 border-transparent text-primary underline-offset-4 hover:underline",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-transparent",
+        ghost: "hover:bg-secondary hover:text-foreground border border-transparent",
+        link: "text-primary underline-offset-4 hover:underline border-0",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
+        lg: "h-11 rounded-lg px-8",
         icon: "h-10 w-10",
       },
     },

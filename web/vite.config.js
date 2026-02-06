@@ -14,6 +14,7 @@ export default defineConfig({
         },
     },
     server: {
+        host: '127.0.0.1',
         port: 5173,
         proxy: {
             '/api': {
@@ -21,5 +22,9 @@ export default defineConfig({
                 changeOrigin: true,
             },
         },
+    },
+    // Support environment variables for API base URL
+    define: {
+        'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || 'http://localhost:8080'),
     },
 });

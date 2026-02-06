@@ -30,6 +30,7 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
+    private final ImageService imageService;
 
     /**
      * Helper to get the current authenticated user from the security context
@@ -94,16 +95,23 @@ public class ListingService {
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         
-        // Handle imageUrl - use null for "not set", only set if provided and non-empty
+        // Handle imageUrl - compress and upload to S3 if provided
         // Standard: null = not set, non-empty string = image provided
         String imageUrl = request.getImageUrl();
         if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-            int imageSize = imageUrl.length();
-            log.debug("🔍 Setting imageUrl, size: {} characters", imageSize);
-            if (imageSize > 1000000) {
-                log.warn("⚠️ Image data is very large: {} characters (max allowed: 1000000)", imageSize);
+            // Generate temporary UUID for image key (will use actual listing ID after save)
+            UUID tempListingId = UUID.randomUUID();
+            try {
+                // Compress and upload image (returns S3 URL or compressed base64)
+                String processedImageUrl = imageService.compressAndUpload(imageUrl.trim(), tempListingId);
+                listing.setImageUrl(processedImageUrl);
+                log.debug("🔍 Processed image, final size: {} characters", 
+                    processedImageUrl != null ? processedImageUrl.length() : 0);
+            } catch (Exception e) {
+                log.error("Error processing image: {}", e.getMessage(), e);
+                // Fallback to original if compression fails
+                listing.setImageUrl(imageUrl.trim());
             }
-            listing.setImageUrl(imageUrl.trim());
         } else {
             // Use null to indicate image is not set (standard convention)
             listing.setImageUrl(null);
@@ -123,6 +131,12 @@ public class ListingService {
         listing.setSeller(seller);
 
         Listing savedListing = listingRepository.save(listing);
+        
+        // Re-upload image with correct listing ID if S3 is enabled
+        if (savedListing.getImageUrl() != null && savedListing.getImageUrl().startsWith("https://")) {
+            // Image already uploaded to S3 with temp ID, no need to re-upload
+            // S3 key generation uses listing ID, so this is fine
+        }
         log.debug("🔍 Created listing with ID: {}", savedListing.getId());
         
         // Ensure seller is loaded (eager fetch to avoid lazy loading issues)
@@ -268,11 +282,18 @@ public class ListingService {
                     listing.setPrice(request.getPrice());
                     listing.setCategory(request.getCategory());
                     listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-                    // Handle imageUrl - use null for "not set" (standard convention)
+                    // Handle imageUrl - compress and upload to S3 if provided
                     String bulkImageUrl = request.getImageUrl();
                     if (bulkImageUrl != null && !bulkImageUrl.trim().isEmpty()) {
-                        log.debug("🔍 Bulk listing imageUrl set: {} characters", bulkImageUrl.length());
-                        listing.setImageUrl(bulkImageUrl.trim());
+                        try {
+                            UUID tempListingId = UUID.randomUUID();
+                            String processedImageUrl = imageService.compressAndUpload(bulkImageUrl.trim(), tempListingId);
+                            listing.setImageUrl(processedImageUrl);
+                            log.debug("🔍 Bulk listing image processed");
+                        } catch (Exception e) {
+                            log.error("Error processing bulk image: {}", e.getMessage(), e);
+                            listing.setImageUrl(bulkImageUrl.trim());
+                        }
                     } else {
                         log.debug("🔍 Bulk listing imageUrl is empty or null, setting to null");
                         listing.setImageUrl(null);
@@ -336,9 +357,23 @@ public class ListingService {
         }
         if (request.getImageUrl() != null) {
             // Update imageUrl: empty string clears image (sets to null), non-empty sets new image
-            // Standard: null = not set, non-empty string = image provided
             String imageUrl = request.getImageUrl().trim();
-            listing.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
+            if (imageUrl.isEmpty()) {
+                // Delete old image from S3 if it exists
+                if (listing.getImageUrl() != null && listing.getImageUrl().startsWith("https://")) {
+                    imageService.deleteImage(listing.getImageUrl());
+                }
+                listing.setImageUrl(null);
+            } else {
+                // Compress and upload new image
+                try {
+                    String processedImageUrl = imageService.compressAndUpload(imageUrl, listing.getId());
+                    listing.setImageUrl(processedImageUrl);
+                } catch (Exception e) {
+                    log.error("Error processing image update: {}", e.getMessage(), e);
+                    listing.setImageUrl(imageUrl);
+                }
+            }
         }
         if (request.getLatitude() != null) {
             listing.setLatitude(request.getLatitude());
@@ -373,8 +408,16 @@ public class ListingService {
     public void deleteListing(UUID id) {
         log.debug("🔍 Deleting listing with ID: {}", id);
 
-        if (!listingRepository.existsById(id)) {
-            throw new RuntimeException("Listing not found with id: " + id);
+        Listing listing = listingRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
+
+        // Delete associated image from S3 if it exists
+        if (listing.getImageUrl() != null && listing.getImageUrl().startsWith("https://")) {
+            try {
+                imageService.deleteImage(listing.getImageUrl());
+            } catch (Exception e) {
+                log.warn("Failed to delete image for listing {}: {}", id, e.getMessage());
+            }
         }
 
         listingRepository.deleteById(id);

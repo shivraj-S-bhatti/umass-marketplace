@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/shared/components/ui/toaster'
 import { UserProvider } from '@/shared/contexts/UserContext'
+import { ThemeProvider } from '@/shared/contexts/ThemeContext'
+import { ListingsViewProvider } from '@/shared/contexts/ListingsViewContext'
 import { ChatProvider } from '@/shared/contexts/ChatContext'
 import { CartProvider } from '@/shared/contexts/CartContext'
 import ProtectedRoute from '@/shared/components/ProtectedRoute'
@@ -23,11 +25,13 @@ import LandingPage from '@/pages/LandingPage'
 function App() {
   return (
     <UserProvider>
-      <CartProvider>
-        <ChatProvider>
-          <Layout>
-            <ErrorBoundary>
-              <Routes>
+      <ThemeProvider>
+        <ListingsViewProvider>
+          <CartProvider>
+            <ChatProvider>
+              <Layout>
+                <ErrorBoundary>
+                  <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/landing" element={<LandingPage />} />
                 {/* Future enhancement routes - currently show landing page */}
@@ -72,12 +76,14 @@ function App() {
                 <Route path="/design-playground" element={<DesignPlaygroundPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/profile/:sellerId" element={<SellerProfilePage />} />
-              </Routes>
-            </ErrorBoundary>
-            <Toaster />
-          </Layout>
-        </ChatProvider>
-      </CartProvider>
+                  </Routes>
+                </ErrorBoundary>
+                <Toaster />
+              </Layout>
+            </ChatProvider>
+          </CartProvider>
+        </ListingsViewProvider>
+      </ThemeProvider>
     </UserProvider>
   )
 }

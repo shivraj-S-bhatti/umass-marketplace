@@ -84,7 +84,6 @@ export default function SellPage() {
       const reader = new FileReader()
       reader.onloadend = async () => {
         const base64String = reader.result as string
-        const originalSizeKB = (base64String.length * 0.75) / 1024
         
         // Compress image to fit within size limits
         const compressedBase64 = await compressImage(base64String, 400)
@@ -176,7 +175,7 @@ export default function SellPage() {
       <div className="text-center py-4 mb-4">
         <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">Sell an Item</h1>
         <p className="text-base text-muted-foreground">
-          List your item for sale to fellow UMass students 🍂
+          List your item for sale to fellow UMass students.
         </p>
       </div>
       <div className="mb-4 flex justify-end">
@@ -213,7 +212,7 @@ export default function SellPage() {
               <textarea
                 id="description"
                 placeholder="Describe your item in detail..."
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('description')}
               />
               {errors.description && (
@@ -245,7 +244,7 @@ export default function SellPage() {
               <Label htmlFor="category">Category</Label>
               <select
                 id="category"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('category')}
               >
                 <option value="">Select a category</option>
@@ -310,7 +309,7 @@ export default function SellPage() {
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="h-32 w-32 object-cover rounded-md border border-input"
+                    className="h-32 w-32 object-cover rounded-lg border border-border"
                   />
                 </div>
               )}
@@ -345,8 +344,8 @@ export default function SellPage() {
                       setLongitude(null)
                     }
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  aria-label="Share my location with buyers"
+                className="h-4 w-4 rounded border-border bg-card text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                aria-label="Share my location with buyers"
                 />
                 <Label htmlFor="useLocation" className="cursor-pointer font-medium flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
@@ -612,7 +611,7 @@ function BulkUploadModal() {
                     setShowMapSelector(false)
                   }
                 }}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-border bg-card text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 aria-label="Share location with buyers for all listings"
               />
               <Label htmlFor="bulkUseLocation" className="cursor-pointer font-medium flex items-center gap-2">

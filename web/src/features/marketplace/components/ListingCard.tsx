@@ -191,7 +191,7 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
             </div>
 
             <div className="flex items-center justify-between text-xs">
-              <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'}>
+              <StickerBadge variant="status" statusType={listing.status}>
                 {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
               </StickerBadge>
               <div className="flex items-center text-muted-foreground">
@@ -227,15 +227,15 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
                 </Button>
                 {listing.status === 'ACTIVE' ? (
                    <>
-                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ON_HOLD')}>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs bg-amber-500 hover:bg-amber-600 text-white border-0" onClick={() => handleStatusUpdate('ON_HOLD')}>
                       Hold
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('SOLD')}>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs bg-red-600 hover:bg-red-700 text-white border-0" onClick={() => handleStatusUpdate('SOLD')}>
                       Sold
                     </Button>
                    </>
                 ) : (
-                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ACTIVE')}>
+                  <Button size="sm" variant="outline" className="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white border-0" onClick={() => handleStatusUpdate('ACTIVE')}>
                     Reactivate
                   </Button>
                 )}

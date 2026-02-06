@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { Search, Filter, X } from 'lucide-react'
+import { Search, Filter, X, LayoutGrid, LayoutList } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { CATEGORIES, CONDITIONS, STATUSES } from '@/shared/lib/constants/constants'
 import type { SearchFilters as SearchFiltersType } from '@/features/marketplace/components/SearchFilters'
+import { useListingsView } from '@/shared/contexts/ListingsViewContext'
 
 interface TwoTierNavbarProps {
   onSearch: (filters: SearchFiltersType) => void
@@ -13,6 +14,7 @@ interface TwoTierNavbarProps {
 }
 
 export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = false }: TwoTierNavbarProps) {
+  const { view, setView } = useListingsView()
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<SearchFiltersType>(initialFilters || {
     query: '',
@@ -57,13 +59,13 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
                          filters.minPrice || filters.maxPrice || filters.status
 
   return (
-    <div className="border-b-4 border-foreground bg-card paper-texture">
+    <div className="border-b border-border bg-card">
       {/* Tier 1: Search Bar */}
       <div className="container mx-auto px-4 py-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <select
-              className="h-10 px-3 rounded-comic border-2 border-foreground bg-card text-sm font-medium min-w-[100px]"
+              className="h-10 px-3 rounded-lg border border-input bg-card text-sm font-medium min-w-[100px] text-foreground"
               value={filters.category || ''}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
             >
@@ -84,13 +86,37 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
                 size="icon"
                 onClick={handleSearch}
                 disabled={isLoading}
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 min-w-[32px] rounded-full border-2 border-foreground shadow-comic hover:shadow-comic hover:translate-x-0 hover:translate-y-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 min-w-[32px] rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Search className="h-4 w-4" />
               </Button>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center border border-border rounded-lg overflow-hidden" role="group" aria-label="Listings view">
+              <button
+                type="button"
+                onClick={() => setView('compact')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  view === 'compact' ? 'bg-primary text-primary-foreground' : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
+                }`}
+                title="Compact view"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Compact</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('sparse')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-colors border-l border-border ${
+                  view === 'sparse' ? 'bg-primary text-primary-foreground' : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
+                }`}
+                title="Sparse view"
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Sparse</span>
+              </button>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -112,12 +138,12 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
 
       {/* Tier 2: Advanced Filters */}
       {showFilters && (
-        <div className="border-t-2 border-foreground bg-muted/30">
+        <div className="border-t border-border bg-muted/30">
           <div className="container mx-auto px-4 py-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Condition Filter */}
               <div className="space-y-1.5">
-                <Label className="text-xs">Condition</Label>
+                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Condition</Label>
                 <div className="flex flex-wrap gap-1.5">
                   {CONDITIONS.map((condition) => {
                     const isSelected = filters.condition.includes(condition)
@@ -131,10 +157,10 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
                             setFilters({ ...filters, condition: [...filters.condition, condition] })
                           }
                         }}
-                        className={`px-2 py-1 rounded-comic text-xs font-medium border-2 transition-colors ${
+                        className={`px-2 py-1 rounded-lg text-xs font-medium border border-border transition-colors ${
                           isSelected
-                            ? 'bg-primary text-primary-foreground border-foreground'
-                            : 'bg-card border-foreground hover:bg-accent'
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-card hover:bg-secondary'
                         }`}
                       >
                         {condition}
@@ -170,7 +196,7 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
               <div className="space-y-1.5">
                 <Label className="text-xs">Status</Label>
                 <select
-                  className="flex h-8 w-full rounded-comic border-2 border-foreground bg-card px-2 text-xs font-medium"
+                  className="flex h-8 w-full rounded-lg border border-input bg-card px-2 text-xs font-medium text-foreground"
                   value={filters.status || ''}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 >

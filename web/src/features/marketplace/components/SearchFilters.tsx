@@ -155,7 +155,7 @@ export default function SearchFilters({ onSearch, isLoading = false, initialFilt
                           setFilters({ ...filters, condition: filters.condition.filter(c => c !== condition) })
                         }
                       }}
-                      className="rounded border-gray-300"
+                      className="rounded border-border bg-card text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     />
                     <span>{condition}</span>
                   </label>

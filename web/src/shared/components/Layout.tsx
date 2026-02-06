@@ -1,10 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/ui/button'
-import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, Palette, ShoppingCart, Calendar, Users, Trophy, Store } from 'lucide-react'
+import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, ShoppingCart, Calendar, Users, Trophy, Store, Sun, Moon } from 'lucide-react'
 import { UserRole, useUser } from '@/shared/contexts/UserContext'
+import { useTheme } from '@/shared/contexts/ThemeContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import Logo from '@/shared/components/Logo'
-import { LeafWallpaper } from '@/shared/components/ui/leaf-wallpaper'
 import { useEffect } from 'react'
 
 // Layout component for Everything UMass
@@ -17,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { role, setRole, isSeller, isBuyer, user } = useUser()
+  const { theme, toggleTheme } = useTheme()
 
   // Navigation items - same for both modes, but will show/hide based on mode
   const allNavItems = [
@@ -67,13 +68,10 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-background relative flex flex-col">
-      {/* Leaf wallpaper background */}
-      <LeafWallpaper />
-      
-      {/* Top-Tier Navigation - Future Enhancements */}
-      <nav className="border-b-4 border-foreground bg-primary/10 paper-texture relative z-10">
+      {/* Top-tier nav */}
+      <nav className="border-b border-border bg-card relative z-10">
         <div className="container mx-auto px-2 sm:px-4 py-2">
-          <div className="flex items-center justify-center gap-1 md:gap-2 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center justify-center gap-1 md:gap-2 overflow-x-auto">
             {topTierNavItems.map(({ path, label, icon: Icon }) => {
               const isActive = location.pathname === path || 
                 (path === '/' && location.pathname === '/') ||
@@ -82,10 +80,10 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={path}
                   to={path}
-                  className={`flex items-center space-x-1.5 px-2 sm:px-3 py-1.5 rounded-comic text-xs md:text-sm font-bold transition-all border-2 whitespace-nowrap flex-shrink-0 ${
+                  className={`flex items-center space-x-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                     isActive
-                      ? 'bg-primary text-primary-foreground border-foreground shadow-comic'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent border-transparent hover:border-foreground'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   <Icon className="h-3 w-3 md:h-4 md:w-4" />
@@ -96,9 +94,9 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </nav>
-      
-      {/* Header Navigation - Tier 2 */}
-      <header className="border-b-4 border-foreground bg-card paper-texture relative z-10">
+
+      {/* Header - Tier 2 */}
+      <header className="border-b border-border bg-card relative z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -126,10 +124,10 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={path}
                   to={path}
-                  className={`flex items-center space-x-2 px-3 py-1.5 rounded-comic text-sm font-bold transition-all border-2 ${
+                  className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     location.pathname === path
-                      ? 'bg-primary text-primary-foreground border-foreground shadow-comic'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent border-transparent hover:border-foreground'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -141,23 +139,23 @@ export default function Layout({ children }: LayoutProps) {
             {/* Right Side: User Info or Login + Toggle */}
             <div className="flex items-center space-x-3">
               {/* Buyer/Seller Toggle */}
-              <div className="hidden md:flex items-center border-2 border-foreground rounded-comic overflow-hidden">
+              <div className="hidden md:flex items-center border border-border rounded-lg overflow-hidden">
                 <button
                   onClick={() => handleRoleChange('buyer')}
-                  className={`px-3 py-1.5 text-sm font-bold transition-all ${
+                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                     isBuyer
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   Buyer
                 </button>
                 <button
                   onClick={() => handleRoleChange('seller')}
-                  className={`px-3 py-1.5 text-sm font-bold transition-all border-l-2 border-foreground ${
+                  className={`px-3 py-1.5 text-sm font-medium transition-colors border-l border-border ${
                     isSeller
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   Seller
@@ -166,7 +164,7 @@ export default function Layout({ children }: LayoutProps) {
 
               {user ? (
                 <Link to="/login">
-                  <Avatar className="cursor-pointer border-2 border-foreground">
+                  <Avatar className="cursor-pointer border border-border">
                     <AvatarImage src={user.pictureUrl} alt={user.name} />
                     <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
                   </Avatar>
@@ -190,10 +188,10 @@ export default function Layout({ children }: LayoutProps) {
               {isBuyer && (
                 <Link
                   to="/cart"
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-comic text-sm font-medium transition-colors border-2 ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     location.pathname === '/cart'
-                      ? 'bg-primary text-primary-foreground border-foreground'
-                      : 'bg-card text-muted-foreground border-foreground hover:bg-accent hover:text-foreground'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   <ShoppingCart className="h-4 w-4" />
@@ -204,10 +202,10 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={path}
                   to={path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-comic text-sm font-medium transition-colors border-2 ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     location.pathname === path
-                      ? 'bg-primary text-primary-foreground border-foreground'
-                      : 'bg-card text-muted-foreground border-foreground hover:bg-accent hover:text-foreground'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -216,25 +214,33 @@ export default function Layout({ children }: LayoutProps) {
               ))}
             </div>
 
-            {/* Buyer/Seller Toggle (Mobile) */}
+            {/* Theme + Buyer/Seller (Mobile) */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center border-2 border-foreground rounded-comic overflow-hidden flex-1">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="p-2 rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground"
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+              <div className="flex items-center border border-border rounded-lg overflow-hidden flex-1">
                 <button
                   onClick={() => handleRoleChange('buyer')}
-                  className={`flex-1 px-3 py-2 text-sm font-bold transition-all ${
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                     isBuyer
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground'
+                      : 'bg-transparent text-muted-foreground'
                   }`}
                 >
                   Buyer
                 </button>
                 <button
                   onClick={() => handleRoleChange('seller')}
-                  className={`flex-1 px-3 py-2 text-sm font-bold transition-all border-l-2 border-foreground ${
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors border-l border-border ${
                     isSeller
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground'
+                      : 'bg-transparent text-muted-foreground'
                   }`}
                 >
                   Seller
@@ -251,10 +257,10 @@ export default function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="border-t-4 border-foreground bg-card mt-auto paper-texture relative z-10">
+      <footer className="border-t border-border bg-card mt-auto relative z-10">
         <div className="container mx-auto px-4 py-3">
           <div className="text-center text-xs text-muted-foreground">
-            <p className="font-medium">&copy; 2025 Everything UMass. Built for students, by students. 🍂</p>
+            <p className="font-medium">&copy; 2025 Everything UMass. Built for students, by students.</p>
           </div>
         </div>
       </footer>

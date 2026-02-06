@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/ui/button'
 import { ArrowLeft, Mail, User } from 'lucide-react'
 import { SellerReviews } from '@/features/marketplace/components/SellerReviews'
 import { CreateReview } from '@/features/marketplace/components/CreateReview'
-import { getSellerReviewStats, getUser, type SellerReviewStats } from '@/features/marketplace/api/api'
+import { getSellerReviewStats, getUser } from '@/features/marketplace/api/api'
 import { useState, useEffect } from 'react'
 
 export default function SellerProfilePage() {

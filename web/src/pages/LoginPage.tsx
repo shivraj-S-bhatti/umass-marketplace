@@ -3,14 +3,12 @@ import { Button } from '@/shared/components/ui/button'
 import { LogIn, Mail, ShoppingBag, Store } from 'lucide-react'
 import { useUser } from '@/shared/contexts/UserContext'
 import { useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useToast } from '@/shared/hooks/use-toast'
-import scrapBookImage from '@/assets/scrap_book.png'
 
 // Login Page - placeholder for OAuth authentication
 // Currently shows a placeholder for Google OAuth integration
 export default function LoginPage() {
-  const navigate = useNavigate()
   const { user, isAuthenticated, logout, role, setRole } = useUser()
   const [searchParams] = useSearchParams()
   const { toast } = useToast()
@@ -34,22 +32,9 @@ export default function LoginPage() {
   }
 
 
-  const handleRoleSelection = (newRole: 'buyer' | 'seller') => {
-    setRole(newRole)
-    navigate('/')
-  }
-
   return (
-    <div 
-      className="flex items-center justify-center py-8 flex-1"
-      style={{
-        backgroundImage: `url(${scrapBookImage})`,
-        backgroundRepeat: 'repeat',
-        backgroundSize: 'auto',
-        minHeight: '100%',
-      }}
-    >
-      <Card className="w-full max-w-md mx-4">
+    <div className="flex items-center justify-center py-8 flex-1 bg-background min-h-full">
+      <Card className="w-full max-w-md mx-4 border border-border">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
             {isAuthenticated && user?.pictureUrl ? (

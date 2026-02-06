@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// Tailwind CSS configuration for UMass Marketplace
-// Includes shadcn/ui theme and custom colors for the marketplace design
+// Tailwind – Swiss design, dark mode
 export default {
   darkMode: ["class"],
   content: [
@@ -19,6 +18,9 @@ export default {
   		}
   	},
   	extend: {
+  		fontFamily: {
+  			sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  		},
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
@@ -60,25 +62,11 @@ export default {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-  			autumn: {
-  				red: '#d97706',
-  				orange: '#ea580c',
-  				yellow: '#f59e0b',
-  				brown: '#78350f',
-  				cream: '#fef3c7'
-  			}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)',
-  			'comic': '1.5rem'
-  		},
-  		borderWidth: {
-  			'comic': '4px'
-  		},
-  		boxShadow: {
-  			'comic': '4px 4px 0px rgba(0, 0, 0, 0.2), 8px 8px 0px rgba(0, 0, 0, 0.1)'
   		},
 		keyframes: {
 			'accordion-down': {

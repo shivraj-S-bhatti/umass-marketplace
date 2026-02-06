@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import App from './app/App'
+import { initTheme } from '@/shared/contexts/ThemeContext'
 import './index.css'
+
+initTheme()
 
 // Main entry point for Everything UMass React application
 // Sets up React Query for API state management and React Router for navigation

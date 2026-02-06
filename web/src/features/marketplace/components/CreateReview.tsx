@@ -164,7 +164,7 @@ export function CreateReview({ sellerId, sellerName, onReviewSubmitted }: Create
             rows={4}
             disabled={createReviewMutation.isPending}
             className={cn(
-              "flex w-full rounded-comic border-2 border-foreground bg-card px-3 py-2 text-sm font-medium ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              "flex w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
             )}
           />
         </div>

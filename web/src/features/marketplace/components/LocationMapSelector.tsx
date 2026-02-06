@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Button } from '@/shared/components/ui/button'
-import { MapPin, Navigation } from 'lucide-react'
+import { Navigation } from 'lucide-react'
 
 // Fix Leaflet default icon issue with Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -128,7 +128,7 @@ export default function LocationMapSelector({
           {isLoadingLocation ? 'Getting location...' : 'Use My Location'}
         </Button>
       </div>
-      <div className="border-2 border-foreground rounded-comic overflow-hidden" style={{ height }}>
+      <div className="border border-border rounded-lg overflow-hidden" style={{ height }}>
         {validCenter[0] != null && validCenter[1] != null && 
          typeof validCenter[0] === 'number' && typeof validCenter[1] === 'number' &&
          !isNaN(validCenter[0]) && !isNaN(validCenter[1]) ? (
@@ -147,19 +147,19 @@ export default function LocationMapSelector({
             {/* Always show a marker - either selected location or center point */}
             {selectedLocation ? (
               <Marker position={[selectedLocation.lat, selectedLocation.lng]}>
-                <L.Popup>
+                <Popup>
                   Selected Location
                   <br />
                   {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
-                </L.Popup>
+                </Popup>
               </Marker>
             ) : (
               <Marker position={validCenter}>
-                <L.Popup>
+                <Popup>
                   Click to select location
                   <br />
                   {validCenter[0].toFixed(4)}, {validCenter[1].toFixed(4)}
-                </L.Popup>
+                </Popup>
               </Marker>
             )}
           </MapContainer>

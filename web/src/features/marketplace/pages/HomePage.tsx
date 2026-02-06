@@ -9,6 +9,7 @@ import { Search, Calendar, XCircle, MapPin, Eye } from 'lucide-react'
 import { type SearchFilters as SearchFiltersType } from '@/features/marketplace/components/SearchFilters'
 import TwoTierNavbar from '@/shared/components/TwoTierNavbar'
 import { useSearchParams } from 'react-router-dom'
+import { useListingsView } from '@/shared/contexts/ListingsViewContext'
 import { ListingDetailModal } from '@/shared/components/ui/listing-detail-modal'
 import { useUser } from '@/shared/contexts/UserContext'
 import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
@@ -18,6 +19,7 @@ import { getDistanceText, requestLocationOnInteraction, type Location } from '@/
 // Main landing page where users can browse available items for sale
 export default function HomePage() {
   const [searchParams] = useSearchParams()
+  const { view: listingsView } = useListingsView()
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({
     query: '',
     category: searchParams.get('category') || '',
@@ -90,8 +92,8 @@ export default function HomePage() {
   }
 
   const listings = listingsData?.content || []
-  const hasActiveSearch = searchFilters.query || searchFilters.category || 
-                         searchFilters.condition || searchFilters.minPrice || 
+  const hasActiveSearch = searchFilters.query || searchFilters.category ||
+                         searchFilters.condition.length > 0 || searchFilters.minPrice ||
                          searchFilters.maxPrice || searchFilters.status
 
   return (
@@ -163,9 +165,12 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className={listingsView === 'compact'
+              ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2'
+              : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+            }>
               {listings.map((listing) => (
-                <HomeListingCard key={listing.id} listing={listing} />
+                <HomeListingCard key={listing.id} listing={listing} compact={listingsView === 'compact'} />
               ))}
             </div>
             
@@ -238,7 +243,7 @@ export default function HomePage() {
 }
 
 // Individual listing card component
-function HomeListingCard({ listing }: { listing: Listing }) {
+function HomeListingCard({ listing, compact = false }: { listing: Listing; compact?: boolean }) {
   const queryClient = useQueryClient()
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -294,87 +299,75 @@ function HomeListingCard({ listing }: { listing: Listing }) {
 
   return (
     <>
-      <Card 
-        className="hover:shadow-comic transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col"
+      <Card
+        className={`transition-colors hover:border-primary/50 relative overflow-hidden h-full flex flex-col cursor-pointer ${compact ? 'text-sm' : ''}`}
         onClick={() => setIsDetailModalOpen(true)}
       >
-        {/* Image Section - Always show, with default Eye icon if no image */}
-        <div 
-          className="w-full h-40 overflow-hidden rounded-t-comic cursor-pointer hover:opacity-90 transition-opacity bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 relative"
+        {/* Image Section */}
+        <div
+          className={`w-full overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-secondary/50 flex items-center justify-center flex-shrink-0 relative ${compact ? 'h-28' : 'h-40'}`}
           onClick={(e) => {
-            e.stopPropagation();
-            if (listing.imageUrl) {
-              setIsImageModalOpen(true);
-            }
+            e.stopPropagation()
+            if (listing.imageUrl) setIsImageModalOpen(true)
           }}
         >
           {listing.imageUrl ? (
-            <img
-              src={listing.imageUrl}
-              alt={listing.title}
-              className="w-full h-full object-cover"
-            />
+            <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
           ) : (
-            <Eye className="h-12 w-12 text-primary/40" />
+            <Eye className={compact ? 'h-8 w-8' : 'h-12 w-12'} />
           )}
-          {/* Must Go By Badge on Image */}
           {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
-            <div className="absolute top-2 left-2 z-10">
-              <StickerBadge variant="new" className="bg-red-500 text-white text-xs px-2 py-1 border-2 border-white shadow-lg">
-                MUST GO
-              </StickerBadge>
+            <div className="absolute top-1 left-1 z-10">
+              <StickerBadge variant="new" className={compact ? 'text-[10px] px-1.5 py-0' : ''}>MUST GO</StickerBadge>
             </div>
           )}
         </div>
 
-        <CardHeader className="pb-2 flex-shrink-0">
-          <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-base font-bold line-clamp-2 flex-1">{listing.title}</CardTitle>
-            <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'} className="shrink-0 text-xs px-2 py-1">
+        <CardHeader className={`flex-shrink-0 ${compact ? 'p-2 pb-1' : 'pb-2'}`}>
+          <div className="flex justify-between items-start gap-1">
+            <CardTitle className={`line-clamp-2 flex-1 ${compact ? 'text-xs font-semibold' : 'text-base font-bold'}`}>{listing.title}</CardTitle>
+            <StickerBadge variant="status" statusType={listing.status} className={`shrink-0 ${compact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-1'}`}>
               {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
             </StickerBadge>
           </div>
-          <CardDescription className="line-clamp-2 mt-1 text-sm">
-            {listing.description || 'No description provided'}
-          </CardDescription>
+          {!compact && (
+            <CardDescription className="line-clamp-2 mt-1 text-sm">
+              {listing.description || 'No description provided'}
+            </CardDescription>
+          )}
         </CardHeader>
 
-        <CardContent className="pt-0 flex-1 flex flex-col justify-between">
-          <div className="space-y-2">
-            {/* Price - Centered */}
+        <CardContent className={`pt-0 flex-1 flex flex-col justify-between ${compact ? 'p-2 pt-0' : ''}`}>
+          <div className={compact ? 'space-y-1' : 'space-y-2'}>
             <div className="flex items-center justify-center">
-              <StickerBadge variant="price" className="text-lg px-3 py-1">
+              <StickerBadge variant="price" className={compact ? 'text-sm px-2 py-0.5' : 'text-lg px-3 py-1'}>
                 {formatPrice(listing.price)}
               </StickerBadge>
             </div>
-
-            {/* Distance - Centered below price */}
             {distanceText && (
-              <div className="flex items-center justify-center gap-1 text-green-600 font-semibold text-xs">
-                <MapPin className="h-4 w-4" />
+              <div className="flex items-center justify-center gap-1 text-primary font-medium text-xs">
+                <MapPin className={compact ? 'h-3 w-3' : 'h-4 w-4'} />
                 <span>{distanceText}</span>
               </div>
             )}
-
-            {/* Date - Centered */}
-            <div className="flex items-center justify-center text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3 mr-1" />
-              <span>{formatDate(listing.createdAt, false)}</span>
+            <div className={`flex items-center justify-center text-muted-foreground ${compact ? 'text-[10px]' : 'text-xs'}`}>
+              <Calendar className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
+              <span className="ml-0.5">{formatDate(listing.createdAt, false)}</span>
             </div>
-
-            {/* Category and Condition as Bubbles - Centered */}
-            <div className="flex flex-wrap gap-1.5 justify-center text-xs">
-              {listing.category && (
-                <span className="px-2 py-0.5 rounded-comic bg-secondary border border-foreground font-medium">
-                  {listing.category}
-                </span>
-              )}
-              {listing.condition && (
-                <span className="px-2 py-0.5 rounded-comic bg-muted border border-foreground font-medium">
-                  {listing.condition}
-                </span>
-              )}
-            </div>
+            {!compact && (
+              <div className="flex flex-wrap gap-1.5 justify-center text-xs">
+                {listing.category && (
+                  <span className="px-2 py-0.5 rounded-md bg-secondary border border-border font-medium text-foreground">
+                    {listing.category}
+                  </span>
+                )}
+                {listing.condition && (
+                  <span className="px-2 py-0.5 rounded-md bg-muted border border-border font-medium text-foreground">
+                    {listing.condition}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -390,32 +383,27 @@ function HomeListingCard({ listing }: { listing: Listing }) {
 
     {/* Image Modal */}
     {isImageModalOpen && listing.imageUrl && (
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm"
         onClick={() => setIsImageModalOpen(false)}
       >
         <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
-          {/* Close button */}
           <button
             onClick={() => setIsImageModalOpen(false)}
-            className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 rounded-full p-2 transition-colors"
+            className="absolute top-4 right-4 z-10 bg-card border border-border hover:bg-secondary rounded-lg p-2 transition-colors text-foreground"
             aria-label="Close image"
           >
             <XCircle className="h-6 w-6" />
           </button>
-
-          {/* Image */}
           <img
             src={listing.imageUrl}
             alt={listing.title}
             className="max-w-full max-h-full object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
-
-          {/* Image info */}
-          <div className="absolute bottom-4 left-4 right-4 bg-black/60 text-white rounded-lg p-3 backdrop-blur-sm">
+          <div className="absolute bottom-4 left-4 right-4 bg-card/90 border border-border text-foreground rounded-lg p-3 backdrop-blur-sm">
             <h3 className="font-semibold text-lg mb-1">{listing.title}</h3>
-            <p className="text-sm text-gray-300">
+            <p className="text-sm text-muted-foreground">
               {formatPrice(listing.price)} • {listing.category || 'Uncategorized'}
             </p>
           </div>
