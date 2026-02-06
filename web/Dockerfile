@@ -14,6 +14,10 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Build-time API URL (so frontend calls correct host when accessed by IP or domain)
+ARG VITE_API_BASE_URL=http://localhost:8080
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Build the application
 RUN npm run build
 
