@@ -24,14 +24,7 @@ set +a
 # Navigate to project root
 cd "$PROJECT_ROOT"
 
-# Build frontend
-echo "📦 Building frontend..."
-cd web
-npm ci
-npm run build
-cd ..
-
-# Build and start services with Docker Compose
+# Build and start services with Docker Compose (frontend is built inside the web image)
 echo "🐳 Building and starting Docker containers..."
 cd "$SCRIPT_DIR"
 docker-compose -f docker-compose.prod.yml down
