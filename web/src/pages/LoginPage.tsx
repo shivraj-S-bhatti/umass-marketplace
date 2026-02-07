@@ -24,9 +24,7 @@ export default function LoginPage() {
     }
   }, [searchParams])
 
-  const handleGoogleLogin = async () => {
-    // Redirect browser to the backend OAuth2 authorization endpoint for Google
-    // Backend will handle the OAuth handshake and redirect back to the frontend
+  const handleGoogleLogin = () => {
     const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
     window.location.href = `${base}/oauth2/authorization/google`
   }

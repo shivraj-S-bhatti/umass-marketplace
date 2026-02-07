@@ -27,7 +27,8 @@ sudo rm -f /etc/nginx/sites-enabled/default
 echo "Testing nginx config..."
 sudo nginx -t
 
-echo "Reloading nginx..."
+echo "Starting or reloading nginx..."
+sudo systemctl start nginx
 sudo systemctl reload nginx
 
 echo "Running Certbot for $DOMAIN..."

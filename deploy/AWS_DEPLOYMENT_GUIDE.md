@@ -229,7 +229,7 @@ AWS_S3_BUCKET_NAME=umass-marketplace-images
 # JWT Secret
 JWT_SECRET=$(openssl rand -base64 32)
 
-# OAuth2 (from Google Cloud Console)
+# OAuth2 (see "Where to get Google OAuth keys" below)
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 
@@ -238,14 +238,46 @@ FRONTEND_URL=https://everything-umass.tech
 VITE_API_BASE_URL=https://everything-umass.tech
 ```
 
+### 5.2 Where to get Google OAuth keys
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**.
+2. Under **OAuth 2.0 Client IDs**, click your web client (e.g. **Web client 1**).
+3. **Client ID**: Copy the long value (e.g. `…apps.googleusercontent.com`). Put it in `deploy/.env` as `GOOGLE_CLIENT_ID`.
+4. **Client secret**: In the **Client secrets** section, use the copy icon or **Download JSON** to get the secret. Put it in `deploy/.env` as `GOOGLE_CLIENT_SECRET` (no quotes).
+5. Ensure **Authorized JavaScript origins** includes `https://everything-umass.tech` and **Authorized redirect URIs** includes `https://everything-umass.tech/login/oauth2/code/google`. For local testing, also add `http://localhost:8080` to origins and `http://localhost:8080/login/oauth2/code/google` to redirect URIs.
+
+### 5.3 Local API run (with OAuth)
+
+The API needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the environment. Maven does not load `api/.env` by default. Use the run script so env vars are set:
+
+```bash
+cd api
+./run.sh
+```
+
+This sources `api/.env` and runs `mvn spring-boot:run`. Ensure `api/.env` has the same OAuth client ID/secret as `deploy/.env` (the Web client that has your redirect URIs).
+
 ## Step 6: Deploy Application
 
 ### 6.1 Run Deployment
+
+On EC2 **always use the deploy script** so the server pulls pre-built images from ECR and does not build locally. Do **not** run `docker compose -f deploy/docker-compose.prod.yml` on EC2—that file builds on the server and is very slow.
 
 ```bash
 cd ~/umass-marketplace
 ./deploy/deploy.sh
 ```
+
+The script uses `deploy/docker-compose.ecr.yml` and requires `ECR_URI_API` and `ECR_URI_WEB` in `deploy/.env` (set after running `./deploy/build-and-push.sh` on your Mac).
+
+#### Build images and push to ECR (from your Mac)
+
+When you change code or need to update production:
+
+1. Ensure `deploy/.env` has `VITE_API_BASE_URL=https://everything-umass.tech` (and other vars).
+2. From project root: `./deploy/build-and-push.sh` (builds API + web for linux/amd64, pushes to ECR).
+3. Copy updated `deploy/.env` to EC2 if you changed env (e.g. `scp -i your-key.pem deploy/.env ubuntu@YOUR_EC2_IP:~/umass-marketplace/deploy/.env`).
+4. On EC2: `cd ~/umass-marketplace && ./deploy/deploy.sh` (pulls new images and restarts containers).
 
 ### 6.2 Verify Services
 
@@ -283,13 +315,17 @@ You will be prompted for a contact email (for Let's Encrypt). For non-interactiv
 
 The script installs nginx, deploys [deploy/nginx-host.conf](deploy/nginx-host.conf) to the host, and runs `certbot --nginx -d everything-umass.tech`. Certbot adds the HTTPS server block and certificate paths automatically.
 
-### 7.2 After HTTPS works
+### 7.2 "Not Secure" in the browser
+
+If the site loads but the browser shows "Not Secure", you are on **HTTP** instead of **HTTPS**. Open **https://everything-umass.tech** (with `https://`) in the address bar. Certbot usually configures nginx to redirect HTTP to HTTPS; if not, add a `server { listen 80; return 301 https://$host$request_uri; }` block on the server.
+
+### 7.3 After HTTPS works
 
 1. Set in `deploy/.env`: `FRONTEND_URL=https://everything-umass.tech`, `VITE_API_BASE_URL=https://everything-umass.tech`.
 2. On your Mac: rebuild and push the web image (`./deploy/build-and-push.sh`), then copy `.env` to EC2 and run `./deploy/deploy.sh` on EC2.
 3. In Google OAuth, set authorized origins and redirect URIs to `https://everything-umass.tech`.
 
-### 7.3 Auto-Renewal
+### 7.4 Auto-Renewal
 
 Certbot configures a systemd timer for renewal. Test with:
 
@@ -317,9 +353,11 @@ Route 53 costs **$0.50/month per hosted zone** (plus per-query charges). If you 
 
 ### 9.1 View Logs
 
+If you deploy with `deploy.sh` (ECR), view logs with:
+
 ```bash
-cd ~/umass-marketplace/deploy
-docker-compose -f docker-compose.prod.yml logs -f
+cd ~/umass-marketplace
+docker compose -f deploy/docker-compose.ecr.yml logs -f
 ```
 
 **CloudWatch Logs note (cost control):**
@@ -380,11 +418,11 @@ Create Lambda function to stop EC2 if cost exceeds threshold (advanced).
 ### Services Won't Start
 
 ```bash
-# Check logs
-docker-compose -f deploy/docker-compose.prod.yml logs
+# Check logs (use same compose file as deploy.sh: docker-compose.ecr.yml)
+docker compose -f deploy/docker-compose.ecr.yml logs
 
 # Restart services
-docker-compose -f deploy/docker-compose.prod.yml restart
+docker compose -f deploy/docker-compose.ecr.yml restart
 ```
 
 ### Database Connection Issues

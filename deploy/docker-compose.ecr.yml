@@ -1,5 +1,6 @@
-# Production Docker Compose using pre-built images from ECR (no build on EC2).
-# Set ECR_URI_API and ECR_URI_WEB in .env (from deploy/build-and-push.sh output).
+# ECR-only production stack: no build on EC2. Use with deploy.sh after build-and-push.sh.
+# API and web bind to localhost so host nginx (ports 80/443) can proxy to them.
+# Requires in deploy/.env: ECR_URI_API, ECR_URI_WEB, and the rest of the prod env vars.
 
 services:
   db:
@@ -71,8 +72,6 @@ services:
   web:
     image: ${ECR_URI_WEB}
     container_name: umass-marketplace-web-prod
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
     ports:
       - "127.0.0.1:5173:5173"
     depends_on:
@@ -80,8 +79,6 @@ services:
     restart: unless-stopped
     networks:
       - umass-marketplace-prod
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     deploy:
       resources:
         limits:
