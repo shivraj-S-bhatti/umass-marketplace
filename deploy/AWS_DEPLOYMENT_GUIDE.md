@@ -260,23 +260,39 @@ curl http://localhost:8080/health
 curl http://localhost
 ```
 
-## Step 7: SSL Certificate (Optional but Recommended)
+## Step 7: SSL Certificate (Host nginx + Certbot)
 
-### 7.1 Install Certbot
+The stack uses **host nginx** as the public entrypoint (ports 80/443); Docker web and api containers bind to localhost only. Certbot obtains and configures the Let's Encrypt certificate.
 
-Already installed by setup script.
+**Prerequisites:** Domain (e.g. everything-umass.tech) A record must point to this instance (Elastic IP recommended so the IP does not change on restart).
 
-### 7.2 Get Certificate
+### 7.1 One-time SSL setup on EC2
+
+After the stack is running and DNS points here:
 
 ```bash
-sudo certbot --nginx -d everything-umass.tech
+cd ~/umass-marketplace
+./deploy/ssl-setup.sh
 ```
 
-If you do not have a domain yet, skip this step and run HTTP only for the alpha. Let's Encrypt generally expects a domain name (not a raw IP).
+You will be prompted for a contact email (for Let's Encrypt). For non-interactive use:
+
+```bash
+./deploy/ssl-setup.sh your-email@example.com
+```
+
+The script installs nginx, deploys [deploy/nginx-host.conf](deploy/nginx-host.conf) to the host, and runs `certbot --nginx -d everything-umass.tech`. Certbot adds the HTTPS server block and certificate paths automatically.
+
+### 7.2 After HTTPS works
+
+1. Set in `deploy/.env`: `FRONTEND_URL=https://everything-umass.tech`, `VITE_API_BASE_URL=https://everything-umass.tech`.
+2. On your Mac: rebuild and push the web image (`./deploy/build-and-push.sh`), then copy `.env` to EC2 and run `./deploy/deploy.sh` on EC2.
+3. In Google OAuth, set authorized origins and redirect URIs to `https://everything-umass.tech`.
 
 ### 7.3 Auto-Renewal
 
-Certbot sets up auto-renewal automatically. Test with:
+Certbot configures a systemd timer for renewal. Test with:
+
 ```bash
 sudo certbot renew --dry-run
 ```
@@ -413,6 +429,24 @@ All services are containerized, making migration easy:
 2. **Export S3 data:** `aws s3 sync` to local
 3. **Deploy elsewhere:** Use same Docker Compose files
 4. **Update environment variables:** Point to new resources
+
+## Faster deploys (build on Mac, pull on EC2)
+
+**First deploy on EC2** builds both images on the t3.micro and can take **45–60+ minutes**. To deploy without building on EC2:
+
+1. **On your Mac:** Ensure `deploy/.env` has `VITE_API_BASE_URL` and `FRONTEND_URL` set for production (e.g. `https://everything-umass.tech` or your EC2 URL). AWS CLI must be configured (`aws configure`).
+2. **Build and push to ECR:** From the project root run:
+   ```bash
+   ./deploy/build-and-push.sh
+   ```
+   The script builds the API and web images, creates ECR repositories if needed, and pushes them. It prints two lines like:
+   ```
+   ECR_URI_API=123456789012.dkr.ecr.us-east-1.amazonaws.com/umass-marketplace-api:latest
+   ECR_URI_WEB=123456789012.dkr.ecr.us-east-1.amazonaws.com/umass-marketplace-web:latest
+   ```
+3. **Add to .env:** Paste those two lines into `deploy/.env` (or add them on EC2 after copying .env).
+4. **EC2 IAM:** The EC2 instance must be able to pull from ECR. Attach a role with policy `AmazonEC2ContainerRegistryReadOnly`, or ensure AWS credentials on EC2 can call `ecr:GetDownloadUrlForLayer` and `ecr:BatchGetImage`.
+5. **Deploy on EC2:** Copy the updated `.env` to EC2, then run `./deploy/deploy.sh`. The script detects `ECR_URI_API` and `ECR_URI_WEB`, logs in to ECR, pulls the images, and starts the stack. No build; deploy finishes in a few minutes.
 
 ## Next Steps
 
