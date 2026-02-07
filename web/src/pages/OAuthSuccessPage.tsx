@@ -29,7 +29,7 @@ export default function OAuthSuccessPage() {
         pictureUrl: pictureUrl || undefined,
       })
       setRole('seller')
-      navigate('/dashboard')
+      navigate('/')
     } else {
       navigate('/')
     }

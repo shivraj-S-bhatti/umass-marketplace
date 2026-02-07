@@ -1,6 +1,6 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from '@/shared/components/ui/toaster'
-import { UserProvider } from '@/shared/contexts/UserContext'
+import { UserProvider, useUser } from '@/shared/contexts/UserContext'
 import { ThemeProvider } from '@/shared/contexts/ThemeContext'
 import { ListingsViewProvider } from '@/shared/contexts/ListingsViewContext'
 import { ChatProvider } from '@/shared/contexts/ChatContext'
@@ -20,6 +20,12 @@ import CartPage from '@/features/marketplace/pages/CartPage'
 import SellerProfilePage from '@/features/marketplace/pages/SellerProfilePage'
 import LandingPage from '@/pages/LandingPage'
 
+// Root path: show landing for unauthenticated users, explore (HomePage) for logged-in users
+function HomeOrLanding() {
+  const { isAuthenticated } = useUser()
+  return isAuthenticated ? <HomePage /> : <Navigate to="/landing" replace />
+}
+
 // Main App component for Everything UMass
 // Sets up routing and provides global layout with navigation
 function App() {
@@ -32,7 +38,7 @@ function App() {
               <Layout>
                 <ErrorBoundary>
                   <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<HomeOrLanding />} />
                 <Route path="/landing" element={<LandingPage />} />
                 {/* Future enhancement routes - currently show landing page */}
                 <Route path="/events" element={<LandingPage />} />

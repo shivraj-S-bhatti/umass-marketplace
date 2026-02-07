@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
-import { Store, Calendar, MessageSquare, Users, Trophy, ArrowRight, ShoppingBag } from 'lucide-react'
+import { Store, Calendar, MessageSquare, Users, Trophy, ArrowRight } from 'lucide-react'
 
 // Landing Page – Swiss design, dark mode
 export default function LandingPage() {
@@ -10,7 +10,7 @@ export default function LandingPage() {
       icon: Store,
       title: 'Marketplace',
       description: 'Buy and sell with verified UMass students. Zero fees, campus proximity, and real-time distance tracking.',
-      path: '/',
+      path: '/login',
     },
     {
       icon: Calendar,
@@ -52,16 +52,13 @@ export default function LandingPage() {
               Your one-stop platform for campus life. Host your clubs, organize events,
               join pickup games, or engage in commerce—all in one verified, student-only community.
             </p>
+            <p className="text-sm text-muted-foreground pt-2">
+              Sign in with your UMass email to explore the marketplace and use all features.
+            </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <Button size="lg" className="text-base px-8" asChild>
-                <Link to="/">
-                  <ShoppingBag className="h-5 w-5 mr-2" />
-                  Explore Marketplace
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
                 <Link to="/login">
-                  Get Started
+                  Sign in with Google
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Link>
               </Button>
