@@ -317,13 +317,15 @@ The script installs nginx, deploys [deploy/nginx-host.conf](deploy/nginx-host.co
 
 ### 7.2 Login does nothing / page blanks (OAuth)
 
-If clicking "Sign in with Google" leaves the page blank or returns 304, nginx is likely sending `/oauth2/*` and `/login` to the frontend instead of the API. The API must handle those paths and return a 302 redirect to Google. Ensure [deploy/nginx-host.conf](deploy/nginx-host.conf) includes `location /oauth2/` and `location /login` that `proxy_pass` to `http://127.0.0.1:8080`. Then on EC2:
+If clicking "Sign in with Google" leaves the page blank or returns 304, nginx may be sending OAuth paths to the frontend instead of the API. **Only** `/oauth2/` (OAuth start) and `/login/oauth2/` (OAuth callback) must be proxied to the API; the API returns a 302 redirect to Google for those. The path `/login` is **served by the SPA** (React login page), so do **not** add a broad `location /login` that proxies to the API. Ensure [deploy/nginx-host.conf](deploy/nginx-host.conf) includes `location /oauth2/` and `location /login/oauth2/` that `proxy_pass` to `http://127.0.0.1:8080`. Then on EC2:
 
 ```bash
 sudo cp ~/umass-marketplace/deploy/nginx-host.conf /etc/nginx/sites-available/umass-marketplace
-# If Certbot created a separate server { listen 443 ssl; } block, add the same /oauth2/ and /login blocks into it
+# If Certbot created a separate server { listen 443 ssl; } block, add the same /oauth2/ and /login/oauth2/ blocks into it
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+**If the site already had HTTPS (Certbot was run before):** the repo file only has `listen 80`. Copying it overwrites the live config and removes the `listen 443` block, so HTTPS will break. Either merge only the `location /oauth2/` and `location /login/oauth2/` blocks into the existing 443 server block, or after copying run `sudo certbot --nginx -d everything-umass.tech`, choose "Attempt to reinstall this existing certificate", then add those two location blocks to the new 443 block if needed.
 
 ### 7.3 "Not Secure" in the browser
 
