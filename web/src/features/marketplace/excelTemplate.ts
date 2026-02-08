@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import { CreateListingForm } from '@/features/marketplace/pages/SellPage'
+import { UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
 
 // Template column headers - must match exactly
 export const TEMPLATE_COLUMNS = [
@@ -220,8 +221,8 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
         const base64 = btoa(binaryString)
         const dataUrl = `data:${mimeType};base64,${base64}`
         
-        // Compress the image to reduce size
-        const compressedDataUrl = await compressImage(dataUrl, 400) // Max 400KB per image
+        // Compress the image to reduce size (small for Postgres storage)
+        const compressedDataUrl = await compressImage(dataUrl, UPLOAD_IMAGE_MAX_KB)
         
         // Map image to row number (range.tl.nativeRow is 0-indexed, we want 1-indexed for row number)
         // Add 1 because Excel rows are 1-indexed and we want to match the data row

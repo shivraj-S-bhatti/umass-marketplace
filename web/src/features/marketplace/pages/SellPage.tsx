@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useState } from 'react'
 import { MapPin, Loader2, Download, Image, X } from 'lucide-react'
 import { createBulkListings, type CreateListingRequest } from '@/features/marketplace/api/api'
-import { CATEGORIES, CONDITIONS } from '@/shared/lib/constants/constants'
+import { CATEGORIES, CONDITIONS, UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
 import { parseExcelFile, validateTemplateFormat, validateExcelStructure, downloadTemplate, convertToCreateListingForm } from '@/features/marketplace/excelTemplate'
 import LocationMapSelector from '@/features/marketplace/components/LocationMapSelector'
 import { compressImage } from '@/shared/lib/utils/imageCompression'
@@ -86,7 +86,7 @@ export default function SellPage() {
         const base64String = reader.result as string
         
         // Compress image to fit within size limits
-        const compressedBase64 = await compressImage(base64String, 400)
+        const compressedBase64 = await compressImage(base64String, UPLOAD_IMAGE_MAX_KB)
         
         setImagePreview(compressedBase64)
         setValue('imageUrl', compressedBase64)
@@ -567,7 +567,7 @@ function PhotoBulkUploadModal() {
         reader.onloadend = () => resolve(reader.result as string)
         reader.readAsDataURL(files[i])
       })
-      const compressed = await compressImage(dataUrl, 400)
+      const compressed = await compressImage(dataUrl, UPLOAD_IMAGE_MAX_KB)
       compressedUrls.push(compressed)
     }
 
