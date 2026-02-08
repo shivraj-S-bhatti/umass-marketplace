@@ -462,6 +462,25 @@ docker exec umass-marketplace-api-prod env | grep SPRING_DATASOURCE
 4. Review S3 storage usage
 5. Check data transfer costs
 
+### Database persistence and EC2 lifecycle
+
+PostgreSQL data is stored in a **Docker named volume** (`postgres_data`) mounted at `/var/lib/postgresql/data` inside the `db` container. That volume lives on the EC2 instance's **root EBS volume**.
+
+| Scenario | State saved? | What to do |
+|----------|--------------|------------|
+| **EC2 stop, then start** | Yes | Root EBS is preserved. After start, run `docker compose -f deploy/docker-compose.ecr.yml up -d` (or your usual deploy). DB data is intact. |
+| **EC2 reboot** | Yes | Same as stop/start; volume and data persist. |
+| **Replace/change the instance (new instance, same AMI)** | No | New instance = new root disk. The old volume is gone unless you attached a separate EBS volume for Docker data or took a snapshot. |
+| **EC2 terminate** | No | Instance and its root EBS are deleted. All DB data is lost unless you used a separate EBS volume and reattach it, or restored from a snapshot. |
+| **`docker compose down`** | Yes | Only containers are removed. Named volume `postgres_data` stays on disk. `up` again and data is there. |
+| **`docker compose down -v`** | No | The `-v` flag removes named volumes. DB data is deleted. Do not use `-v` in production. |
+
+**Edge cases and recommendations:**
+
+- **No separate EBS for DB:** Today the DB lives on the root volume. If you terminate the instance, data is lost. For a non-critical alpha that's often acceptable. For anything you care about, either avoid terminating or add a **separate EBS volume** for `/var/lib/docker` (or for a bind mount to Postgres data) and attach it to a new instance after replace/terminate.
+- **Backups:** There is no automated backup in this guide. To back up: `docker exec umass-marketplace-db-prod pg_dump -U umarket umarket > backup.sql`. Restore with `psql` or by feeding the file into a new DB. Consider a cron job or periodic snapshot of the EBS volume if you need recoverability.
+- **S3 images:** Listing images in S3 are independent of EC2. They persist as long as the bucket and objects exist; stopping/terminating EC2 does not remove them.
+
 ## FAQ: “Could I get doxed / DDoS’d?”
 
 - Any public server will be scanned by bots. This is normal.
