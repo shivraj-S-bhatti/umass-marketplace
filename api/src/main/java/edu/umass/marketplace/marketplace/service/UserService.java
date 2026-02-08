@@ -5,6 +5,7 @@ import edu.umass.marketplace.marketplace.model.User;
 import edu.umass.marketplace.marketplace.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Get user by ID
@@ -50,7 +52,7 @@ public class UserService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setName(request.getName());
-//        user.setPictureUrl(request.getPictureUrl());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
         log.debug("🔍 Created user with ID: {}", savedUser.getId());

@@ -7,6 +7,7 @@ import edu.umass.marketplace.marketplace.response.UserResponse;
 import edu.umass.marketplace.marketplace.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ public class AuthService {
 
     private final UserService userService;
     private final edu.umass.marketplace.common.security.JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Register a new user
@@ -52,8 +54,7 @@ public class AuthService {
         User user = userService.getUserByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
-        // For now, simple password check - in real app, use proper password hashing
-        if (!request.getPassword().equals("password")) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new RuntimeException("Invalid email or password");
         }
 

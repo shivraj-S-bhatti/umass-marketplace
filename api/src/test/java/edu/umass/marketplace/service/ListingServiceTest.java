@@ -176,6 +176,7 @@ class ListingServiceTest {
     void shouldCreateBulkListings() {
         // Given
         List<CreateListingRequest> requests = List.of(testRequest);
+        when(userRepository.findByEmail("dummy@umass.edu")).thenReturn(Optional.of(testSeller));
         when(listingRepository.saveAll(anyList())).thenReturn(List.of(testListing));
 
         // When

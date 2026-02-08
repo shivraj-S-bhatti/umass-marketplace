@@ -111,7 +111,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JWT and Email dependencies removed - using simple approach for now -->
+        <!-- Spring Boot WebSocket - for real-time messaging -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- JWT support for issuing tokens after OAuth login -->
         <dependency>
             <groupId>com.auth0</groupId>

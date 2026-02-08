@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class ChatController {
 
     private final ChatService chatService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/listing/{listingId}")
     public ResponseEntity<ChatDTO> startChat(
@@ -49,7 +51,9 @@ public class ChatController {
             return ResponseEntity.status(401).build();
         }
         String content = body.get("content");
-        return ResponseEntity.ok(chatService.sendMessage(chatId, userPrincipal.getId(), content));
+        MessageDTO message = chatService.sendMessage(chatId, userPrincipal.getId(), content);
+        messagingTemplate.convertAndSend("/topic/chat/" + chatId, message);
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping("/{chatId}/messages")

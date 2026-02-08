@@ -68,25 +68,14 @@ public class ListingService {
 
     @Transactional
     public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
-        // Get seller from authenticated principal, or use QA Testing user if not authenticated
-        User seller;
         if (principal == null || principal.getName() == null || principal.getName().trim().isEmpty()) {
-            // Use QA Testing user for unauthenticated requests
-            String qaEmail = "qa-testing@umass.edu";
-            seller = userRepository.findByEmail(qaEmail)
-                .orElseGet(() -> {
-                    User qaUser = new User();
-                    qaUser.setEmail(qaEmail);
-                    qaUser.setName("QA Testing");
-                    return userRepository.save(qaUser);
-                });
-            log.debug("🔍 Using QA Testing user for unauthenticated listing creation");
-        } else {
-            String email = principal.getName();
-            seller = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "User not found in database. Please try logging in again."));
+            throw new IllegalArgumentException("Authentication required to create a listing.");
         }
+
+        String email = principal.getName();
+        User seller = userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "User not found in database. Please try logging in again."));
 
         Listing listing = new Listing();
         listing.setTitle(request.getTitle());

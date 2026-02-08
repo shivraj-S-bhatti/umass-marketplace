@@ -5,8 +5,10 @@ import edu.umass.marketplace.marketplace.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -37,20 +39,45 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Enable CORS for frontend communication
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // Disable CSRF for API endpoints
             .csrf(csrf -> csrf.disable())
-            // Allow all requests for testing
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .anyRequest().permitAll()
+                // Public endpoints
+                .requestMatchers("/health").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**", "/auth/success").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+
+                // Listings: read is public, write requires auth
+                .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/listings/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/listings/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/listings/**").authenticated()
+
+                // Reviews: read is public, write requires auth
+                .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/reviews/**").authenticated()
+
+                // Users: public read
+                .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+
+                // Chats: fully authenticated
+                .requestMatchers("/api/chats/**").authenticated()
+
+                // Everything else requires authentication
+                .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService()))
                 .successHandler(oauth2LoginSuccessHandler)
             )
-            // JWT filter to populate SecurityContext from Authorization header
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+
+        // Allow H2 console frames
+        http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
     }

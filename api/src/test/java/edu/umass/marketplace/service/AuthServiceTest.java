@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +31,9 @@ class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private edu.umass.marketplace.marketplace.service.AuthService authService;
 
@@ -42,16 +46,17 @@ class AuthServiceTest {
         registerRequest = new RegisterRequest();
         registerRequest.setEmail("test@umass.edu");
         registerRequest.setName("Test User");
-        registerRequest.setPassword("password");
+        registerRequest.setPassword("password123");
 
         loginRequest = new LoginRequest();
         loginRequest.setEmail("test@umass.edu");
-        loginRequest.setPassword("password");
+        loginRequest.setPassword("password123");
 
         testUser = new User();
         testUser.setId(UUID.randomUUID());
         testUser.setEmail("test@umass.edu");
         testUser.setName("Test User");
+        testUser.setPasswordHash("$2a$10$hashedpassword");
     }
 
     @Test
@@ -66,8 +71,6 @@ class AuthServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-//        assertThat(result.getEmail()).isEqualTo("test@umass.edu");
-//        assertThat(result.getName()).isEqualTo("Test User");
         assertThat(result.getToken()).isNotBlank();
         verify(userService, times(1)).createUser(any(RegisterRequest.class));
     }
@@ -90,6 +93,7 @@ class AuthServiceTest {
         // Given
         when(userService.getUserByEmail("test@umass.edu"))
                 .thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("password123", "$2a$10$hashedpassword")).thenReturn(true);
         when(jwtUtil.generateToken(any(), anyString(), anyString())).thenReturn("mock-token");
 
         // When
@@ -97,8 +101,6 @@ class AuthServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-//        assertThat(result.getEmail()).isEqualTo("test@umass.edu");
-//        assertThat(result.getName()).isEqualTo("Test User");
         assertThat(result.getToken()).isNotBlank();
     }
 
@@ -120,6 +122,7 @@ class AuthServiceTest {
         // Given
         when(userService.getUserByEmail("test@umass.edu"))
                 .thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("wrongpassword", "$2a$10$hashedpassword")).thenReturn(false);
 
         // When & Then
         loginRequest.setPassword("wrongpassword");
@@ -128,4 +131,3 @@ class AuthServiceTest {
                 .hasMessageContaining("Invalid email or password");
     }
 }
-
