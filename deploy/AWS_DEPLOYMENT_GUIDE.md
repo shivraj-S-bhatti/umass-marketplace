@@ -315,17 +315,27 @@ You will be prompted for a contact email (for Let's Encrypt). For non-interactiv
 
 The script installs nginx, deploys [deploy/nginx-host.conf](deploy/nginx-host.conf) to the host, and runs `certbot --nginx -d everything-umass.tech`. Certbot adds the HTTPS server block and certificate paths automatically.
 
-### 7.2 "Not Secure" in the browser
+### 7.2 Login does nothing / page blanks (OAuth)
+
+If clicking "Sign in with Google" leaves the page blank or returns 304, nginx is likely sending `/oauth2/*` and `/login` to the frontend instead of the API. The API must handle those paths and return a 302 redirect to Google. Ensure [deploy/nginx-host.conf](deploy/nginx-host.conf) includes `location /oauth2/` and `location /login` that `proxy_pass` to `http://127.0.0.1:8080`. Then on EC2:
+
+```bash
+sudo cp ~/umass-marketplace/deploy/nginx-host.conf /etc/nginx/sites-available/umass-marketplace
+# If Certbot created a separate server { listen 443 ssl; } block, add the same /oauth2/ and /login blocks into it
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 7.3 "Not Secure" in the browser
 
 If the site loads but the browser shows "Not Secure", you are on **HTTP** instead of **HTTPS**. Open **https://everything-umass.tech** (with `https://`) in the address bar. Certbot usually configures nginx to redirect HTTP to HTTPS; if not, add a `server { listen 80; return 301 https://$host$request_uri; }` block on the server.
 
-### 7.3 After HTTPS works
+### 7.4 After HTTPS works
 
 1. Set in `deploy/.env`: `FRONTEND_URL=https://everything-umass.tech`, `VITE_API_BASE_URL=https://everything-umass.tech`.
 2. On your Mac: rebuild and push the web image (`./deploy/build-and-push.sh`), then copy `.env` to EC2 and run `./deploy/deploy.sh` on EC2.
 3. In Google OAuth, set authorized origins and redirect URIs to `https://everything-umass.tech`.
 
-### 7.4 Auto-Renewal
+### 7.5 Auto-Renewal
 
 Certbot configures a systemd timer for renewal. Test with:
 

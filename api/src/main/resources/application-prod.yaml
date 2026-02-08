@@ -25,9 +25,10 @@ application:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:86400000}
 
-# Server configuration
+# Server configuration (behind nginx: trust X-Forwarded-Proto so OAuth redirect_uri uses https)
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
 
 # Production-specific settings
 springdoc:
