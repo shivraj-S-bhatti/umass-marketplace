@@ -11,11 +11,11 @@ import { Label } from '@/shared/components/ui/label'
 import { createListing } from '@/features/marketplace/api/api'
 import { useToast } from '@/shared/hooks/use-toast'
 import { Plus } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog'
 import { useState } from 'react'
-import { MapPin, Loader2, Download } from 'lucide-react'
-import { createBulkListings } from '@/features/marketplace/api/api'
-import { CATEGORIES, CONDITIONS } from '@/shared/lib/constants/constants'
+import { MapPin, Loader2, Download, Image, X } from 'lucide-react'
+import { createBulkListings, type CreateListingRequest } from '@/features/marketplace/api/api'
+import { CATEGORIES, CONDITIONS, UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
 import { parseExcelFile, validateTemplateFormat, validateExcelStructure, downloadTemplate, convertToCreateListingForm } from '@/features/marketplace/excelTemplate'
 import LocationMapSelector from '@/features/marketplace/components/LocationMapSelector'
 import { compressImage } from '@/shared/lib/utils/imageCompression'
@@ -86,7 +86,7 @@ export default function SellPage() {
         const base64String = reader.result as string
         
         // Compress image to fit within size limits
-        const compressedBase64 = await compressImage(base64String, 400)
+        const compressedBase64 = await compressImage(base64String, UPLOAD_IMAGE_MAX_KB)
         
         setImagePreview(compressedBase64)
         setValue('imageUrl', compressedBase64)
@@ -178,7 +178,8 @@ export default function SellPage() {
           List your item for sale to fellow UMass students.
         </p>
       </div>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex flex-wrap justify-end gap-2">
+        <PhotoBulkUploadModal />
         <BulkUploadModal />
       </div>
       <Card>
@@ -412,6 +413,359 @@ export default function SellPage() {
       </Card>
       </div>
     </div>
+  )
+}
+
+const MAX_PHOTOS = 15
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB, same as single-listing form
+
+type PerItemDetails = {
+  title: string
+  price: string
+  description: string
+  category: string
+  condition: string
+}
+
+const defaultItemDetails = (): PerItemDetails => ({
+  title: '',
+  price: '1',
+  description: '',
+  category: '',
+  condition: '',
+})
+
+function PhotoBulkUploadModal() {
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const [isOpen, setIsOpen] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const [itemDetails, setItemDetails] = useState<PerItemDetails[]>([])
+  const [useLocation, setUseLocation] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [latitude, setLatitude] = useState<number | null>(null)
+  const [longitude, setLongitude] = useState<number | null>(null)
+  const [showMapSelector, setShowMapSelector] = useState(false)
+  const [mustGoBy, setMustGoBy] = useState<string>('')
+
+  const createBulkListingsMutation = useMutation({
+    mutationFn: createBulkListings,
+    onSuccess: (data) => {
+      toast({ title: 'Success!', description: `${data.length} listings created successfully.` })
+      queryClient.invalidateQueries({ queryKey: ['listings'] })
+      setFiles([])
+      setPreviews([])
+      setItemDetails([])
+      setIsOpen(false)
+      navigate('/dashboard')
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to create listings. Please try again.', variant: 'destructive' })
+    },
+  })
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || [])
+    const valid = selected.filter((f) => f.type.startsWith('image/') && f.size <= MAX_IMAGE_SIZE_BYTES)
+    if (valid.length !== selected.length) {
+      toast({ title: 'Some files skipped', description: 'Only images under 5MB are allowed.', variant: 'destructive' })
+    }
+    const combined = [...files, ...valid].slice(0, MAX_PHOTOS)
+    setFiles(combined)
+    setItemDetails((prev) => {
+      const next = [...prev]
+      while (next.length < combined.length) next.push(defaultItemDetails())
+      return next.slice(0, combined.length)
+    })
+    if (combined.length > MAX_PHOTOS) {
+      toast({ title: 'Limit reached', description: `Showing first ${MAX_PHOTOS} photos.`, variant: 'destructive' })
+    }
+    Promise.all(
+      combined.map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(file)
+        })
+      })
+    ).then(setPreviews)
+    e.target.value = ''
+  }
+
+  const removePhoto = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+    setPreviews((prev) => prev.filter((_, i) => i !== index))
+    setItemDetails((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const updateItemDetail = (index: number, field: keyof PerItemDetails, value: string) => {
+    setItemDetails((prev) => {
+      const next = [...prev]
+      if (next[index]) next[index] = { ...next[index], [field]: value }
+      return next
+    })
+  }
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setFiles([])
+      setPreviews([])
+      setItemDetails([])
+      setUseLocation(false)
+      setLatitude(null)
+      setLongitude(null)
+      setShowMapSelector(false)
+      setMustGoBy('')
+    }
+    setIsOpen(open)
+  }
+
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: 'Geolocation not supported', description: 'Your browser does not support location.', variant: 'destructive' })
+      return
+    }
+    setLocationLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude)
+        setLongitude(position.coords.longitude)
+        setLocationLoading(false)
+        toast({ title: 'Location captured!', description: 'Applied to all listings.' })
+      },
+      () => {
+        setLocationLoading(false)
+        setUseLocation(false)
+        toast({ title: 'Location denied', description: 'You can still list without location.', variant: 'destructive' })
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
+  const handleSubmit = async () => {
+    if (files.length === 0) {
+      toast({ title: 'No photos', description: 'Select at least one photo.', variant: 'destructive' })
+      return
+    }
+    const invalid: string[] = []
+    itemDetails.forEach((d, i) => {
+      if (!d.title.trim()) invalid.push(`Item ${i + 1}: title required`)
+      const p = parseFloat(d.price)
+      if (!Number.isFinite(p) || p <= 0) invalid.push(`Item ${i + 1}: valid price required`)
+    })
+    if (invalid.length > 0) {
+      toast({ title: 'Please fix errors', description: invalid.slice(0, 5).join('; '), variant: 'destructive' })
+      return
+    }
+
+    const compressedUrls: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      const reader = new FileReader()
+      const dataUrl = await new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(files[i])
+      })
+      const compressed = await compressImage(dataUrl, UPLOAD_IMAGE_MAX_KB)
+      compressedUrls.push(compressed)
+    }
+
+    const listings: CreateListingRequest[] = compressedUrls.map((imageUrl, i) => {
+      const d = itemDetails[i] ?? defaultItemDetails()
+      return {
+        title: d.title.trim(),
+        price: parseFloat(d.price),
+        description: d.description.trim() || undefined,
+        category: d.category || undefined,
+        condition: d.condition || undefined,
+        imageUrl,
+        ...(useLocation && latitude != null && longitude != null ? { latitude, longitude } : {}),
+        ...(mustGoBy ? { mustGoBy: new Date(mustGoBy).toISOString() } : {}),
+      }
+    })
+
+    createBulkListingsMutation.mutate(listings)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="default" className="flex items-center gap-2">
+          <Image className="h-4 w-4" />
+          List from photos
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>List multiple items from photos</DialogTitle>
+          <DialogDescription className="sr-only">
+            Add photos and fill in details for each item.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Photos (up to {MAX_PHOTOS})</Label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30 text-muted-foreground hover:bg-muted/50">
+                <Image className="h-6 w-6" />
+                <span className="text-xs mt-1">Add</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+              </label>
+              {previews.map((src, i) => (
+                <div key={i} className="relative">
+                  <img src={src} alt={`Item ${i + 1}`} className="h-24 w-24 rounded-lg object-cover border border-border" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground hover:bg-destructive/90"
+                    aria-label={`Remove photo ${i + 1}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {previews.length > 0 && (
+            <div className="space-y-4">
+              <Label>Details for each item</Label>
+              {previews.map((src, i) => {
+                const d = itemDetails[i] ?? defaultItemDetails()
+                return (
+                  <div key={i} className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                    <div className="flex items-center gap-3 font-medium text-sm">Item {i + 1}</div>
+                    <div className="flex gap-4">
+                      <div className="shrink-0">
+                        <img src={src} alt={`Item ${i + 1}`} className="h-20 w-20 rounded-lg object-cover border border-border" />
+                      </div>
+                      <div className="flex-1 grid gap-2 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Title *</Label>
+                          <Input
+                            value={d.title}
+                            onChange={(e) => updateItemDetail(i, 'title', e.target.value)}
+                            placeholder="e.g. Desk lamp"
+                            className="h-9 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Price *</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            value={d.price}
+                            onChange={(e) => updateItemDetail(i, 'price', e.target.value)}
+                            placeholder="0.00"
+                            className="h-9 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-xs">Description</Label>
+                          <Input
+                            value={d.description}
+                            onChange={(e) => updateItemDetail(i, 'description', e.target.value)}
+                            placeholder="Optional"
+                            className="h-9 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Category</Label>
+                          <select
+                            className="flex h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
+                            value={d.category}
+                            onChange={(e) => updateItemDetail(i, 'category', e.target.value)}
+                          >
+                            <option value="">Select</option>
+                            {CATEGORIES.map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Condition</Label>
+                          <select
+                            className="flex h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
+                            value={d.condition}
+                            onChange={(e) => updateItemDetail(i, 'condition', e.target.value)}
+                          >
+                            <option value="">Select</option>
+                            {CONDITIONS.map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <div className="space-y-3 rounded-lg border border-input bg-muted/20 p-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="photoBulkUseLocation"
+                checked={useLocation}
+                onChange={(e) => {
+                  setUseLocation(e.target.checked)
+                  if (!e.target.checked) {
+                    setLatitude(null)
+                    setLongitude(null)
+                    setShowMapSelector(false)
+                  }
+                }}
+                className="h-4 w-4 rounded border-border bg-card text-primary focus:ring-2 focus:ring-ring"
+                aria-label="Assign location to all listings"
+              />
+              <Label htmlFor="photoBulkUseLocation" className="cursor-pointer font-medium flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Assign location to all listings
+              </Label>
+            </div>
+            {useLocation && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={captureLocation} disabled={locationLoading} className="flex items-center gap-2">
+                    {locationLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Getting location...</> : latitude ? <><MapPin className="h-4 w-4" /> Location captured</> : <><MapPin className="h-4 w-4" /> Use my location</>}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShowMapSelector((s) => !s)} className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> {showMapSelector ? 'Hide map' : 'Select on map'}
+                  </Button>
+                </div>
+                {latitude != null && longitude != null && <p className="text-xs text-muted-foreground">Location: {latitude.toFixed(4)}, {longitude.toFixed(4)}</p>}
+                {showMapSelector && (
+                  <LocationMapSelector onLocationSelect={(lat, lng) => { setLatitude(lat); setLongitude(lng) }} initialLat={latitude ?? undefined} initialLng={longitude ?? undefined} height="300px" />
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="photoBulkMustGoBy">Must go by (optional)</Label>
+            <Input id="photoBulkMustGoBy" type="datetime-local" value={mustGoBy} onChange={(e) => setMustGoBy(e.target.value)} />
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={createBulkListingsMutation.isPending || files.length === 0}
+            className="w-full"
+          >
+            {createBulkListingsMutation.isPending ? 'Creating...' : `Create ${files.length} listing${files.length !== 1 ? 's' : ''}`}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

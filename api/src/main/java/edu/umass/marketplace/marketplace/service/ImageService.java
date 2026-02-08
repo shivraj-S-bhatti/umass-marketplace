@@ -36,16 +36,16 @@ public class ImageService {
     @Value("${aws.s3.enabled:false}")
     private boolean s3Enabled;
 
-    @Value("${image.compression.max-width:1200}")
+    @Value("${image.compression.max-width:800}")
     private int maxWidth;
 
-    @Value("${image.compression.max-height:1200}")
+    @Value("${image.compression.max-height:800}")
     private int maxHeight;
 
-    @Value("${image.compression.quality:0.85}")
+    @Value("${image.compression.quality:0.6}")
     private double quality;
 
-    @Value("${image.compression.max-size-kb:100}")
+    @Value("${image.compression.max-size-kb:40}")
     private int maxSizeKB;
 
     /**

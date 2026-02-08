@@ -11,7 +11,8 @@ import { Label } from '@/shared/components/ui/label'
 import { updateListing, getListing } from '@/features/marketplace/api/api'
 import { useToast } from '@/shared/hooks/use-toast'
 import { Save, ArrowLeft, MapPin, Loader2 } from 'lucide-react'
-import { CATEGORIES, CONDITIONS } from '@/shared/lib/constants/constants'
+import { CATEGORIES, CONDITIONS, UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
+import { compressImage } from '@/shared/lib/utils/imageCompression'
 import LocationMapSelector from '@/features/marketplace/components/LocationMapSelector'
 
 // Edit listing form schema
@@ -110,12 +111,13 @@ export default function EditPage() {
 
       setImageFile(file)
 
-      // Create preview
+      // Create preview and compress for small storage
       const reader = new FileReader()
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64String = reader.result as string
-        setImagePreview(base64String)
-        setValue('imageUrl', base64String)
+        const compressed = await compressImage(base64String, UPLOAD_IMAGE_MAX_KB)
+        setImagePreview(compressed)
+        setValue('imageUrl', compressed)
       }
       reader.readAsDataURL(file)
     }

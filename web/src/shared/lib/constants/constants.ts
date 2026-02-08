@@ -27,3 +27,6 @@ export const STATUSES = [
   'SOLD',
 ] as const
 
+/** Max size in KB for uploaded listing images (compressed). Keeps Postgres/storage small. */
+export const UPLOAD_IMAGE_MAX_KB = 80
+
