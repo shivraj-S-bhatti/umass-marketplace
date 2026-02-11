@@ -321,11 +321,11 @@ If clicking "Sign in with Google" leaves the page blank or returns 304, nginx ma
 
 ```bash
 sudo cp ~/umass-marketplace/deploy/nginx-host.conf /etc/nginx/sites-available/umass-marketplace
-# If Certbot created a separate server { listen 443 ssl; } block, add the same /oauth2/ and /login/oauth2/ blocks into it
+# If Certbot created a separate server { listen 443 ssl; } block, add the same /oauth2/, /login/oauth2/, and /ws/ blocks into it
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-**If the site already had HTTPS (Certbot was run before):** the repo file only has `listen 80`. Copying it overwrites the live config and removes the `listen 443` block, so HTTPS will break. Either merge only the `location /oauth2/` and `location /login/oauth2/` blocks into the existing 443 server block, or after copying run `sudo certbot --nginx -d everything-umass.tech`, choose "Attempt to reinstall this existing certificate", then add those two location blocks to the new 443 block if needed.
+**If the site already had HTTPS (Certbot was run before):** the repo file only has `listen 80`. Copying it overwrites the live config and removes the `listen 443` block, so HTTPS will break. Either merge only the `location /oauth2/`, `location /login/oauth2/`, and `location /ws/` blocks into the existing 443 server block, or after copying run `sudo certbot --nginx -d everything-umass.tech`, choose "Attempt to reinstall this existing certificate", then add those location blocks to the new 443 block if needed.
 
 ### 7.3 "Not Secure" in the browser
 
