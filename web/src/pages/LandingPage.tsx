@@ -43,37 +43,37 @@ export default function LandingPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-      {/* Hero */}
-      <section className="py-10 md:py-16 overflow-hidden">
+      {/* Hero – scaled down ~20% */}
+      <section className="py-6 md:py-10 overflow-hidden">
         <div className="container mx-auto px-4 flex flex-col items-center">
           {/* Hero card: no bottom padding so mascot sits flush */}
-          <Card className="relative w-full max-w-3xl border border-border overflow-visible !p-0">
-            <CardContent className="pt-6 sm:pt-8 md:pt-10 px-6 sm:px-8 md:px-10 pb-0">
+          <Card className="relative w-full max-w-2xl border border-border overflow-visible !p-0">
+            <CardContent className="pt-5 sm:pt-6 md:pt-8 px-5 sm:px-6 md:px-8 pb-0">
               {/* Text – centered */}
-              <div className="text-center space-y-4">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
+              <div className="text-center space-y-3">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">
                   Everything UMass,<br />
                   <span className="text-primary">We've Got You</span>
                 </h1>
-                <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto leading-relaxed uppercase tracking-wide">
+                <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed uppercase tracking-wide">
                   Buy sell share organize, all in one verified student only community.
                 </p>
               </div>
 
-              {/* Mascot: block removes inline gap; card uses !p-0 so no bottom gap */}
-              <div className="flex justify-center mt-4">
+              {/* Mascot */}
+              <div className="flex justify-center mt-3">
                 <img
                   src="/mascot.png"
                   alt="Sam the Minuteman – UMass mascot"
-                  className="w-52 sm:w-60 md:w-72 lg:w-80 h-auto block"
+                  className="w-40 sm:w-48 md:w-60 lg:w-64 h-auto block"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* CTA below card */}
-          <div className="flex flex-col items-center gap-3 mt-10">
-            <Button size="lg" className="text-base px-10" asChild>
+          <div className="flex flex-col items-center gap-2 mt-6">
+            <Button size="lg" className="text-sm px-8" asChild>
               <Link to={user ? '/' : '/login'}>
                 {user ? 'Explore Marketplace' : 'Sign in with Google'}
                 <ArrowRight className="h-5 w-5 ml-2" />
@@ -89,14 +89,14 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="container mx-auto px-4 py-12 md:py-16">
+      <section className="container mx-auto px-4 py-8 md:py-12">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center mb-2">
           Everything You Need for Campus Life
         </h2>
-        <p className="text-muted-foreground text-center mb-10 max-w-2xl mx-auto">
+        <p className="text-muted-foreground text-center mb-6 max-w-2xl mx-auto text-sm">
           One platform. One community. Everything UMass.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
           {features.map((feature) => {
             const Icon = feature.icon
             return (
@@ -104,12 +104,12 @@ export default function LandingPage() {
                 key={feature.title}
                 className="border border-border hover:border-primary/50 transition-colors cursor-pointer group"
               >
-                <CardHeader>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg border border-border bg-secondary/50">
-                      <Icon className="h-6 w-6 text-primary" />
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 rounded-lg border border-border bg-secondary/50">
+                      <Icon className="h-5 w-5 text-primary" />
                     </div>
-                    <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
+                    <CardTitle className="text-lg font-semibold">{feature.title}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -130,19 +130,19 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border bg-card py-12 md:py-16">
+      <section className="border-t border-border bg-card py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <Card className="max-w-3xl mx-auto border border-border bg-secondary/20">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl md:text-4xl mb-3 font-bold">
+          <Card className="max-w-2xl mx-auto border border-border bg-secondary/20">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl md:text-3xl mb-2 font-bold">
                 Ready to Join the UMass Community?
               </CardTitle>
-              <CardDescription className="text-base md:text-lg">
+              <CardDescription className="text-sm md:text-base">
                 Connect with thousands of verified UMass students. Buy, sell, organize, and engage—all in one place.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="text-base px-8" asChild>
+            <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button size="lg" className="text-sm px-6" asChild>
                 <Link to={user ? '/' : '/login'}>
                   {user ? 'Explore Marketplace' : 'Sign In with UMass Email'}
                   <ArrowRight className="h-5 w-5 ml-2" />

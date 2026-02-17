@@ -1,14 +1,31 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/ui/button'
-import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, ShoppingCart, Calendar, Users, Trophy, Store, Sun, Moon } from 'lucide-react'
+import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, ShoppingCart, Calendar, Users, Trophy, Store, Sun, Moon, ChevronDown, User, LogOut } from 'lucide-react'
 import { UserRole, useUser } from '@/shared/contexts/UserContext'
 import { useTheme } from '@/shared/contexts/ThemeContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/shared/components/ui/dropdown-menu'
 import Logo from '@/shared/components/Logo'
 import { useEffect } from 'react'
 
-// Layout component for Everything UMass
-// Provides consistent navigation and page structure across the application
+const SUBAPPS = [
+  { path: '/', label: 'Marketplace', icon: Store },
+  { path: '/events', label: 'Events', icon: Calendar },
+  { path: '/leasings', label: 'Leasings', icon: Store },
+  { path: '/common-room', label: 'Common Room', icon: MessageSquare },
+  { path: '/clubs', label: 'Clubs', icon: Users },
+  { path: '/sports', label: 'Sports', icon: Trophy },
+] as const
+
+const MARKETPLACE_PATHS = ['/', '/sell', '/dashboard', '/cart']
+
+const marketplaceNavItems = [
+  { path: '/', label: 'Explore', icon: ShoppingBag, showIn: ['buyer', 'seller'] as UserRole[] },
+  { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as UserRole[] },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as UserRole[] },
+  { path: '/messages', label: 'Messages', icon: MessageSquare, showIn: ['buyer', 'seller'] as UserRole[] },
+]
+
 interface LayoutProps {
   children: React.ReactNode
 }
@@ -16,31 +33,19 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { role, setRole, isSeller, isBuyer, user } = useUser()
+  const { role, setRole, isSeller, isBuyer, user, logout } = useUser()
   const { theme, toggleTheme } = useTheme()
 
-  // Navigation items - same for both modes, but will show/hide based on mode
-  const allNavItems = [
-    { path: '/', label: 'Explore', icon: ShoppingBag, showIn: ['buyer', 'seller'] as UserRole[] },
-    { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as UserRole[] },
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as UserRole[] },
-    { path: '/messages', label: 'Messages', icon: MessageSquare, showIn: ['buyer', 'seller'] as UserRole[] },
-  ]
-
-  // Filter nav items based on current mode
-  const navItems = allNavItems.filter(item => item.showIn.includes(role))
-
-  // Handle role change and cart access logic
-  useEffect(() => {
-    if (location.pathname === '/cart' && isSeller) {
-      navigate('/dashboard')
-    }
-  }, [role, location.pathname, isSeller, navigate])
+  const currentSubapp = SUBAPPS.find(s => s.path === '/' ? location.pathname === '/' : location.pathname.startsWith(s.path)) ?? SUBAPPS[0]
+  const isMarketplace = MARKETPLACE_PATHS.some(p => p === '/' ? location.pathname === '/' : location.pathname.startsWith(p))
+  const navItems = marketplaceNavItems.filter(item => item.showIn.includes(role))
 
   useEffect(() => {
-    if (location.pathname === '/cart' && !isBuyer) {
-      setRole('buyer')
-    }
+    if (location.pathname === '/cart' && isSeller) navigate('/dashboard')
+  }, [location.pathname, isSeller, navigate])
+
+  useEffect(() => {
+    if (location.pathname === '/cart' && !isBuyer) setRole('buyer')
   }, [location.pathname, isBuyer, setRole])
 
   const handleRoleChange = (newRole: 'buyer' | 'seller') => {
@@ -52,83 +57,132 @@ export default function Layout({ children }: LayoutProps) {
     }
   }
 
-  // Top-tier navigation items for future enhancements
-  const topTierNavItems = [
-    { path: '/', label: 'Marketplace', icon: Store },
-    { path: '/events', label: 'Event Hub', icon: Calendar },
-    { path: '/common-room', label: 'Common Room', icon: MessageSquare },
-    { path: '/clubs', label: 'Clubs', icon: Users },
-    { path: '/sports', label: 'Sports', icon: Trophy },
-  ]
-
   return (
     <div className="min-h-screen bg-background relative flex flex-col">
-      {/* Top-tier nav */}
-      <nav className="border-b border-border bg-card relative z-10">
-        <div className="container mx-auto px-2 sm:px-4 py-2">
-          <div className="flex items-center justify-center gap-1 md:gap-2 overflow-x-auto">
-            {topTierNavItems.map(({ path, label, icon: Icon }) => {
-              const isActive = location.pathname === path ||
-                (path === '/' && location.pathname === '/') ||
-                (path !== '/' && location.pathname.startsWith(path))
-              return (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`flex items-center space-x-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  <Icon className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">{label}</span>
-                </Link>
-              )
-            })}
+      {/* Single top bar: [Logo] Everything UMass - [Subapp v]  |  [Avatar v] */}
+      <header className="border-b border-border bg-card relative z-10">
+        <div className="container mx-auto px-4 py-2.5">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Logo + Everything UMass - Subapp dropdown (text trigger) */}
+            <div className="flex items-center gap-2 min-w-0">
+              <Link to="/" className="flex items-center shrink-0" aria-label="Home">
+                <Logo />
+              </Link>
+              <span className="font-semibold text-foreground shrink-0">Everything UMass</span>
+              <span className="text-muted-foreground shrink-0 hidden sm:inline">–</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 shrink-0 text-foreground font-medium hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 py-0.5"
+                  >
+                    {currentSubapp.label}
+                    <ChevronDown className="h-4 w-4 opacity-70" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {SUBAPPS.map(({ path, label }) => (
+                    <DropdownMenuItem key={path} onSelect={() => navigate(path)}>
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Right: Profile / Login dropdown only */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                {user ? (
+                  <button type="button" className="rounded-full border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 shrink-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.pictureUrl} alt={user.name} />
+                      <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
+                    </Avatar>
+                  </button>
+                ) : (
+                  <Button variant="outline" size="sm">
+                    <LogIn className="h-4 w-4 mr-1.5" />
+                    Log in
+                  </Button>
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[12rem]">
+                {user ? (
+                  <>
+                    <DropdownMenuLabel className="font-normal flex flex-col gap-0.5">
+                      <span className="font-semibold truncate">{user.name || 'User'}</span>
+                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => navigate('/profile/me')}>
+                      <User className="h-4 w-4 mr-2" />
+                      Profile & settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => navigate('/messages')}>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Messages
+                    </DropdownMenuItem>
+                    {isBuyer && (
+                      <DropdownMenuItem onSelect={() => navigate('/cart')}>
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Cart
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => toggleTheme()}>
+                      {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+                      {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => logout()} className="text-destructive focus:text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Log out
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem onSelect={() => navigate('/login')}>
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Log in
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </nav>
 
-      {/* Header - Tier 2 */}
-      <header className="border-b border-border bg-card relative z-10">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <Logo />
-
-            <nav className="hidden md:flex items-center space-x-2">
-              {isBuyer && (
-                <Button variant="outline" size="sm" className="mr-2" asChild>
-                  <Link to="/cart">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Cart
-                  </Link>
-                </Button>
-              )}
+        {/* Marketplace sub-nav: Explore, Sell, Dashboard, Cart, Buyer | Seller */}
+        {isMarketplace && (
+          <nav className="border-t border-border/50">
+            <div className="container mx-auto px-4 py-2 flex flex-wrap items-center gap-2">
               {navItems.map(({ path, label, icon: Icon }) => (
                 <Link
                   key={path}
                   to={path}
-                  className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === path
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    location.pathname === path ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  <span>{label}</span>
+                  {label}
                 </Link>
               ))}
-            </nav>
-
-            <div className="flex items-center space-x-3">
-              <div className="hidden md:flex items-center border border-border rounded-lg overflow-hidden">
+              {isBuyer && (
+                <Link
+                  to="/cart"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors md:hidden ${
+                    location.pathname === '/cart' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Cart
+                </Link>
+              )}
+              <div className="flex items-center border border-border rounded-lg overflow-hidden ml-auto">
                 <button
                   onClick={() => handleRoleChange('buyer')}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                    isBuyer
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
+                    isBuyer ? 'bg-primary text-primary-foreground' : 'bg-transparent text-muted-foreground hover:bg-secondary'
                   }`}
                 >
                   Buyer
@@ -136,83 +190,7 @@ export default function Layout({ children }: LayoutProps) {
                 <button
                   onClick={() => handleRoleChange('seller')}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors border-l border-border ${
-                    isSeller
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  Seller
-                </button>
-              </div>
-
-              {user ? (
-                <Link to="/login">
-                  <Avatar className="cursor-pointer border border-border">
-                    <AvatarImage src={user.pictureUrl} alt={user.name} />
-                    <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
-                  </Avatar>
-                </Link>
-              ) : (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/login">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Login
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          <nav className="md:hidden mt-3 space-y-2">
-            <div className="flex flex-wrap gap-2">
-              {isBuyer && (
-                <Link
-                  to="/cart"
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/cart'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  <span>Cart</span>
-                </Link>
-              )}
-              {navItems.map(({ path, label, icon: Icon }) => (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === path
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center border border-border rounded-lg overflow-hidden flex-1">
-                <button
-                  onClick={() => handleRoleChange('buyer')}
-                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
-                    isBuyer
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-transparent text-muted-foreground'
-                  }`}
-                >
-                  Buyer
-                </button>
-                <button
-                  onClick={() => handleRoleChange('seller')}
-                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors border-l border-border ${
-                    isSeller
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-transparent text-muted-foreground'
+                    isSeller ? 'bg-primary text-primary-foreground' : 'bg-transparent text-muted-foreground hover:bg-secondary'
                   }`}
                 >
                   Seller
@@ -220,14 +198,14 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             </div>
           </nav>
-        </div>
+        )}
       </header>
 
-      <main className="relative z-10 flex-1 flex flex-col min-h-0">
+      <main className="flex-1 flex flex-col min-h-0">
         {children}
       </main>
 
-      <footer className="border-t border-border bg-card mt-auto relative z-10">
+      <footer className="border-t border-border bg-card mt-auto">
         <div className="container mx-auto px-4 py-3">
           <div className="text-center text-xs text-muted-foreground">
             <p className="font-medium">&copy; 2025 Everything UMass. Built for students, by students.</p>
