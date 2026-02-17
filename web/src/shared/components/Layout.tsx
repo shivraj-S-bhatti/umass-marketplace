@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/ui/button'
 import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, ShoppingCart, Store, Home, Link2, Sun, Moon, ChevronDown, User, LogOut } from 'lucide-react'
-import { UserRole, useUser } from '@/shared/contexts/UserContext'
+import { useUser } from '@/shared/contexts/UserContext'
 import { useTheme } from '@/shared/contexts/ThemeContext'
 import { useLoginModal } from '@/shared/contexts/LoginModalContext'
+import { useCart } from '@/shared/contexts/CartContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/shared/components/ui/dropdown-menu'
 import { useToast } from '@/shared/hooks/use-toast'
@@ -33,12 +34,13 @@ const SUBAPPS = [
   { path: '/leasings', label: 'Leasing', icon: Home, disabled: true },
 ] as const
 
-const MARKETPLACE_PATHS = ['/marketplace', '/sell', '/dashboard', '/cart']
+const MARKETPLACE_PATHS = ['/marketplace', '/sell', '/dashboard', '/cart', '/listing', '/u']
 
-const marketplaceNavItems = [
-  { path: '/marketplace', label: 'Explore', icon: ShoppingBag, showIn: ['buyer', 'seller'] as UserRole[] },
-  { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as UserRole[] },
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as UserRole[] },
+const marketplaceSubNavLinks = [
+  { path: '/marketplace', label: 'Explore', icon: ShoppingBag },
+  { path: '/sell', label: 'Sell', icon: Plus },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/cart', label: 'Cart', icon: ShoppingCart },
 ]
 
 interface LayoutProps {
@@ -48,24 +50,25 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { role, setRole, isSeller, isBuyer, user, logout } = useUser()
+  const { user, logout } = useUser()
   const { theme, toggleTheme } = useTheme()
   const { openLoginModal } = useLoginModal()
   const { toast } = useToast()
+  const { cartCount } = useCart()
 
-  const currentSubapp = SUBAPPS.find(s =>
-    s.path === '/' ? location.pathname === '/' : location.pathname.startsWith(s.path)
-  ) ?? SUBAPPS[0]
   const isMarketplace = MARKETPLACE_PATHS.some(p => location.pathname.startsWith(p))
-  const navItems = marketplaceNavItems.filter(item => item.showIn.includes(role))
+  const isPublicSharePath = location.pathname.startsWith('/listing/') || location.pathname.startsWith('/u/')
+  const showMarketplaceSubNav = isMarketplace && (!!user || isPublicSharePath)
+  const showCart = !!user && !isPublicSharePath
 
-  useEffect(() => {
-    if (location.pathname === '/cart' && isSeller) navigate('/dashboard')
-  }, [location.pathname, isSeller, navigate])
-
-  useEffect(() => {
-    if (location.pathname === '/cart' && !isBuyer) setRole('buyer')
-  }, [location.pathname, isBuyer, setRole])
+  const currentSubapp = (location.pathname.startsWith('/listing') || location.pathname.startsWith('/u/'))
+    ? SUBAPPS.find(s => s.path === '/marketplace') ?? SUBAPPS[0]
+    : SUBAPPS.find(s =>
+        s.path === '/' ? location.pathname === '/' : location.pathname.startsWith(s.path)
+      ) ?? SUBAPPS[0]
+  const navItems = (isPublicSharePath && !user)
+    ? marketplaceSubNavLinks.filter(item => item.path === '/marketplace')
+    : marketplaceSubNavLinks.filter(item => item.path !== '/cart' || showCart)
 
   return (
     <div className="min-h-screen bg-background relative flex flex-col">
@@ -153,13 +156,11 @@ export default function Layout({ children }: LayoutProps) {
                   <DropdownMenuItem onSelect={() => navigate('/messages')}>
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Messages
+                  </DropdownMenuItem>                  
+                  <DropdownMenuItem onSelect={() => navigate('/cart')}>
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Cart
                   </DropdownMenuItem>
-                  {isBuyer && (
-                    <DropdownMenuItem onSelect={() => navigate('/cart')}>
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Cart
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => toggleTheme()}>
                     {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
@@ -183,7 +184,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Marketplace sub-nav: same left alignment as main header */}
-        {isMarketplace && (
+        {showMarketplaceSubNav && (
           <nav className="border-t border-border/50">
             <div className="w-full max-w-[1600px] mx-auto pl-3 pr-4 py-2 flex flex-wrap items-center gap-2 sm:pl-4">
               {navItems.map(({ path, label, icon: Icon }) => (
@@ -195,20 +196,9 @@ export default function Layout({ children }: LayoutProps) {
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {label}
+                  {path === '/cart' && cartCount > 0 ? `Cart (${cartCount})` : label}
                 </Link>
               ))}
-              {isBuyer && (
-                <Link
-                  to="/cart"
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors md:hidden ${
-                    location.pathname === '/cart' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  Cart
-                </Link>
-              )}
             </div>
           </nav>
         )}
