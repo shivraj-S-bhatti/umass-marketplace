@@ -84,27 +84,9 @@ public class ListingService {
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         
-        // Handle imageUrl - compress and upload to S3 if provided
-        // Standard: null = not set, non-empty string = image provided
-        String imageUrl = request.getImageUrl();
-        if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-            // Generate temporary UUID for image key (will use actual listing ID after save)
-            UUID tempListingId = UUID.randomUUID();
-            try {
-                // Compress and upload image (returns S3 URL or compressed base64)
-                String processedImageUrl = imageService.compressAndUpload(imageUrl.trim(), tempListingId);
-                listing.setImageUrl(processedImageUrl);
-                log.debug("🔍 Processed image, final size: {} characters", 
-                    processedImageUrl != null ? processedImageUrl.length() : 0);
-            } catch (Exception e) {
-                log.error("Error processing image: {}", e.getMessage(), e);
-                // Fallback to original if compression fails
-                listing.setImageUrl(imageUrl.trim());
-            }
-        } else {
-            // Use null to indicate image is not set (standard convention)
-            listing.setImageUrl(null);
-        }
+        // Defer image upload until after save so we have the real listing ID for S3 key (listings/{id}/...)
+        String imageUrlFromRequest = request.getImageUrl();
+        listing.setImageUrl(null);
         
         listing.setLatitude(request.getLatitude());
         listing.setLongitude(request.getLongitude());
@@ -121,10 +103,18 @@ public class ListingService {
 
         Listing savedListing = listingRepository.save(listing);
         
-        // Re-upload image with correct listing ID if S3 is enabled
-        if (savedListing.getImageUrl() != null && savedListing.getImageUrl().startsWith("https://")) {
-            // Image already uploaded to S3 with temp ID, no need to re-upload
-            // S3 key generation uses listing ID, so this is fine
+        // Upload image with actual listing ID so S3 key is listings/{actualId}/...
+        if (imageUrlFromRequest != null && !imageUrlFromRequest.trim().isEmpty()) {
+            try {
+                String processedImageUrl = imageService.compressAndUpload(imageUrlFromRequest.trim(), savedListing.getId());
+                savedListing.setImageUrl(processedImageUrl);
+                listingRepository.save(savedListing);
+                log.debug("🔍 Processed image with listing ID {}, final size: {} characters",
+                    savedListing.getId(), processedImageUrl != null ? processedImageUrl.length() : 0);
+            } catch (Exception e) {
+                log.error("Error processing image: {}", e.getMessage(), e);
+                // Leave imageUrl null; listing is already saved
+            }
         }
         log.debug("🔍 Created listing with ID: {}", savedListing.getId());
         

@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +30,9 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
     // Count listings by status
     long countByStatus(String status);
+
+    // Find listings created before the given cutoff (for retention cleanup)
+    List<Listing> findByCreatedAtBefore(OffsetDateTime cutoff);
 
     // Find listings with multiple filters
     @Query("SELECT l FROM Listing l WHERE " +

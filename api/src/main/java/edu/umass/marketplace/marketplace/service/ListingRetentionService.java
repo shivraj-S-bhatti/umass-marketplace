@@ -41,11 +41,8 @@ public class ListingRetentionService {
         log.info("Running listing retention cleanup. Deleting listings created before {} ({} days old)", 
             cutoff, retentionDays);
 
-        // Find all listings older than cutoff
-        List<Listing> oldListings = listingRepository.findAll().stream()
-            .filter(listing -> listing.getCreatedAt() != null)
-            .filter(listing -> listing.getCreatedAt().isBefore(cutoff))
-            .toList();
+        // Find only old listings server-side to avoid loading all listings into memory
+        List<Listing> oldListings = listingRepository.findByCreatedAtBefore(cutoff);
 
         if (oldListings.isEmpty()) {
             log.info("No old listings to delete");
@@ -86,6 +83,6 @@ public class ListingRetentionService {
     @Transactional
     public int deleteOldListingsManually() {
         deleteOldListings();
-        return listingRepository.findAll().size();
+        return (int) listingRepository.count();
     }
 }

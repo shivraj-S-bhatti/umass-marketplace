@@ -37,3 +37,26 @@ export function formatDate(dateString: string, includeYear: boolean = true): str
   }
   return new Date(dateString).toLocaleDateString('en-US', options)
 }
+
+/**
+ * Relative time string (e.g. "Posted 2d ago")
+ * @param dateString - ISO date string
+ * @param prefix - Optional prefix, e.g. "Posted "
+ * @returns e.g. "Posted 2d ago", "Posted 1h ago", "Posted just now"
+ */
+export function timeAgo(dateString: string, prefix: string = 'Posted '): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+  if (seconds < 60) return `${prefix}just now`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${prefix}${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${prefix}${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${prefix}${days}d ago`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${prefix}${months}mo ago`
+  const years = Math.floor(months / 12)
+  return `${prefix}${years}y ago`
+}

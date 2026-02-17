@@ -31,6 +31,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authHeader = accessor.getFirstNativeHeader("Authorization");
+            boolean authenticated = false;
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 try {
@@ -42,10 +43,15 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
                         accessor.setUser(auth);
+                        authenticated = true;
                     }
                 } catch (Exception ex) {
                     log.debug("Failed to authenticate WebSocket connection from JWT", ex);
                 }
+            }
+            if (!authenticated) {
+                log.warn("Rejecting WebSocket CONNECT: missing or invalid Authorization Bearer token");
+                return null;
             }
         }
 

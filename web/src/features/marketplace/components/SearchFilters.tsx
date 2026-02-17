@@ -9,6 +9,8 @@ import { CONDITIONS, CATEGORIES, STATUSES } from '@/shared/lib/constants/constan
 
 // Search Filters Component for Everything UMass
 // Provides advanced filtering options for listings
+export type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'distance'
+
 export interface SearchFilters {
   query: string
   category: string
@@ -16,6 +18,7 @@ export interface SearchFilters {
   minPrice: number | undefined
   maxPrice: number | undefined
   status: string
+  sort?: SortOption
 }
 
 interface SearchFiltersProps {

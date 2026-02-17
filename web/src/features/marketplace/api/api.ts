@@ -286,6 +286,11 @@ class ApiClient {
   async getUser(userId: string): Promise<User> {
     return this.request<User>(`/api/users/${userId}`)
   }
+
+  // Platform stats
+  async getPlatformStats(): Promise<{ totalStudents: number; onlineNow: number }> {
+    return this.request<{ totalStudents: number; onlineNow: number }>(`/api/stats/platform`)
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
@@ -303,3 +308,4 @@ export const getReviewsBySeller = (sellerId: string, page = 0, size = 10) => api
 export const getSellerReviewStats = (sellerId: string) => apiClient.getSellerReviewStats(sellerId)
 export const hasUserReviewedSeller = (sellerId: string) => apiClient.hasUserReviewedSeller(sellerId)
 export const getUser = (userId: string) => apiClient.getUser(userId)
+export const getPlatformStats = () => apiClient.getPlatformStats()

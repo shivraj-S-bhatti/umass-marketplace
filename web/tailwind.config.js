@@ -20,33 +20,37 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+  			brand: ['Crimson Pro', 'Georgia', 'serif'],
+  			graduate: ['Graduate', 'Georgia', 'serif'],
   		},
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
+		ring: 'var(--ring)',
+			background: 'hsl(var(--background))',
+			foreground: 'hsl(var(--foreground))',
+			primary: {
+				DEFAULT: 'var(--primary)',
+				foreground: 'var(--primary-foreground)',
+				hover: 'var(--primary-hover)',
+				pressed: 'var(--primary-pressed)',
+			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
   				foreground: 'hsl(var(--secondary-foreground))'
   			},
   			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
+  				DEFAULT: 'oklch(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
   			muted: {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'
   			},
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
+		accent: {
+				DEFAULT: 'var(--accent)',
+				foreground: 'var(--accent-foreground)',
+			},
   			popover: {
   				DEFAULT: 'hsl(var(--popover))',
   				foreground: 'hsl(var(--popover-foreground))'
@@ -55,6 +59,20 @@ export default {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
   			},
+  			surface: {
+  				'1': 'hsl(var(--surface-1))',
+  				'2': 'hsl(var(--surface-2))',
+  				'3': 'hsl(var(--surface-3))'
+  			},
+  			brand: {
+				'300': 'var(--ring)',
+				'400': 'var(--primary)',
+				'500': 'var(--primary-hover)',
+				'600': 'var(--primary-pressed)',
+			},
+  			success: 'oklch(var(--success))',
+  			warning: 'oklch(var(--warning))',
+  			danger: 'oklch(var(--danger))',
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',

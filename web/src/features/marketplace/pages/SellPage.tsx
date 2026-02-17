@@ -12,7 +12,7 @@ import { createListing } from '@/features/marketplace/api/api'
 import { useToast } from '@/shared/hooks/use-toast'
 import { Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { MapPin, Loader2, Download, Image, X } from 'lucide-react'
 import { createBulkListings, type CreateListingRequest } from '@/features/marketplace/api/api'
 import { CATEGORIES, CONDITIONS, UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
@@ -38,6 +38,7 @@ export default function SellPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [useLocation, setUseLocation] = useState(false)
@@ -170,18 +171,19 @@ export default function SellPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4">
+    <div className="container mx-auto px-4 py-3">
       <div className="max-w-2xl mx-auto">
-      <div className="text-center py-4 mb-4">
+      <div className="text-center py-3 mb-3">
         <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">Sell an Item</h1>
         <p className="text-base text-muted-foreground">
           List your item for sale to fellow UMass students.
         </p>
       </div>
-      <div className="mb-4 flex flex-wrap justify-end gap-2">
+      <div className="mb-3 flex flex-wrap justify-center gap-4">
         <PhotoBulkUploadModal />
         <BulkUploadModal />
       </div>
+      <p className="text-center text-sm text-muted-foreground mb-3">List one item: use the form below.</p>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center text-2xl">
@@ -265,7 +267,7 @@ export default function SellPage() {
               <Label htmlFor="condition">Condition</Label>
               <select
                 id="condition"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('condition')}
               >
                 <option value="">Select condition</option>
@@ -283,23 +285,37 @@ export default function SellPage() {
             {/* Image Upload */}
             <div className="space-y-2">
               <Label htmlFor="image">Item Image (Optional)</Label>
-              <div className="flex items-center gap-2">
-                <Input
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
                   id="image"
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="cursor-pointer"
+                  className="sr-only"
+                  ref={imageInputRef}
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  className="h-10"
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                  {imageFile ? imageFile.name : 'Choose file'}
+                </Button>
                 {imageFile && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="h-10"
                     onClick={handleRemoveImage}
                   >
                     Remove
                   </Button>
+                )}
+                {!imageFile && (
+                  <span className="text-sm text-muted-foreground">No file chosen</span>
                 )}
               </div>
               {errors.imageUrl && (
@@ -593,7 +609,7 @@ function PhotoBulkUploadModal() {
       <DialogTrigger asChild>
         <Button variant="default" className="flex items-center gap-2">
           <Image className="h-4 w-4" />
-          List from photos
+          List multiple from photos
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
@@ -917,7 +933,7 @@ function BulkUploadModal() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Got a lot to sell? Bulk Upload via Excel</Button>
+        <Button variant="outline">Bulk upload via Excel</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

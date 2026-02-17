@@ -176,9 +176,9 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
         <CardContent className="pt-0 flex-1 flex flex-col justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <StickerBadge variant="price" className="px-3 sm:px-4 py-1.5 sm:py-2 text-base sm:text-lg md:text-xl shadow-sm">
+              <span className="font-semibold text-foreground text-base sm:text-lg md:text-xl">
                 {formatPrice(listing.price)}
-              </StickerBadge>
+              </span>
 
               {distanceText && (
                 <div 
@@ -191,9 +191,12 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
             </div>
 
             <div className="flex items-center justify-between text-xs">
-              <StickerBadge variant="status" statusType={listing.status}>
-                {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
-              </StickerBadge>
+              {listing.status !== 'ACTIVE' && (
+                <StickerBadge variant="status" statusType={listing.status}>
+                  {listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
+                </StickerBadge>
+              )}
+              {listing.status === 'ACTIVE' && <span />}
               <div className="flex items-center text-muted-foreground">
                 <Calendar className="h-3 w-3 mr-1" />
                 <span>{formatDate(listing.createdAt)}</span>

@@ -9,11 +9,16 @@ export default function OAuthSuccessPage() {
 
   useEffect(() => {
     const token = searchParams.get('token')
+    const error = searchParams.get('error')
     const id = searchParams.get('id')
     const email = searchParams.get('email')
     const name = searchParams.get('name')
     const pictureUrl = searchParams.get('pictureUrl')
 
+    if (error) {
+      navigate('/?auth=cancelled', { replace: true })
+      return
+    }
     if (token) {
       localStorage.setItem('token', token)
       if (id) localStorage.setItem('userId', id)
@@ -21,7 +26,6 @@ export default function OAuthSuccessPage() {
       if (name) localStorage.setItem('userName', name)
       if (pictureUrl) localStorage.setItem('userPictureUrl', pictureUrl)
 
-      // Update user context immediately
       setUser({
         id: id || '',
         name: name || '',
@@ -29,11 +33,11 @@ export default function OAuthSuccessPage() {
         pictureUrl: pictureUrl || undefined,
       })
       setRole('seller')
-      navigate('/')
+      navigate('/marketplace')
     } else {
-      navigate('/')
+      navigate('/marketplace')
     }
-  }, [])
+  }, [searchParams, navigate, setUser, setRole])
 
   return <div className="p-8 text-center">Signing you in...</div>
 }

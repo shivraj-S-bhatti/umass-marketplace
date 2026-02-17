@@ -7,6 +7,14 @@ import { apiClient, type Listing } from '@/features/marketplace/api/api'
 import { useToast } from '@/shared/hooks/use-toast'
 import { LayoutDashboard, Plus, Calendar, Eye } from 'lucide-react'
 import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog'
 
 // Dashboard Page - displays user's listings and statistics
 // Shows seller's own listings with management options and overview stats
@@ -232,10 +240,21 @@ export default function DashboardPage() {
   )
 }
 
+type ListingStatus = 'ACTIVE' | 'ON_HOLD' | 'SOLD'
+
+function statusLabel(s: ListingStatus) {
+  return s === 'ACTIVE' ? 'Active' : s === 'ON_HOLD' ? 'On Hold' : 'Sold'
+}
+
+function statusDotClass(s: ListingStatus) {
+  return s === 'ACTIVE' ? 'bg-success' : s === 'ON_HOLD' ? 'bg-warning' : 'bg-danger'
+}
+
 // Individual listing card component for dashboard
 function DashboardListingCard({ listing }: { listing: Listing }) {
   const navigate = useNavigate()
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -243,12 +262,35 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
     navigate(`/edit/${listing.id}`)
   }
 
-  // Handle Escape key to close modal
+  const updateStatus = async (newStatus: ListingStatus) => {
+    try {
+      await apiClient.updateListing(listing.id, { ...listing, status: newStatus })
+      await queryClient.invalidateQueries({ queryKey: ['listings'] })
+      await queryClient.invalidateQueries({ queryKey: ['listings-stats'] })
+      toast({ title: 'Success', description: `Listing status updated to ${statusLabel(newStatus)}.` })
+    } catch (error) {
+      console.error('Failed to update listing status:', error)
+      toast({ title: 'Error', description: 'Failed to update listing status. Please try again.', variant: 'destructive' })
+    }
+  }
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as ListingStatus
+    if (value === 'SOLD') {
+      setSoldConfirmOpen(true)
+      return
+    }
+    updateStatus(value)
+  }
+
+  const confirmMarkSold = () => {
+    setSoldConfirmOpen(false)
+    updateStatus('SOLD')
+  }
+
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isImageModalOpen) {
-        setIsImageModalOpen(false)
-      }
+      if (e.key === 'Escape' && isImageModalOpen) setIsImageModalOpen(false)
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
@@ -258,179 +300,79 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
     <>
       <Card className="hover:shadow-lg transition-shadow">
         {listing.imageUrl && (
-          <div 
+          <div
             className="w-full h-48 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
             onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
           >
-            <img
-              src={listing.imageUrl}
-              alt={listing.title}
-              className="w-full h-full object-cover"
-            />
+            <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
           </div>
         )}
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
-            listing.status === 'ACTIVE' 
-              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/40' 
-              : listing.status === 'ON_HOLD'
-              ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/40'
-              : 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/40'
-          }`}>
-            {listing.status}
-          </span>
-        </div>
-        <CardDescription className="line-clamp-2">
-          {listing.description || 'No description provided'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center text-2xl font-bold text-primary">
-            {formatPrice(listing.price)}
-          </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
-            Listed {formatDate(listing.createdAt)}
-          </div>
-          {listing.category && (
-            <div className="text-sm">
-              <span className="font-medium">Category:</span> {listing.category}
+        <CardHeader>
+          <div className="flex justify-between items-start gap-2">
+            <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={`h-2 w-2 rounded-full ${statusDotClass(listing.status)}`} aria-hidden />
+              <select
+                value={listing.status}
+                onChange={handleStatusChange}
+                className="h-8 min-w-0 rounded-md border border-input bg-background px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="ON_HOLD">On Hold</option>
+                <option value="SOLD">Sold</option>
+              </select>
             </div>
-          )}
-          {listing.condition && (
-            <div className="text-sm">
-              <span className="font-medium">Condition:</span> {listing.condition}
+          </div>
+          <CardDescription className="line-clamp-2">
+            {listing.description || 'No description provided'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center text-2xl font-bold text-foreground">
+              {formatPrice(listing.price)}
             </div>
-          )}
-        </div>
-        <div className="mt-4 space-y-2">
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4 mr-1" />
+              Listed {formatDate(listing.createdAt)}
+            </div>
+            {listing.category && (
+              <div className="text-sm">
+                <span className="font-medium">Category:</span> {listing.category}
+              </div>
+            )}
+            {listing.condition && (
+              <div className="text-sm">
+                <span className="font-medium">Condition:</span> {listing.condition}
+              </div>
+            )}
+          </div>
+          <div className="mt-4">
+            <Button size="sm" variant="outline" className="w-full" onClick={handleEdit}>
               Edit
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {listing.status === 'ACTIVE' && (
-              <>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-0"
-                  onClick={async () => {
-                    try {
-                      toast({
-                        title: "Putting listing on hold...",
-                        description: "Please wait while we update the listing status.",
-                      });
-                      
-                      await apiClient.updateListing(listing.id, {
-                        ...listing,
-                        status: 'ON_HOLD'
-                      });
+        </CardContent>
+      </Card>
 
-                      await queryClient.invalidateQueries({ queryKey: ['listings'] });
-                      await queryClient.invalidateQueries({ queryKey: ['listings-stats'] });
-                      
-                      toast({
-                        title: "Success!",
-                        description: "Listing has been put on hold.",
-                        variant: "default",
-                      });
-                    } catch (error) {
-                      console.error('Failed to update listing status:', error);
-                      toast({
-                        title: "Error",
-                        description: "Failed to update listing status. Please try again.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  Put On Hold
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
-                  onClick={async () => {
-                    try {
-                      toast({
-                        title: "Marking listing as sold...",
-                        description: "Please wait while we update the listing status.",
-                      });
-                      
-                      await apiClient.updateListing(listing.id, {
-                        ...listing,
-                        status: 'SOLD'
-                      });
-
-                      await queryClient.invalidateQueries({ queryKey: ['listings'] });
-                      await queryClient.invalidateQueries({ queryKey: ['listings-stats'] });
-                      
-                      toast({
-                        title: "Success!",
-                        description: "Listing has been marked as sold.",
-                        variant: "default",
-                      });
-                    } catch (error) {
-                      console.error('Failed to update listing status:', error);
-                      toast({
-                        title: "Error",
-                        description: "Failed to update listing status. Please try again.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  Mark Sold
-                </Button>
-              </>
-            )}
-            {listing.status !== 'ACTIVE' && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-                onClick={async () => {
-                  try {
-                    toast({
-                      title: "Reactivating listing...",
-                      description: "Please wait while we update the listing status.",
-                    });
-                    
-                    await apiClient.updateListing(listing.id, {
-                      ...listing,
-                      status: 'ACTIVE'
-                    });
-
-                    await queryClient.invalidateQueries({ queryKey: ['listings'] });
-                    await queryClient.invalidateQueries({ queryKey: ['listings-stats'] });
-                    
-                    toast({
-                      title: "Success!",
-                      description: "Listing has been reactivated.",
-                      variant: "default",
-                    });
-                  } catch (error) {
-                    console.error('Failed to update listing status:', error);
-                    toast({
-                      title: "Error",
-                      description: "Failed to update listing status. Please try again.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Reactivate
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <Dialog open={soldConfirmOpen} onOpenChange={setSoldConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark as sold?</DialogTitle>
+            <DialogDescription>
+              This will mark &quot;{listing.title}&quot; as sold. You can change the status later from this card.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSoldConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmMarkSold}>
+              Mark sold
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     {/* Image Modal */}
     {isImageModalOpen && listing.imageUrl && (

@@ -2,32 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-/* UMass doodle-poster palette – maroon #7A2433, grey #8C8C8C, paper #F8F7F2 */
+/* UMass design system: neutral ladder + brand hex (actions only) + focus ring */
 @layer base {
   :root {
-    /* Light mode – warm paper background, UMass maroon accent */
+    /* Light mode – warm paper */
     --umass-maroon: 350 54% 31%;
     --umass-grey: 0 0% 55%;
     --background: 50 30% 96%;
-    --foreground: 0 0% 20%;
-    --card: 50 20% 99%;
-    --card-foreground: 0 0% 20%;
-    --popover: 50 20% 99%;
-    --popover-foreground: 0 0% 20%;
-    --primary: 350 54% 31%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 50 10% 93%;
-    --secondary-foreground: 0 0% 20%;
-    --muted: 50 10% 93%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 350 54% 31%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --surface-1: 50 25% 94%;
+    --surface-2: 50 20% 99%;
+    --surface-3: 50 15% 92%;
     --border: 50 10% 88%;
-    --input: 50 10% 88%;
-    --ring: 350 54% 31%;
+    --border-strong: 50 10% 78%;
+    --text: 0 0% 18%;
+    --text-2: 0 0% 30%;
+    --text-3: 0 0% 55%;
+    --foreground: var(--text);
+    --card: var(--surface-2);
+    --card-foreground: var(--text);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--text);
+    /* Brand (UMass maroon) – actions/selection only, exact hex */
+    --primary: #ac312e;
+    --primary-hover: #850007;
+    --primary-pressed: #72000a;
+    --primary-foreground: #ffffff;
+    --ring: #d45750; /* focus outline only, not fill */
+    --secondary: var(--surface-1);
+    --secondary-foreground: var(--text);
+    --muted: var(--surface-1);
+    --muted-foreground: var(--text-3);
+    --accent: #850007;
+    --accent-foreground: #ffffff;
+    --destructive: 0.62 0.14 25;
+    --destructive-foreground: 0 0% 98%;
+    --input: var(--surface-3);
     --radius: 0.5rem;
+    --success: 0.66 0.12 145;
+    --warning: 0.70 0.12 85;
+    --danger: 0.62 0.14 25;
     --chart-1: 350 54% 31%;
     --chart-2: 0 0% 55%;
     --chart-3: 0 0% 65%;
@@ -36,26 +49,36 @@
   }
 
   .dark {
-    /* Dark mode – #121212 bg, lighter surfaces, warm off-white text, doodle grey muted */
-    --background: 0 0% 7%;
-    --foreground: 50 30% 96%;
-    --card: 0 0% 12%;
-    --card-foreground: 50 30% 96%;
-    --popover: 0 0% 12%;
-    --popover-foreground: 50 30% 96%;
-    --primary: 350 54% 31%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 20%;
-    --secondary-foreground: 50 30% 96%;
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 350 54% 31%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    /* Dark mode – neutral ladder (each step noticeably lighter so cards lift) */
+    --background: 0 0% 5%;
+    --surface-1: 0 0% 10%;
+    --surface-2: 0 0% 16%;
+    --surface-3: 0 0% 22%;
+    --border: 0 0% 28%;
+    --border-strong: 0 0% 38%;
+    --text: 0 0% 96%;
+    --text-2: 0 0% 84%;
+    --text-3: 0 0% 68%;
+    --foreground: var(--text);
+    --card: var(--surface-2);
+    --card-foreground: var(--text);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--text);
+    --secondary: var(--surface-1);
+    --secondary-foreground: var(--text);
+    --muted: var(--surface-1);
+    --muted-foreground: var(--text-3);
+    --input: var(--surface-3);
+    /* Brand – same hex (primary = action/selected only) */
+    --primary: #ac312e;
+    --primary-hover: #850007;
+    --primary-pressed: #72000a;
+    --primary-foreground: #ffffff;
+    --ring: #d45750;
+    --accent: #850007;
+    --accent-foreground: #ffffff;
+    --destructive: var(--danger);
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 22%;
-    --input: 0 0% 22%;
-    --ring: 350 54% 31%;
     --chart-1: 350 54% 31%;
     --chart-2: 0 0% 55%;
     --chart-3: 0 0% 40%;

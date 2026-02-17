@@ -31,7 +31,7 @@ export default function CartPage() {
               <p className="text-muted-foreground mb-6 text-center">
                 Start shopping to add items to your cart
               </p>
-              <Button onClick={() => navigate('/')}>
+              <Button onClick={() => navigate('/marketplace')}>
                 Browse Listings
               </Button>
             </CardContent>
@@ -110,7 +110,7 @@ export default function CartPage() {
                 <Button className="w-full mt-4" size="lg">
                   Proceed to Checkout
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => navigate('/')}>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/marketplace')}>
                   Continue Shopping
                 </Button>
               </CardContent>

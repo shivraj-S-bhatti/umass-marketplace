@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog'
 import { Button } from './button'
-import { Calendar, MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User, Navigation, ShoppingCart } from 'lucide-react'
-import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
+import { MapPin, Mail, MessageCircle, Tags, CheckCircle2, AlertCircle, User, Navigation, ShoppingCart, ChevronDown, Pencil } from 'lucide-react'
+import { formatPrice, timeAgo } from '@/shared/lib/utils/utils'
+import { getDistanceText } from '@/shared/lib/utils/locationUtils'
 import type { Listing } from '@/features/marketplace/api/api'
 import { useState } from 'react'
 import { useToast } from '@/shared/hooks/use-toast'
@@ -11,6 +12,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import { SellerReviews } from '@/features/marketplace/components/SellerReviews'
 import { CreateReview } from '@/features/marketplace/components/CreateReview'
 import LocationMapPopup from '@/features/marketplace/components/LocationMapPopup'
+import { ShareListingButton } from '@/features/marketplace/components/ShareListingButton'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu'
 
 interface ListingDetailModalProps {
   listing: Listing | null
@@ -18,6 +21,8 @@ interface ListingDetailModalProps {
   onClose: () => void
   isCurrentUserSeller?: boolean
   onUpdateStatus?: (status: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => Promise<void>
+  /** Optional user location for distance in meta row */
+  userLocation?: { lat: number; lng: number } | null
 }
 
 export function ListingDetailModal({ 
@@ -25,7 +30,8 @@ export function ListingDetailModal({
   isOpen, 
   onClose,
   isCurrentUserSeller = false,
-  onUpdateStatus 
+  onUpdateStatus,
+  userLocation = null,
 }: ListingDetailModalProps) {
   const { toast } = useToast()
   const [isUpdating, setIsUpdating] = useState(false)
@@ -55,6 +61,7 @@ export function ListingDetailModal({
 
   const handleStatusUpdate = async (newStatus: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => {
     if (!onUpdateStatus) return
+    if (newStatus === 'SOLD' && !window.confirm('Mark as sold? This will remove the listing from search.')) return
 
     try {
       setIsUpdating(true)
@@ -75,63 +82,72 @@ export function ListingDetailModal({
     }
   }
 
+  const statusLabel = listing.status === 'ACTIVE' ? 'Active' : listing.status === 'ON_HOLD' ? 'On hold' : 'Sold'
+
+  const distanceText = userLocation && listing.latitude != null && listing.longitude != null
+    ? getDistanceText(userLocation, { lat: listing.latitude, lng: listing.longitude })
+    : null
+  const metaRow = [timeAgo(listing.createdAt, ''), distanceText].filter(Boolean).join(' · ')
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>{listing.title}</DialogTitle>
+        <DialogContent className={`max-w-lg h-[90vh] max-h-[90vh] flex flex-col p-4 gap-0 ${listing.imageUrl ? 'min-[900px]:max-w-4xl' : ''}`}>
+          <DialogHeader className="flex-shrink-0 flex flex-row items-center justify-between gap-2 pb-2 pr-10">
+            <DialogTitle className="flex-1 min-w-0 text-base truncate">{listing.title}</DialogTitle>
+            <ShareListingButton listing={listing} variant="button" className="border-border bg-card hover:bg-secondary" />
           </DialogHeader>
-          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-            <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1 min-h-0 pr-2">
-              {listing.imageUrl && (
-                <div className="w-full aspect-video overflow-hidden rounded-lg flex-shrink-0 relative z-0 mb-4">
-                  <img
-                    src={listing.imageUrl}
-                    alt={listing.title}
-                    className="w-full h-full object-cover relative z-0"
-                  />
-                </div>
-              )}
-              <div className="space-y-4 flex-shrink-0 relative z-10">
+          <div className={`flex flex-col flex-1 min-h-0 overflow-hidden gap-0 ${listing.imageUrl ? 'min-[900px]:flex-row' : ''}`}>
+            {/* Left (60% on desktop only when image exists): image only */}
+            {listing.imageUrl && (
+              <div className="w-full min-[900px]:w-[60%] min-[900px]:flex-shrink-0 aspect-[4/3] min-[900px]:aspect-auto min-[900px]:min-h-0 overflow-hidden rounded-t-lg min-[900px]:rounded-lg bg-muted relative flex-shrink-0">
+                <img
+                  src={listing.imageUrl}
+                  alt={listing.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            {/* Right (40% on desktop with image, full width otherwise): scrollable info */}
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overscroll-contain py-2 pr-1 min-[900px]:pl-4">
+              <div className="space-y-2">
             <div>
-              <div className="flex items-center text-3xl font-bold text-primary mb-2">
+              <div className="flex items-center text-xl font-bold text-foreground">
                 {formatPrice(listing.price)}
               </div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4 mr-1" />
-                Listed {formatDate(listing.createdAt)}
+              <div className="flex items-center text-xs text-muted-foreground mt-0.5">
+                {metaRow}
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-semibold">Description</h4>
-              <p className="text-muted-foreground">
+
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold">Description</h4>
+              <p className="text-sm text-muted-foreground">
                 {listing.description || 'No description provided'}
               </p>
             </div>
 
             {(listing.category || listing.condition || (listing.latitude && listing.longitude)) && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 {listing.category && (
                   <div>
-                    <h4 className="font-semibold">Category</h4>
-                    <p className="text-muted-foreground">{listing.category}</p>
+                    <h4 className="text-sm font-semibold">Category</h4>
+                    <p className="text-xs text-muted-foreground">{listing.category}</p>
                   </div>
                 )}
                 {listing.condition && (
                   <div>
-                    <h4 className="font-semibold">Condition</h4>
-                    <p className="text-muted-foreground">{listing.condition}</p>
+                    <h4 className="text-sm font-semibold">Condition</h4>
+                    <p className="text-xs text-muted-foreground">{listing.condition}</p>
                   </div>
                 )}
                 {listing.latitude && listing.longitude && (
                   <div>
-                    <h4 className="font-semibold flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
+                    <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5" />
                       Location
                     </h4>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-xs text-muted-foreground">
                       {listing.latitude.toFixed(4)}, {listing.longitude.toFixed(4)}
                     </p>
                   </div>
@@ -139,112 +155,114 @@ export function ListingDetailModal({
               </div>
             )}
 
-            {/* Must Go By Date */}
             {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
-              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-destructive font-semibold">
-                  <AlertCircle className="h-4 w-4" />
+              <div className="bg-destructive/10 border border-destructive/30 rounded-md px-2 py-1.5">
+                <div className="flex items-center gap-1.5 text-destructive text-sm font-semibold">
+                  <AlertCircle className="h-3.5 w-3.5" />
                   <span>Must go by: {new Date(listing.mustGoBy).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
               </div>
             )}
 
-            {/* Location / Show on Map */}
             {listing.latitude && listing.longitude && (
-              <div>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setMapOpen(true)}
-                >
-                  <Navigation className="h-4 w-4 mr-2" />
-                  Show on Map
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setMapOpen(true)}
+              >
+                <Navigation className="h-3.5 w-3.5 mr-1.5" />
+                Show on Map
+              </Button>
             )}
 
-            <div className="border-t pt-4">
-              <h4 className="font-semibold mb-2">Seller Information</h4>
-              <div className="space-y-3">
-                <div className="flex items-center text-muted-foreground">
-                  <Mail className="h-4 w-4 mr-2" />
+            <div className="border-t border-border pt-2">
+              <h4 className="text-sm font-semibold mb-1">Seller</h4>
+              <div className="space-y-1.5">
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Mail className="h-3.5 w-3.5 mr-1.5" />
                   {listing.sellerPictureUrl && (
-                    <img src={listing.sellerPictureUrl} alt={listing.sellerName} className="h-6 w-6 rounded-full mr-2" />
+                    <img src={listing.sellerPictureUrl} alt={listing.sellerName} className="h-5 w-5 rounded-full mr-1.5" />
                   )}
                   {listing.sellerName} ({listing.sellerEmail})
                 </div>
                 {listing.sellerId && (
                   <Link
                     to={`/profile/${listing.sellerId}`}
-                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
+                    className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <User className="h-4 w-4" />
+                    <User className="h-3.5 w-3.5" />
                     View Seller Profile & Reviews
                   </Link>
                 )}
               </div>
             </div>
 
-            {/* Seller Reviews Section */}
             {!isCurrentUserSeller && listing.sellerId && (
-              <div className="border-t pt-4 space-y-4">
-                <h4 className="font-semibold mb-2">Seller Reviews</h4>
+              <div className="border-t border-border pt-2 space-y-2">
+                <h4 className="text-sm font-semibold">Seller Reviews</h4>
                 <SellerReviews sellerId={listing.sellerId} />
-                <CreateReview 
-                  sellerId={listing.sellerId} 
+                <CreateReview
+                  sellerId={listing.sellerId}
                   sellerName={listing.sellerName}
                 />
               </div>
             )}
               </div>
             </div>
-            <div className="flex gap-2 pt-4 border-t flex-shrink-0 bg-background">
+          </div>
+          <div className="flex flex-col sm:flex-row gap-1 pt-2 border-t border-border flex-shrink-0 bg-card">
               {isCurrentUserSeller ? (
-                <div className="flex gap-2 w-full">
-                  {listing.status !== 'SOLD' && (
-                    <Button
-                      onClick={() => handleStatusUpdate('SOLD')}
-                      disabled={isUpdating}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Mark as Sold
-                    </Button>
-                  )}
-                  {listing.status === 'ACTIVE' ? (
-                    <Button
-                      onClick={() => handleStatusUpdate('ON_HOLD')}
-                      disabled={isUpdating}
-                      className="flex-1 bg-amber-500 hover:bg-amber-600 text-white border-0"
-                    >
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Put on Hold
-                    </Button>
-                  ) : listing.status === 'ON_HOLD' && (
-                    <Button
-                      onClick={() => handleStatusUpdate('ACTIVE')}
-                      disabled={isUpdating}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-                    >
-                      <Tags className="h-4 w-4 mr-2" />
-                      Make Active
-                    </Button>
-                  )}
+                <div className="flex flex-col sm:flex-row gap-1 w-full items-stretch">
+                  <Button size="sm" className="h-8 text-xs w-full sm:flex-1" asChild>
+                    <Link to={`/edit/${listing.id}`}>
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Edit
+                    </Link>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline" className="h-8 text-xs w-full sm:flex-1 border-border" disabled={isUpdating}>
+                        {listing.status === 'SOLD' ? (
+                          <CheckCircle2 className="h-3 w-3 mr-1 text-destructive" />
+                        ) : listing.status === 'ON_HOLD' ? (
+                          <AlertCircle className="h-3 w-3 mr-1 text-warning" />
+                        ) : (
+                          <Tags className="h-3 w-3 mr-1 text-success" />
+                        )}
+                        {statusLabel}
+                        <ChevronDown className="h-3 w-3 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {listing.status !== 'ACTIVE' && (
+                        <DropdownMenuItem onSelect={() => handleStatusUpdate('ACTIVE')}>
+                          <Tags className="h-3 w-3 mr-2 text-success" />
+                          Active
+                        </DropdownMenuItem>
+                      )}
+                      {listing.status !== 'ON_HOLD' && (
+                        <DropdownMenuItem onSelect={() => handleStatusUpdate('ON_HOLD')}>
+                          <AlertCircle className="h-3 w-3 mr-2 text-warning" />
+                          On hold
+                        </DropdownMenuItem>
+                      )}
+                      {listing.status !== 'SOLD' && (
+                        <DropdownMenuItem onSelect={() => handleStatusUpdate('SOLD')}>
+                          <CheckCircle2 className="h-3 w-3 mr-2 text-destructive" />
+                          Sold
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ) : (
                 <>
-                  <Button onClick={handleAddToCart} className="flex-1">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                  <Button onClick={handleContactSeller} className="flex-1">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Contact Seller
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs w-full sm:flex-1 border-border bg-card hover:bg-secondary"
                     onClick={async () => {
                       try {
                         await startChat(listing.id)
@@ -259,12 +277,19 @@ export function ListingDetailModal({
                       }
                     }}
                   >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Start Chat
+                    <MessageCircle className="h-3 w-3 mr-1 text-primary" />
+                    Message seller
+                  </Button>
+                  <Button size="sm" variant="secondary" className="h-8 text-xs w-full sm:flex-1" onClick={handleAddToCart}>
+                    <ShoppingCart className="h-3 w-3 mr-1" />
+                    Add to Cart
+                  </Button>
+                  <Button size="sm" variant="secondary" className="h-8 text-xs w-full sm:flex-1" onClick={handleContactSeller}>
+                    <Mail className="h-3 w-3 mr-1" />
+                    Contact Seller
                   </Button>
                 </>
               )}
-            </div>
           </div>
         </DialogContent>
     </Dialog>

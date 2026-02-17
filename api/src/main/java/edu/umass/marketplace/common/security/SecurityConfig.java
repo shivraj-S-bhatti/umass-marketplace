@@ -34,9 +34,9 @@ import java.util.Map;
 public class SecurityConfig {
     
     private final UserRepository userRepository;
-    
-    // This injection now works because JwtUtil is created in ApplicationConfig!
+
     private final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oauth2LoginFailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.frontend-url:}")
@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers("/oauth2/**", "/login/oauth2/**", "/auth/success").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                // WebSocket: permitAll for HTTP upgrade only; CONNECT requires JWT (enforced in WebSocketAuthInterceptor)
                 .requestMatchers("/ws/**").permitAll()
 
                 // Listings: read is public, write requires auth
@@ -79,6 +80,7 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService()))
                 .successHandler(oauth2LoginSuccessHandler)
+                .failureHandler(oauth2LoginFailureHandler)
             )
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
