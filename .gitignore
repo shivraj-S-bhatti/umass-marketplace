@@ -131,6 +131,10 @@ dist
 .cache/
 public
 
+# Vite: allow web app static assets
+!web/public/
+!web/public/**
+
 # Vuepress build output
 .vuepress/dist
 

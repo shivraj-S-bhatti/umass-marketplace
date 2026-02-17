@@ -2,60 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Swiss design – light/dark themes, Inter, minimal chrome */
+/* UMass doodle-poster palette – maroon #7A2433, grey #8C8C8C, paper #F8F7F2 */
 @layer base {
   :root {
-    /* Light mode */
-    --background: 0 0% 98%;
-    --foreground: 0 0% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    --primary: 48 96% 53%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 48 96% 53%;
-    --accent-foreground: 0 0% 9%;
+    /* Light mode – warm paper background, UMass maroon accent */
+    --umass-maroon: 350 54% 31%;
+    --umass-grey: 0 0% 55%;
+    --background: 50 30% 96%;
+    --foreground: 0 0% 20%;
+    --card: 50 20% 99%;
+    --card-foreground: 0 0% 20%;
+    --popover: 50 20% 99%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 350 54% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 50 10% 93%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 50 10% 93%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 350 54% 31%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 48 96% 53%;
+    --border: 50 10% 88%;
+    --input: 50 10% 88%;
+    --ring: 350 54% 31%;
     --radius: 0.5rem;
-    --chart-1: 48 96% 53%;
-    --chart-2: 0 0% 45%;
-    --chart-3: 0 0% 60%;
+    --chart-1: 350 54% 31%;
+    --chart-2: 0 0% 55%;
+    --chart-3: 0 0% 65%;
     --chart-4: 0 0% 75%;
-    --chart-5: 0 0% 90%;
+    --chart-5: 50 10% 90%;
   }
 
   .dark {
-    /* Dark mode – marko.ch style */
+    /* Dark mode – #121212 bg, lighter surfaces, warm off-white text, doodle grey muted */
     --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 11%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 11%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 48 96% 53%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 48 96% 53%;
-    --accent-foreground: 0 0% 9%;
+    --foreground: 50 30% 96%;
+    --card: 0 0% 12%;
+    --card-foreground: 50 30% 96%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 50 30% 96%;
+    --primary: 350 54% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 50 30% 96%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 350 54% 31%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 22%;
     --input: 0 0% 22%;
-    --ring: 48 96% 53%;
-    --chart-1: 48 96% 53%;
-    --chart-2: 0 0% 60%;
+    --ring: 350 54% 31%;
+    --chart-1: 350 54% 31%;
+    --chart-2: 0 0% 55%;
     --chart-3: 0 0% 40%;
     --chart-4: 0 0% 30%;
     --chart-5: 0 0% 20%;

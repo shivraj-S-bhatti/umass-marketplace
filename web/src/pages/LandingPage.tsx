@@ -2,15 +2,18 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Store, Calendar, MessageSquare, Users, Trophy, ArrowRight } from 'lucide-react'
+import { useUser } from '@/shared/contexts/UserContext'
 
-// Landing Page – Swiss design, dark mode
+/** Landing: hero card with mascot, UMass palette, sign-in/explore CTA */
 export default function LandingPage() {
+  const { user } = useUser()
+
   const features = [
     {
       icon: Store,
       title: 'Marketplace',
       description: 'Buy and sell with verified UMass students. Zero fees, campus proximity, and real-time distance tracking.',
-      path: '/login',
+      path: user ? '/' : '/login',
     },
     {
       icon: Calendar,
@@ -41,28 +44,46 @@ export default function LandingPage() {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
       {/* Hero */}
-      <section className="border-b border-border bg-card py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
-              Everything UMass,<br />
-              <span className="text-primary">We've Got You</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Your one-stop platform for campus life. Host your clubs, organize events,
-              join pickup games, or engage in commerce—all in one verified, student-only community.
-            </p>
-            <p className="text-sm text-muted-foreground pt-2">
-              Sign in with your UMass email to explore the marketplace and use all features.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button size="lg" className="text-base px-8" asChild>
-                <Link to="/login">
-                  Sign in with Google
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Link>
-              </Button>
-            </div>
+      <section className="py-10 md:py-16 overflow-hidden">
+        <div className="container mx-auto px-4 flex flex-col items-center">
+          {/* Hero card: no bottom padding so mascot sits flush */}
+          <Card className="relative w-full max-w-3xl border border-border overflow-visible !p-0">
+            <CardContent className="pt-6 sm:pt-8 md:pt-10 px-6 sm:px-8 md:px-10 pb-0">
+              {/* Text – centered */}
+              <div className="text-center space-y-4">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
+                  Everything UMass,<br />
+                  <span className="text-primary">We've Got You</span>
+                </h1>
+                <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto leading-relaxed uppercase tracking-wide">
+                  Buy sell share organize, all in one verified student only community.
+                </p>
+              </div>
+
+              {/* Mascot: block removes inline gap; card uses !p-0 so no bottom gap */}
+              <div className="flex justify-center mt-4">
+                <img
+                  src="/mascot.png"
+                  alt="Sam the Minuteman – UMass mascot"
+                  className="w-52 sm:w-60 md:w-72 lg:w-80 h-auto block"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* CTA below card */}
+          <div className="flex flex-col items-center gap-3 mt-10">
+            <Button size="lg" className="text-base px-10" asChild>
+              <Link to={user ? '/' : '/login'}>
+                {user ? 'Explore Marketplace' : 'Sign in with Google'}
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Link>
+            </Button>
+            {!user && (
+              <p className="text-sm text-muted-foreground">
+                Use your UMass email to get started
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -122,8 +143,8 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="text-base px-8" asChild>
-                <Link to="/login">
-                  Sign In with UMass Email
+                <Link to={user ? '/' : '/login'}>
+                  {user ? 'Explore Marketplace' : 'Sign In with UMass Email'}
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Link>
               </Button>
