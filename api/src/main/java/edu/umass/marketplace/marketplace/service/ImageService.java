@@ -1,8 +1,8 @@
 package edu.umass.marketplace.marketplace.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -21,11 +21,11 @@ import java.util.UUID;
  * Compresses images to reduce storage costs and improve performance.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ImageService {
 
-    private final S3Client s3Client;
+    @Autowired(required = false)
+    private S3Client s3Client;
 
     @Value("${aws.s3.bucket-name:umass-marketplace-images}")
     private String bucketName;
@@ -151,6 +151,7 @@ public class ImageService {
      * Upload compressed image to S3.
      */
     private void uploadToS3(byte[] imageBytes, String s3Key) {
+        if (s3Client == null) return;
         try {
             PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -171,7 +172,7 @@ public class ImageService {
      * Delete image from S3.
      */
     public void deleteImage(String s3Url) {
-        if (!s3Enabled || s3Url == null || !s3Url.startsWith("https://")) {
+        if (!s3Enabled || s3Client == null || s3Url == null || !s3Url.startsWith("https://")) {
             return;
         }
 

@@ -36,8 +36,9 @@ public class ListingService {
      * Helper to get the current authenticated user from the security context
      */
     private User getCurrentAuthenticatedUser() {
-        // Uses Spring Security to get the current principal
-        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return null;
+        Object principal = auth.getPrincipal();
 
         String email = null;
         String name = null;
