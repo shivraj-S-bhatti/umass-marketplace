@@ -216,22 +216,23 @@ class ListingServiceTest {
 
     @Test
     void shouldDeleteListing() {
-        // Given
-        when(listingRepository.existsById(testListing.getId())).thenReturn(true);
+        // Given: deleteListing uses findById then deleteById
+        when(listingRepository.findById(testListing.getId())).thenReturn(Optional.of(testListing));
         doNothing().when(listingRepository).deleteById(testListing.getId());
 
         // When
         listingService.deleteListing(testListing.getId());
 
         // Then
+        verify(listingRepository, times(1)).findById(testListing.getId());
         verify(listingRepository, times(1)).deleteById(testListing.getId());
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNonExistentListing() {
-        // Given
+        // Given: deleteListing uses findById first
         UUID nonExistentId = UUID.randomUUID();
-        when(listingRepository.existsById(nonExistentId)).thenReturn(false);
+        when(listingRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> listingService.deleteListing(nonExistentId))

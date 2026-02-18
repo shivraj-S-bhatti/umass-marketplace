@@ -71,6 +71,9 @@ public class SecurityConfig {
                 // Users: public read
                 .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
 
+                // Platform stats: public (landing/layout)
+                .requestMatchers(HttpMethod.GET, "/api/stats/**").permitAll()
+
                 // Chats: fully authenticated
                 .requestMatchers("/api/chats/**").authenticated()
 

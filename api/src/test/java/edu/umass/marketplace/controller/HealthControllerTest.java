@@ -32,6 +32,9 @@ class HealthControllerTest {
     private edu.umass.marketplace.common.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @MockBean
+    private edu.umass.marketplace.common.security.OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+
+    @MockBean
     private edu.umass.marketplace.common.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockBean
