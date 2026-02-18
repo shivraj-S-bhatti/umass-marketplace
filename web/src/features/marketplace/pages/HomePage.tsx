@@ -1,25 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
-import { StickerBadge } from '@/shared/components/ui/sticker-badge'
+import { Card, CardContent, CardHeader } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/features/marketplace/api/api'
-import { Search, Calendar, XCircle, MapPin, Eye } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { type SearchFilters as SearchFiltersType } from '@/features/marketplace/components/SearchFilters'
 import TwoTierNavbar from '@/shared/components/TwoTierNavbar'
 import { useSearchParams } from 'react-router-dom'
 import { useListingsView } from '@/shared/contexts/ListingsViewContext'
 import { ListingDetailModal } from '@/shared/components/ui/listing-detail-modal'
+import { ListingCard } from '@/shared/components/ListingCard'
 import { useUser } from '@/shared/contexts/UserContext'
-import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
-import { getDistanceText, requestLocationOnInteraction, type Location } from '@/shared/lib/utils/locationUtils'
+import { useCart } from '@/shared/contexts/CartContext'
+import { useToast } from '@/shared/hooks/use-toast'
 
 // Home Page - displays listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
 export default function HomePage() {
   const [searchParams] = useSearchParams()
   const { view: listingsView } = useListingsView()
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+  const { addToCart } = useCart()
+  const { toast } = useToast()
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({
     query: '',
     category: searchParams.get('category') || '',
@@ -170,7 +175,13 @@ export default function HomePage() {
               : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
             }>
               {listings.map((listing) => (
-                <HomeListingCard key={listing.id} listing={listing} compact={listingsView === 'compact'} />
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  compact={listingsView === 'compact'}
+                  onViewListing={(item) => setSelectedListing(item as Listing)}
+                  onAddToShoppingList={user ? (item) => { addToCart(item as Listing); toast({ title: 'Added to Saved Items', description: `${item.title} has been added.` }) } : undefined}
+                />
               ))}
             </div>
             
@@ -236,180 +247,26 @@ export default function HomePage() {
             )}
           </>
         )}
+
+          <ListingDetailModal
+            listing={selectedListing}
+            isOpen={selectedListing !== null}
+            onClose={() => setSelectedListing(null)}
+            isCurrentUserSeller={user?.id === selectedListing?.sellerId}
+            onUpdateStatus={
+              user?.id === selectedListing?.sellerId && selectedListing
+                ? async (newStatus) => {
+                    if (!selectedListing) return
+                    await apiClient.updateListing(selectedListing.id, { ...selectedListing, status: newStatus })
+                    queryClient.invalidateQueries({ queryKey: ['listings'] })
+                    setSelectedListing(null)
+                  }
+                : undefined
+            }
+          />
           </div>
         </div>
     </div>
   )
 }
 
-// Individual listing card component
-function HomeListingCard({ listing, compact = false }: { listing: Listing; compact?: boolean }) {
-  const queryClient = useQueryClient()
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const { user } = useUser()
-
-  // Get the current user's ID from context
-  const currentUserId = user?.id
-
-  // Get user location for distance calculation
-  useEffect(() => {
-    if (userLocation) return
-
-    const cleanup = requestLocationOnInteraction((location: Location) => {
-      setUserLocation(location)
-    })
-
-    return cleanup
-  }, [userLocation])
-
-  // Calculate distance
-  const distanceText = userLocation && listing.latitude != null && listing.longitude != null
-    ? getDistanceText(
-        userLocation,
-        { lat: listing.latitude, lng: listing.longitude }
-      )
-    : null
-
-  const handleUpdateStatus = async (newStatus: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => {
-    try {
-      await apiClient.updateListing(listing.id, {
-        ...listing,
-        status: newStatus,
-      })
-      // Refetch the listings by invalidating the query cache
-      queryClient.invalidateQueries({ queryKey: ['listings'] })
-    } catch (error) {
-      console.error('Failed to update listing status:', error)
-      throw error
-    }
-  }
-
-  // Handle Escape key to close modal
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isImageModalOpen) {
-        setIsImageModalOpen(false)
-      }
-    }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [isImageModalOpen])
-
-  return (
-    <>
-      <Card
-        className={`transition-colors hover:border-primary/50 relative overflow-hidden h-full flex flex-col cursor-pointer ${compact ? 'text-sm' : ''}`}
-        onClick={() => setIsDetailModalOpen(true)}
-      >
-        {/* Image Section */}
-        <div
-          className={`w-full overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity bg-secondary/50 flex items-center justify-center flex-shrink-0 relative ${compact ? 'h-28' : 'h-40'}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            if (listing.imageUrl) setIsImageModalOpen(true)
-          }}
-        >
-          {listing.imageUrl ? (
-            <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
-          ) : (
-            <Eye className={compact ? 'h-8 w-8' : 'h-12 w-12'} />
-          )}
-          {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
-            <div className="absolute top-1 left-1 z-10">
-              <StickerBadge variant="new" className={compact ? 'text-[10px] px-1.5 py-0' : ''}>MUST GO</StickerBadge>
-            </div>
-          )}
-        </div>
-
-        <CardHeader className={`flex-shrink-0 ${compact ? 'p-2 pb-1' : 'pb-2'}`}>
-          <div className="flex justify-between items-start gap-1">
-            <CardTitle className={`line-clamp-2 flex-1 ${compact ? 'text-xs font-semibold' : 'text-base font-bold'}`}>{listing.title}</CardTitle>
-            <StickerBadge variant="status" statusType={listing.status} className={`shrink-0 ${compact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-1'}`}>
-              {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
-            </StickerBadge>
-          </div>
-          {!compact && (
-            <CardDescription className="line-clamp-2 mt-1 text-sm">
-              {listing.description || 'No description provided'}
-            </CardDescription>
-          )}
-        </CardHeader>
-
-        <CardContent className={`pt-0 flex-1 flex flex-col justify-between ${compact ? 'p-2 pt-0' : ''}`}>
-          <div className={compact ? 'space-y-1' : 'space-y-2'}>
-            <div className="flex items-center justify-center">
-              <StickerBadge variant="price" className={compact ? 'text-sm px-2 py-0.5' : 'text-lg px-3 py-1'}>
-                {formatPrice(listing.price)}
-              </StickerBadge>
-            </div>
-            {distanceText && (
-              <div className="flex items-center justify-center gap-1 text-primary font-medium text-xs">
-                <MapPin className={compact ? 'h-3 w-3' : 'h-4 w-4'} />
-                <span>{distanceText}</span>
-              </div>
-            )}
-            <div className={`flex items-center justify-center text-muted-foreground ${compact ? 'text-[10px]' : 'text-xs'}`}>
-              <Calendar className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
-              <span className="ml-0.5">{formatDate(listing.createdAt, false)}</span>
-            </div>
-            {!compact && (
-              <div className="flex flex-wrap gap-1.5 justify-center text-xs">
-                {listing.category && (
-                  <span className="px-2 py-0.5 rounded-md bg-secondary border border-border font-medium text-foreground">
-                    {listing.category}
-                  </span>
-                )}
-                {listing.condition && (
-                  <span className="px-2 py-0.5 rounded-md bg-muted border border-border font-medium text-foreground">
-                    {listing.condition}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-    {/* Details Modal */}
-    <ListingDetailModal
-      listing={listing}
-      isOpen={isDetailModalOpen}
-      onClose={() => setIsDetailModalOpen(false)}
-      isCurrentUserSeller={currentUserId === listing.sellerId}
-      onUpdateStatus={handleUpdateStatus}
-    />
-
-    {/* Image Modal */}
-    {isImageModalOpen && listing.imageUrl && (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm"
-        onClick={() => setIsImageModalOpen(false)}
-      >
-        <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
-          <button
-            onClick={() => setIsImageModalOpen(false)}
-            className="absolute top-4 right-4 z-10 bg-card border border-border hover:bg-secondary rounded-lg p-2 transition-colors text-foreground"
-            aria-label="Close image"
-          >
-            <XCircle className="h-6 w-6" />
-          </button>
-          <img
-            src={listing.imageUrl}
-            alt={listing.title}
-            className="max-w-full max-h-full object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <div className="absolute bottom-4 left-4 right-4 bg-card/90 border border-border text-foreground rounded-lg p-3 backdrop-blur-sm">
-            <h3 className="font-semibold text-lg mb-1">{listing.title}</h3>
-            <p className="text-sm text-muted-foreground">
-              {formatPrice(listing.price)} • {listing.category || 'Uncategorized'}
-            </p>
-          </div>
-        </div>
-      </div>
-    )}
-  </>
-  )
-}
