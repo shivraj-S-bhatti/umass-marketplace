@@ -19,6 +19,8 @@ import MessagesPage from '@/features/marketplace/pages/MessagesPage'
 import OAuthSuccessPage from '@/pages/OAuthSuccessPage'
 import CartPage from '@/features/marketplace/pages/CartPage'
 import SellerProfilePage from '@/features/marketplace/pages/SellerProfilePage'
+import SellerShopPage from '@/features/marketplace/pages/SellerShopPage'
+import ListingRedirectPage from '@/pages/ListingRedirectPage'
 import BentoHomePage from '@/pages/LandingPage'
 import DirectoryPage from '@/pages/DirectoryPage'
 
@@ -101,6 +103,9 @@ function App() {
                         }
                       />
                       <Route path="/cart" element={<CartPage />} />
+                      <Route path="/listing/:id" element={<ListingRedirectPage />} />
+                      <Route path="/u/:sellerId" element={<SellerShopPage />} />
+                      <Route path="/u/:sellerId/:nameSlug" element={<SellerShopPage />} />
                       <Route path="/profile/:sellerId" element={<SellerProfilePage />} />
                     </Routes>
                   </ErrorBoundary>

@@ -5,8 +5,10 @@ import { Button } from '@/shared/components/ui/button'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiClient, type Listing } from '@/features/marketplace/api/api'
 import { useToast } from '@/shared/hooks/use-toast'
-import { LayoutDashboard, Calendar } from 'lucide-react'
+import { useUser } from '@/shared/contexts/UserContext'
+import { LayoutDashboard, Calendar, Share2 } from 'lucide-react'
 import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
+import { ShareMyListingsModal } from '@/features/marketplace/components/ShareMyListingsModal'
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,9 @@ import {
 // Shows seller's own listings with management options and overview stats
 export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(0)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
   const pageSize = 12
+  const { user } = useUser()
 
   const { data: listingsData, isLoading, error } = useQuery({
     queryKey: ['listings', currentPage],
@@ -81,10 +85,28 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-4 max-w-4xl space-y-4">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Manage your listings.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage your listings.</p>
+        </div>
+        {user && (
+          <Button onClick={() => setShareModalOpen(true)} size="sm" className="shrink-0">
+            <Share2 className="h-4 w-4 mr-2" />
+            Share my listings
+          </Button>
+        )}
       </div>
+
+      {user && (
+        <ShareMyListingsModal
+          open={shareModalOpen}
+          onOpenChange={setShareModalOpen}
+          user={{ id: user.id, name: user.name }}
+          listingCount={listingsData?.totalElements ?? 0}
+          firstListingImageUrl={listings?.[0]?.imageUrl}
+        />
+      )}
 
       {/* Stats: single card, multiple rows */}
       <Card>

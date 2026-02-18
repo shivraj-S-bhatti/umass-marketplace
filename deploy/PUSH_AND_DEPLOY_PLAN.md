@@ -91,24 +91,23 @@ If you changed **deploy/.env** (e.g. new ECR URIs or URLs):
 scp -i YOUR_KEY.pem deploy/.env ubuntu@YOUR_EC2_IP:~/umass-marketplace/deploy/.env
 ```
 
-### 4.2 On EC2: pull code and run deploy
+### 4.2 On EC2: run deploy (images come from ECR, not git)
 
 SSH in, then:
 
 ```bash
 cd ~/umass-marketplace
-git fetch origin
-git checkout aws-deployment   # or unified-home-page, same as in step 1
-git pull origin aws-deployment
-
 ./deploy/deploy.sh
 ```
 
-**deploy.sh** will:
+**deploy.sh** pulls the latest API and web **images** from ECR (`:latest`) and restarts the containers. You do **not** need to `git fetch` or `git pull` for a normal app-only deploy—the new code is in the images you built and pushed from your Mac.
 
-- Log in to ECR and **pull** the latest API and web images (`:latest`)
-- Run `docker-compose -f deploy/docker-compose.ecr.yml down` then `up -d`
-- Wait and check `/health` and frontend
+**Only run `git pull` on EC2** when you changed something under `deploy/` (e.g. `deploy.sh`, `docker-compose.ecr.yml`, or other deploy config in the repo). Then:
+
+```bash
+git pull origin aws-deployment
+./deploy/deploy.sh
+```
 
 No need to copy **nginx-host.conf** to the server unless you intentionally want to change nginx (see section 2).
 
@@ -133,5 +132,5 @@ No need to copy **nginx-host.conf** to the server unless you intentionally want 
 | 1 | Mac | Commit ListingService + test changes → push `unified-home-page`; optionally merge into `aws-deployment` and push. |
 | 2 | - | Nginx: no change. Repo **nginx-host.conf** is already correct; avoid overwriting live 443 block. |
 | 3 | Mac | Run `./deploy/build-and-push.sh` (with `VITE_API_BASE_URL` and `FRONTEND_URL` in deploy/.env). |
-| 4 | EC2 | `git pull`, then `./deploy/deploy.sh`. |
+| 4 | EC2 | `./deploy/deploy.sh` (pulls images from ECR). `git pull` only if deploy scripts changed. |
 | 5 | Browser | Smoke-test URL, health, login, create/bulk listing, WebSocket. |

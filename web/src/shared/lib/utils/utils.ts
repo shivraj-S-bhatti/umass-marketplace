@@ -60,3 +60,21 @@ export function timeAgo(dateString: string, prefix: string = 'Posted '): string 
   const years = Math.floor(months / 12)
   return `${prefix}${years}y ago`
 }
+
+/**
+ * Slugify a name for use in share URLs (e.g. "Amanda Smith" -> "amanda-smith").
+ * Lowercase, replace spaces with -, strip non-alphanumeric/hyphen.
+ * @param name - Display name
+ * @param fallback - Used when name is empty (default "listings")
+ */
+export function slugifyName(name: string | null | undefined, fallback: string = 'listings'): string {
+  if (!name || typeof name !== 'string') return fallback
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  return slug || fallback
+}

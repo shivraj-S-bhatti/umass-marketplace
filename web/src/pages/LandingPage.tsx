@@ -86,7 +86,7 @@ export default function BentoHomePage() {
           onClick={() => handleProtectedNav('/directory')}
         >
           <CardContent className="p-5 flex flex-col h-full">
-            <h3 className="font-semibold text-base">UMass links directory</h3>
+            <h3 className="font-semibold text-base">UMass Links Directory</h3>
             <p className="text-sm text-muted-foreground mt-1.5">Useful campus links, curated by students.</p>
             <div className="mt-auto pt-5 space-y-2">
               <Button variant="outline" className="w-full h-11" onClick={(e) => { e.stopPropagation(); handleProtectedNav('/directory') }}>

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/shared/components/ui/button'
 import { Mail, User, ArrowLeft, Store } from 'lucide-react'
 import { apiClient, getListing, getListingsBySeller, type Listing } from '@/features/marketplace/api/api'
-import { formatPrice, timeAgo } from '@/shared/lib/utils/utils'
+import { formatPrice, timeAgo, slugifyName } from '@/shared/lib/utils/utils'
 import { useUser } from '@/shared/contexts/UserContext'
 import { useLoginModal } from '@/shared/contexts/LoginModalContext'
 import { useCart } from '@/shared/contexts/CartContext'
@@ -146,7 +146,7 @@ export default function PublicListingPage() {
               ))}
             </div>
             <Button variant="outline" asChild>
-              <Link to={`/u/${listing.sellerId}`}>
+              <Link to={`/u/${listing.sellerId}/${slugifyName(sellerName)}`}>
                 <Store className="h-4 w-4 mr-2" />
                 View all listings by {sellerName}
               </Link>
