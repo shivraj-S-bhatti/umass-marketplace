@@ -175,12 +175,14 @@ class ListingServiceTest {
     @Test
     void shouldCreateBulkListings() {
         // Given
+        java.security.Principal mockPrincipal = mock(java.security.Principal.class);
+        when(mockPrincipal.getName()).thenReturn("dummy@umass.edu");
         List<CreateListingRequest> requests = List.of(testRequest);
         when(userRepository.findByEmail("dummy@umass.edu")).thenReturn(Optional.of(testSeller));
         when(listingRepository.saveAll(anyList())).thenReturn(List.of(testListing));
 
         // When
-        List<ListingResponse> result = listingService.createListingsBulk(requests, null);
+        List<ListingResponse> result = listingService.createListingsBulk(requests, mockPrincipal);
 
         // Then
         assertThat(result).hasSize(1);

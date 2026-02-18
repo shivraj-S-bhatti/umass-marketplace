@@ -32,41 +32,6 @@ public class ListingService {
     private final UserRepository userRepository;
     private final ImageService imageService;
 
-    /**
-     * Helper to get the current authenticated user from the security context
-     */
-    private User getCurrentAuthenticatedUser() {
-        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return null;
-        Object principal = auth.getPrincipal();
-
-        String email = null;
-        String name = null;
-        String pictureUrl = null;
-
-        if (principal instanceof edu.umass.marketplace.common.security.UserPrincipal userPrincipal) {
-            email = userPrincipal.getEmail();
-            name = userPrincipal.getName();
-            pictureUrl = userPrincipal.getPictureUrl();
-        } else if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
-            email = springUser.getUsername();
-        } else if (principal instanceof String principalStr) {
-            email = principalStr;
-        }
-
-        if (email == null) return null;
-
-        // Try to find existing user; if not found, create one from principal info
-        var opt = userRepository.findByEmail(email);
-        if (opt.isPresent()) return opt.get();
-
-        User u = new User();
-        u.setEmail(email);
-        u.setName(name != null ? name : "Unknown User");
-        u.setPictureUrl(pictureUrl);
-        return userRepository.save(u);
-    }
-
     @Transactional
     public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
         if (principal == null || principal.getName() == null || principal.getName().trim().isEmpty()) {
@@ -234,11 +199,13 @@ public class ListingService {
             throw new RuntimeException("Request list cannot be empty");
         }
 
-        // Get seller from authenticated user context (OAuth2)
-        User seller = getCurrentAuthenticatedUser();
-        if (seller == null) {
-            throw new RuntimeException("User not authenticated");
+        if (principal == null || principal.getName() == null || principal.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Authentication required to create listings.");
         }
+        String email = principal.getName();
+        User seller = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found in database. Please try logging in again."));
 
         // Validate each request
         for (int i = 0; i < requests.size(); i++) {
@@ -254,6 +221,7 @@ public class ListingService {
             }
         }
 
+        // Build listings without uploading images so we get real IDs from save
         List<Listing> listings = requests.stream()
                 .map(request -> {
                     Listing listing = new Listing();
@@ -262,25 +230,9 @@ public class ListingService {
                     listing.setPrice(request.getPrice());
                     listing.setCategory(request.getCategory());
                     listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-                    // Handle imageUrl - compress and upload to S3 if provided
-                    String bulkImageUrl = request.getImageUrl();
-                    if (bulkImageUrl != null && !bulkImageUrl.trim().isEmpty()) {
-                        try {
-                            UUID tempListingId = UUID.randomUUID();
-                            String processedImageUrl = imageService.compressAndUpload(bulkImageUrl.trim(), tempListingId);
-                            listing.setImageUrl(processedImageUrl);
-                            log.debug("🔍 Bulk listing image processed");
-                        } catch (Exception e) {
-                            log.error("Error processing bulk image: {}", e.getMessage(), e);
-                            listing.setImageUrl(bulkImageUrl.trim());
-                        }
-                    } else {
-                        log.debug("🔍 Bulk listing imageUrl is empty or null, setting to null");
-                        listing.setImageUrl(null);
-                    }
+                    listing.setImageUrl(null); // set after save so S3 key uses actual listing ID
                     listing.setLatitude(request.getLatitude());
                     listing.setLongitude(request.getLongitude());
-                    // Parse mustGoBy from ISO 8601 string if provided
                     if (request.getMustGoBy() != null && !request.getMustGoBy().trim().isEmpty()) {
                         try {
                             listing.setMustGoBy(java.time.OffsetDateTime.parse(request.getMustGoBy()));
@@ -296,6 +248,24 @@ public class ListingService {
 
         List<Listing> savedListings = listingRepository.saveAll(listings);
         log.debug("🔍 Created {} listings successfully", savedListings.size());
+
+        // Upload images using actual listing IDs (listings/{id}/...)
+        for (int i = 0; i < savedListings.size(); i++) {
+            String bulkImageUrl = requests.get(i).getImageUrl();
+            if (bulkImageUrl != null && !bulkImageUrl.trim().isEmpty()) {
+                Listing listing = savedListings.get(i);
+                try {
+                    String processedImageUrl = imageService.compressAndUpload(bulkImageUrl.trim(), listing.getId());
+                    listing.setImageUrl(processedImageUrl);
+                    listingRepository.save(listing);
+                    log.debug("🔍 Bulk listing image processed for listing ID {}", listing.getId());
+                } catch (Exception e) {
+                    log.error("Error processing bulk image: {}", e.getMessage(), e);
+                    listing.setImageUrl(bulkImageUrl.trim());
+                    listingRepository.save(listing);
+                }
+            }
+        }
 
         return savedListings.stream()
                 .map(ListingResponse::fromEntity)
