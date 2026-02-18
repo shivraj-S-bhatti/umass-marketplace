@@ -203,6 +203,11 @@ class ApiClient {
     return this.request<Listing>(`/api/listings/${id}`)
   }
 
+  // Get listings by seller ID (paginated)
+  async getListingsBySeller(sellerId: string, page = 0, size = 12): Promise<ListingsResponse> {
+    return this.request<ListingsResponse>(`/api/listings/seller/${sellerId}?page=${page}&size=${size}`)
+  }
+
   // Create a new listing
   async createListing(data: CreateListingRequest): Promise<Listing> {
     return this.request<Listing>('/api/listings', {
@@ -300,6 +305,7 @@ export const createListing = (data: CreateListingRequest) => apiClient.createLis
 export const updateListing = (id: string, data: CreateListingRequest) => apiClient.updateListing(id, data)
 export const getListings = (page = 0, size = 12) => apiClient.getListings({ page, size })
 export const getListing = (id: string) => apiClient.getListing(id)
+export const getListingsBySeller = (sellerId: string, page = 0, size = 12) => apiClient.getListingsBySeller(sellerId, page, size)
 export const getListingStats = () => apiClient.getListingStats()
 export const healthCheck = () => apiClient.healthCheck()
 export const createBulkListings = (data: CreateListingRequest[]) => apiClient.createBulkListings(data)

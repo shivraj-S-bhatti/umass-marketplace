@@ -40,7 +40,7 @@ const marketplaceSubNavLinks = [
   { path: '/marketplace', label: 'Explore', icon: ShoppingBag },
   { path: '/sell', label: 'Sell', icon: Plus },
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/cart', label: 'Cart', icon: ShoppingCart },
+  { path: '/cart', label: 'Saved Items', icon: ShoppingCart },
 ]
 
 interface LayoutProps {

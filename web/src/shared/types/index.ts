@@ -15,3 +15,6 @@ export type {
   ReviewsResponse,
   SellerReviewStats,
 } from '@/features/marketplace/api/api'
+
+/** Alias for Listing used by ListingCard and other shared components */
+export type { Listing as ListingCardData } from '@/features/marketplace/api/api'

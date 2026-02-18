@@ -13,7 +13,7 @@ import { useToast } from '@/shared/hooks/use-toast'
 import { Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog'
 import { useState, useRef } from 'react'
-import { MapPin, Loader2, Download, Image, X } from 'lucide-react'
+import { MapPin, Loader2, Download, Image, X, Upload } from 'lucide-react'
 import { createBulkListings, type CreateListingRequest } from '@/features/marketplace/api/api'
 import { CATEGORIES, CONDITIONS, UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
 import { parseExcelFile, validateTemplateFormat, validateExcelStructure, downloadTemplate, convertToCreateListingForm } from '@/features/marketplace/excelTemplate'
@@ -171,19 +171,19 @@ export default function SellPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-3">
-      <div className="max-w-2xl mx-auto">
-      <div className="text-center py-3 mb-3">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">Sell an Item</h1>
-        <p className="text-base text-muted-foreground">
-          List your item for sale to fellow UMass students.
-        </p>
+    <div className="container mx-auto px-4 py-4 max-w-4xl space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Sell an Item</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            List your item for sale to fellow UMass students.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 shrink-0">
+          <PhotoBulkUploadModal />
+          <BulkUploadModal />
+        </div>
       </div>
-      <div className="mb-3 flex flex-wrap justify-center gap-4">
-        <PhotoBulkUploadModal />
-        <BulkUploadModal />
-      </div>
-      <p className="text-center text-sm text-muted-foreground mb-3">List one item: use the form below.</p>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center text-2xl">
@@ -195,13 +195,14 @@ export default function SellPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
                 placeholder="e.g., MacBook Pro 13-inch"
+                className="bg-muted/60 border-border"
                 {...register('title')}
               />
               {errors.title && (
@@ -209,36 +210,35 @@ export default function SellPage() {
               )}
             </div>
 
-            {/* Description */}
+            {/* Price */}
             <div className="space-y-2">
+              <Label htmlFor="price">Price *</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0.01"
+                max="999999.99"
+                placeholder="0.00"
+                className="bg-muted/60 border-border"
+                {...register('price', { valueAsNumber: true })}
+              />
+              {errors.price && (
+                <p className="text-sm text-destructive">{errors.price.message}</p>
+              )}
+            </div>
+
+            {/* Description - full width */}
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="description">Description</Label>
               <textarea
                 id="description"
                 placeholder="Describe your item in detail..."
-                className="flex min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-[80px] w-full rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('description')}
               />
               {errors.description && (
                 <p className="text-sm text-destructive">{errors.description.message}</p>
-              )}
-            </div>
-
-            {/* Price */}
-            <div className="space-y-2">
-              <Label htmlFor="price">Price *</Label>
-              <div className="relative">
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  max="999999.99"
-                  placeholder="0.00"
-                  {...register('price', { valueAsNumber: true })}
-                />
-              </div>
-              {errors.price && (
-                <p className="text-sm text-destructive">{errors.price.message}</p>
               )}
             </div>
 
@@ -247,7 +247,7 @@ export default function SellPage() {
               <Label htmlFor="category">Category</Label>
               <select
                 id="category"
-                className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('category')}
               >
                 <option value="">Select a category</option>
@@ -267,7 +267,7 @@ export default function SellPage() {
               <Label htmlFor="condition">Condition</Label>
               <select
                 id="condition"
-                className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('condition')}
               >
                 <option value="">Select condition</option>
@@ -282,8 +282,8 @@ export default function SellPage() {
               )}
             </div>
 
-            {/* Image Upload */}
-            <div className="space-y-2">
+            {/* Image Upload - full width */}
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="image">Item Image (Optional)</Label>
               <div className="flex items-center gap-2 flex-wrap">
                 <input
@@ -332,11 +332,12 @@ export default function SellPage() {
               )}
             </div>
             {/* Must Go By Date */}
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="mustGoBy">Must Go By (Optional)</Label>
               <Input
                 id="mustGoBy"
                 type="datetime-local"
+                className="bg-muted/60 border-border"
                 {...register('mustGoBy')}
               />
               {errors.mustGoBy && (
@@ -348,7 +349,7 @@ export default function SellPage() {
             </div>
 
             {/* Location Sharing Toggle */}
-            <div className="space-y-3 rounded-lg border border-input bg-muted/20 p-4">
+            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4 md:col-span-2">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -407,7 +408,7 @@ export default function SellPage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-4">
+            <div className="flex gap-4 md:col-span-2">
               <Button
                 type="submit"
                 disabled={createListingMutation.isPending}
@@ -427,7 +428,6 @@ export default function SellPage() {
           </form>
         </CardContent>
       </Card>
-      </div>
     </div>
   )
 }
@@ -607,7 +607,7 @@ function PhotoBulkUploadModal() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="default" className="flex items-center gap-2">
+        <Button variant="default" className="flex items-center gap-2 w-full sm:w-auto justify-center">
           <Image className="h-4 w-4" />
           List multiple from photos
         </Button>
@@ -933,7 +933,10 @@ function BulkUploadModal() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Bulk upload via Excel</Button>
+        <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto justify-center">
+          <Upload className="h-4 w-4" />
+          Bulk upload via Excel
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiClient, type Listing } from '@/features/marketplace/api/api'
 import { useToast } from '@/shared/hooks/use-toast'
-import { LayoutDashboard, Plus, Calendar, Eye } from 'lucide-react'
+import { LayoutDashboard, Calendar } from 'lucide-react'
 import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
 import {
   Dialog,
@@ -35,10 +35,10 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">My Dashboard</h1>
-          <p className="text-muted-foreground">Manage your listings</p>
+      <div className="container mx-auto px-4 py-4 max-w-4xl space-y-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage your listings.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -60,10 +60,12 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <h1 className="text-3xl font-bold mb-2">My Dashboard</h1>
-        <p className="text-muted-foreground mb-8">Manage your marketplace listings</p>
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
+      <div className="container mx-auto px-4 py-4 max-w-4xl">
+        <div className="mb-4">
+          <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage your marketplace listings.</p>
+        </div>
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md">
           <p className="text-destructive">Failed to load your listings. Please try again later.</p>
         </div>
       </div>
@@ -77,63 +79,41 @@ export default function DashboardPage() {
   const onHoldListingsCount = stats?.onHoldListings || 0
 
   return (
-    <div className="container mx-auto px-4 py-4 space-y-4">
+    <div className="container mx-auto px-4 py-4 max-w-4xl space-y-4">
       {/* Header */}
-      <div className="text-center py-3">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">My Dashboard</h1>
-        <p className="text-base text-muted-foreground">Manage your listings.</p>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage your listings.</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold">Active Listings</CardTitle>
-            <Eye className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary mb-1">{activeListingsCount}</div>
-            <p className="text-xs text-muted-foreground font-medium">
-              Currently for sale
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold">Sold Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary mb-1">{soldListingsCount}</div>
-            <p className="text-xs text-muted-foreground font-medium">
-              Successfully sold
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold">On Hold</CardTitle>
-            <Calendar className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary mb-1">{onHoldListingsCount}</div>
-            <p className="text-xs text-muted-foreground font-medium">
-              Temporarily unavailable
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Button asChild>
-          <Link to="/sell">
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Listing
-          </Link>
-        </Button>
-      </div>
+      {/* Stats: single card, multiple rows */}
+      <Card>
+        <CardContent className="py-3 px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <div className="flex items-start justify-between gap-2 border-b border-border sm:border-b-0 sm:border-r border-r-border last:border-r-0 pb-3 sm:pb-0 sm:pr-4 last:pr-0">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Listings</p>
+                <p className="text-xs text-muted-foreground">Currently for sale</p>
+              </div>
+              <span className="text-2xl font-bold text-foreground tabular-nums">{activeListingsCount}</span>
+            </div>
+            <div className="flex items-start justify-between gap-2 border-b border-border sm:border-b-0 sm:border-r border-r-border last:border-r-0 pb-3 sm:pb-0 sm:pr-4 last:pr-0">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Sold Items</p>
+                <p className="text-xs text-muted-foreground">Successfully sold</p>
+              </div>
+              <span className="text-2xl font-bold text-foreground tabular-nums">{soldListingsCount}</span>
+            </div>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">On Hold</p>
+                <p className="text-xs text-muted-foreground">Temporarily unavailable</p>
+              </div>
+              <span className="text-2xl font-bold text-foreground tabular-nums">{onHoldListingsCount}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* My Listings */}
       <div>
