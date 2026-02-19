@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,9 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
     private final ImageService imageService;
+
+    @Value("${app.superuser-email:}")
+    private String superuserEmail;
 
     @Transactional
     public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
@@ -352,14 +356,22 @@ public class ListingService {
     }
 
     /**
-     * Delete a listing
+     * Delete a listing. Caller must be the listing owner or a superuser (app.superuser-email from env).
      */
     @Transactional
-    public void deleteListing(UUID id) {
+    public void deleteListing(UUID id, java.security.Principal principal) {
         log.debug("🔍 Deleting listing with ID: {}", id);
 
         Listing listing = listingRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
+
+        String callerEmail = principal != null ? principal.getName() : null;
+        boolean isSuperuser = superuserEmail != null && !superuserEmail.isBlank() && superuserEmail.trim().equalsIgnoreCase(callerEmail);
+        boolean isOwner = listing.getSeller() != null && listing.getSeller().getEmail() != null
+            && listing.getSeller().getEmail().equals(callerEmail);
+        if (!isOwner && !isSuperuser) {
+            throw new org.springframework.security.access.AccessDeniedException("Not authorized to delete this listing");
+        }
 
         // Delete associated image from S3 if it exists
         if (listing.getImageUrl() != null && listing.getImageUrl().startsWith("https://")) {
@@ -399,6 +411,22 @@ public class ListingService {
         long onHoldCount = listingRepository.countByStatus(Listing.STATUS_ON_HOLD);
 
         log.debug("🔍 Stats - Active: {}, Sold: {}, On Hold: {}", activeCount, soldCount, onHoldCount);
+
+        return new edu.umass.marketplace.marketplace.response.StatsResponse(activeCount, soldCount, onHoldCount);
+    }
+
+    /**
+     * Get listing statistics for a specific seller (counts by status)
+     */
+    @Transactional(readOnly = true)
+    public edu.umass.marketplace.marketplace.response.StatsResponse getListingStatsBySeller(UUID sellerId) {
+        log.debug("🔍 Getting listing statistics for seller ID: {}", sellerId);
+
+        long activeCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ACTIVE);
+        long soldCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_SOLD);
+        long onHoldCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ON_HOLD);
+
+        log.debug("🔍 Seller {} stats - Active: {}, Sold: {}, On Hold: {}", sellerId, activeCount, soldCount, onHoldCount);
 
         return new edu.umass.marketplace.marketplace.response.StatsResponse(activeCount, soldCount, onHoldCount);
     }

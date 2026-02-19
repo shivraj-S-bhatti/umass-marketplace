@@ -65,6 +65,11 @@ aws ecr get-login-password --region "${AWS_REGION:-us-east-1}" | docker login --
 docker-compose -f "$COMPOSE_FILE" pull
 log_step "pull_end"
 
+# Remove dangling images left behind by the pull (old layers no longer tagged)
+echo "🧹 Pruning dangling Docker images..."
+docker image prune -f
+log_step "image_prune"
+
 # Start services
 echo "🐳 Starting containers..."
 log_step "up_start"

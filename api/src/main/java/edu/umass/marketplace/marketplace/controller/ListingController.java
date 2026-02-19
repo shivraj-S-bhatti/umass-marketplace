@@ -75,8 +75,8 @@ public class ListingController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete listing", description = "Delete a marketplace listing")
-    public ResponseEntity<Void> deleteListing(@PathVariable UUID id) {
-        listingService.deleteListing(id);
+    public ResponseEntity<Void> deleteListing(@PathVariable UUID id, java.security.Principal principal) {
+        listingService.deleteListing(id, principal);
         return ResponseEntity.noContent().build();
     }
 
@@ -88,6 +88,12 @@ public class ListingController {
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size
     ) {
         return listingService.getListingsBySeller(sellerId, page, size);
+    }
+
+    @GetMapping("/seller/{sellerId}/stats")
+    @Operation(summary = "Get listing statistics by seller", description = "Retrieve counts of listings by status for a specific seller")
+    public StatsResponse getListingStatsBySeller(@PathVariable UUID sellerId) {
+        return listingService.getListingStatsBySeller(sellerId);
     }
 
     @GetMapping("/stats")

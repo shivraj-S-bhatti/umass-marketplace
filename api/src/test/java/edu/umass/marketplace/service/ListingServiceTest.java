@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.security.Principal;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -218,12 +219,14 @@ class ListingServiceTest {
 
     @Test
     void shouldDeleteListing() {
-        // Given: deleteListing uses findById then deleteById
+        // Given: deleteListing uses findById then deleteById; caller is owner
         when(listingRepository.findById(testListing.getId())).thenReturn(Optional.of(testListing));
         doNothing().when(listingRepository).deleteById(testListing.getId());
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn(testSeller.getEmail());
 
         // When
-        listingService.deleteListing(testListing.getId());
+        listingService.deleteListing(testListing.getId(), principal);
 
         // Then
         verify(listingRepository, times(1)).findById(testListing.getId());
@@ -235,9 +238,10 @@ class ListingServiceTest {
         // Given: deleteListing uses findById first
         UUID nonExistentId = UUID.randomUUID();
         when(listingRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        Principal principal = mock(Principal.class);
 
         // When & Then
-        assertThatThrownBy(() -> listingService.deleteListing(nonExistentId))
+        assertThatThrownBy(() -> listingService.deleteListing(nonExistentId, principal))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("not found");
     }

@@ -31,6 +31,9 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     // Count listings by status
     long countByStatus(String status);
 
+    // Count listings by seller ID and status
+    long countBySellerIdAndStatus(UUID sellerId, String status);
+
     // Find listings created before the given cutoff (for retention cleanup)
     List<Listing> findByCreatedAtBefore(OffsetDateTime cutoff);
 

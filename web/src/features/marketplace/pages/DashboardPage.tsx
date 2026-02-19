@@ -27,14 +27,16 @@ export default function DashboardPage() {
   const { user } = useUser()
 
   const { data: listingsData, isLoading, error } = useQuery({
-    queryKey: ['listings', currentPage],
-    queryFn: () => apiClient.getListings({ page: currentPage, size: pageSize }),
+    queryKey: ['my-listings', user?.id, currentPage],
+    queryFn: () => apiClient.getListingsBySeller(user!.id, currentPage, pageSize),
+    enabled: !!user?.id,
   })
 
-  // Fetch stats for total counts across all listings
+  // Fetch stats for current user's listings
   const { data: stats } = useQuery({
-    queryKey: ['listings-stats'],
-    queryFn: () => apiClient.getListingStats(),
+    queryKey: ['my-listings-stats', user?.id],
+    queryFn: () => apiClient.getListingStatsBySeller(user!.id),
+    enabled: !!user?.id,
   })
 
   if (isLoading) {
@@ -257,6 +259,7 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
   const navigate = useNavigate()
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [soldConfirmOpen, setSoldConfirmOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
@@ -264,11 +267,24 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
     navigate(`/edit/${listing.id}`)
   }
 
+  const confirmDelete = async () => {
+    setDeleteConfirmOpen(false)
+    try {
+      await apiClient.deleteListing(listing.id)
+      await queryClient.invalidateQueries({ queryKey: ['my-listings'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-listings-stats'] })
+      toast({ title: 'Success', description: 'Listing deleted.' })
+    } catch (error) {
+      console.error('Failed to delete listing:', error)
+      toast({ title: 'Error', description: 'Failed to delete listing. Please try again.', variant: 'destructive' })
+    }
+  }
+
   const updateStatus = async (newStatus: ListingStatus) => {
     try {
       await apiClient.updateListing(listing.id, { ...listing, status: newStatus })
-      await queryClient.invalidateQueries({ queryKey: ['listings'] })
-      await queryClient.invalidateQueries({ queryKey: ['listings-stats'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-listings'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-listings-stats'] })
       toast({ title: 'Success', description: `Listing status updated to ${statusLabel(newStatus)}.` })
     } catch (error) {
       console.error('Failed to update listing status:', error)
@@ -303,15 +319,15 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
       <Card className="hover:shadow-lg transition-shadow">
         {listing.imageUrl && (
           <div
-            className="w-full h-48 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
+            className="w-full h-36 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
             onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
           >
             <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
           </div>
         )}
-        <CardHeader>
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-lg line-clamp-2">{listing.title}</CardTitle>
+            <CardTitle className="text-sm font-semibold line-clamp-1">{listing.title}</CardTitle>
             <div className="flex items-center gap-1.5 shrink-0">
               <span className={`h-2 w-2 rounded-full ${statusDotClass(listing.status)}`} aria-hidden />
               <select
@@ -325,37 +341,59 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
               </select>
             </div>
           </div>
-          <CardDescription className="line-clamp-2">
+          <CardDescription className="line-clamp-1 text-xs">
             {listing.description || 'No description provided'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center text-2xl font-bold text-foreground">
+        <CardContent className="pt-0 pb-3">
+          <div className="space-y-1">
+            <div className="flex items-center text-base font-bold text-foreground">
               {formatPrice(listing.price)}
             </div>
-            <div className="flex items-center text-sm text-muted-foreground">
+            <div className="flex items-center text-xs text-muted-foreground">
               <Calendar className="h-4 w-4 mr-1" />
               Listed {formatDate(listing.createdAt)}
             </div>
             {listing.category && (
-              <div className="text-sm">
+              <div className="text-xs">
                 <span className="font-medium">Category:</span> {listing.category}
               </div>
             )}
             {listing.condition && (
-              <div className="text-sm">
+              <div className="text-xs">
                 <span className="font-medium">Condition:</span> {listing.condition}
               </div>
             )}
           </div>
-          <div className="mt-4">
-            <Button size="sm" variant="outline" className="w-full" onClick={handleEdit}>
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
               Edit
+            </Button>
+            <Button size="sm" variant="destructive" className="flex-1" onClick={() => setDeleteConfirmOpen(true)}>
+              Delete
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete listing?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete &quot;{listing.title}&quot;. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={soldConfirmOpen} onOpenChange={setSoldConfirmOpen}>
         <DialogContent>

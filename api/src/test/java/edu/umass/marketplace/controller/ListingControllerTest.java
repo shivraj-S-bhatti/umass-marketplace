@@ -19,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.security.Principal;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -222,13 +223,13 @@ class ListingControllerTest {
 
     @Test
     void shouldDeleteListing() throws Exception {
-        doNothing().when(listingService).deleteListing(testListingId);
+        doNothing().when(listingService).deleteListing(eq(testListingId), any(Principal.class));
 
         mockMvc.perform(delete("/api/listings/{id}", testListingId)
                         .with(authentication(mockAuth)))
                 .andExpect(status().isNoContent());
 
-        verify(listingService, times(1)).deleteListing(testListingId);
+        verify(listingService, times(1)).deleteListing(eq(testListingId), any(Principal.class));
     }
 
     @Test

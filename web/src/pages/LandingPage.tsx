@@ -24,17 +24,17 @@ export default function BentoHomePage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 p-4 md:p-6 lg:p-8 gap-4 md:gap-6">
-      {/* Hero card: !p-0 so card padding doesn't create gap under mascot (see e23f14a) */}
-      <Card className="border border-border flex-1 min-h-0 relative overflow-hidden !p-0">
-        <CardContent className="h-full flex flex-col md:flex-row items-center justify-between gap-4 pt-5 pr-5 pb-0 pl-5 sm:pt-6 sm:pr-6 sm:pl-6 md:pt-8 md:pr-8 md:pl-8">
-          {/* Left: text (has its own bottom padding so content doesn't stick to edge) */}
-          <div className="flex-1 min-w-0 space-y-3 text-center md:text-left pb-5 sm:pb-6 md:pb-8">
+      {/* Hero card: fixed height so it never grows with viewport; mascot always touches bottom */}
+      <Card className="border border-border w-full h-[200px] sm:h-[240px] md:h-[280px] shrink-0 relative overflow-hidden !p-0">
+        <CardContent className="relative w-full h-full flex items-center p-5 sm:p-6 md:p-8 pb-0">
+          {/* Left: text + button — items-center on parent keeps this vertically centered */}
+          <div className="flex flex-col space-y-3 text-left pr-36 sm:pr-44 md:pr-56 lg:pr-64">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">
               Everything UMass,{' '}
               <span className="text-primary">We've Got You!</span>
             </h1>
             {!isAuthenticated ? (
-              <Button size="lg" className="mt-2" onClick={openLoginModal}>
+              <Button size="lg" className="mt-2 w-fit" onClick={openLoginModal}>
                 <Mail className="h-4 w-4 mr-2" />
                 Sign in with UMass Email
               </Button>
@@ -45,12 +45,12 @@ export default function BentoHomePage() {
             )}
           </div>
 
-          {/* Right: mascot; no bottom padding so mascot image touches card edge */}
-          <div className="flex flex-col items-center justify-end shrink-0 h-full min-h-[140px] self-stretch">
+          {/* Mascot: absolute bottom-right so feet always sit on the card's bottom edge */}
+          <div className="absolute bottom-0 right-0 pr-5 sm:pr-6 md:pr-8 flex items-end pointer-events-none">
             <img
               src="/mascot.png"
               alt="Sam the Minuteman"
-              className="w-36 sm:w-44 md:w-56 lg:w-64 h-auto object-contain object-bottom block mt-auto"
+              className="w-36 sm:w-44 md:w-56 lg:w-64 h-auto object-contain object-bottom block"
             />
           </div>
         </CardContent>
@@ -63,11 +63,11 @@ export default function BentoHomePage() {
           className="border border-border hover:border-border/80 transition-colors cursor-pointer"
           onClick={() => handleProtectedNav('/marketplace')}
         >
-          <CardContent className="p-5 flex flex-col h-full">
-            <h3 className="font-semibold text-base">Marketplace</h3>
-            <p className="text-sm text-muted-foreground mt-1.5">Buy and sell with verified UMass students.</p>
-            <div className="mt-auto pt-5 space-y-2">
-              <Button className="w-full h-11" onClick={(e) => { e.stopPropagation(); handleProtectedNav('/marketplace') }}>
+          <CardContent className="p-4 flex flex-col h-full">
+            <h3 className="font-semibold text-sm">Marketplace</h3>
+            <p className="text-xs text-muted-foreground mt-1.5">Buy and sell with verified UMass students.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button className="w-full h-9" onClick={(e) => { e.stopPropagation(); handleProtectedNav('/marketplace') }}>
                 Browse listings
               </Button>
               <button
@@ -85,11 +85,11 @@ export default function BentoHomePage() {
           className="border border-border hover:border-border/80 transition-colors cursor-pointer"
           onClick={() => handleProtectedNav('/directory')}
         >
-          <CardContent className="p-5 flex flex-col h-full">
-            <h3 className="font-semibold text-base">UMass Links Directory</h3>
-            <p className="text-sm text-muted-foreground mt-1.5">Useful campus links, curated by students.</p>
-            <div className="mt-auto pt-5 space-y-2">
-              <Button variant="outline" className="w-full h-11" onClick={(e) => { e.stopPropagation(); handleProtectedNav('/directory') }}>
+          <CardContent className="p-4 flex flex-col h-full">
+            <h3 className="font-semibold text-sm">UMass Links Directory</h3>
+            <p className="text-xs text-muted-foreground mt-1.5">Useful campus links, curated by students.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button variant="outline" className="w-full h-9" onClick={(e) => { e.stopPropagation(); handleProtectedNav('/directory') }}>
                 Explore links
               </Button>
               <button
@@ -104,14 +104,14 @@ export default function BentoHomePage() {
 
         {/* Leasing (coming soon) */}
         <Card className="border border-border">
-          <CardContent className="p-5 flex flex-col h-full">
+          <CardContent className="p-4 flex flex-col h-full">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-base">Leasing</h3>
+              <h3 className="font-semibold text-sm">Leasing</h3>
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full leading-none">Coming soon</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-1.5">Sublets and lease transfers, verified.</p>
-            <div className="mt-auto pt-5 space-y-2">
-              <Button variant="outline" className="w-full h-11" disabled>
+            <p className="text-xs text-muted-foreground mt-1.5">Sublets and lease transfers, verified.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button variant="outline" className="w-full h-9" disabled>
                 Vote to prioritize
               </Button>
               <div className="h-4" />
@@ -121,16 +121,16 @@ export default function BentoHomePage() {
 
         {/* Contribute */}
         <Card className="border border-border hover:border-border/80 transition-colors">
-          <CardContent className="p-5 flex flex-col h-full">
-            <h3 className="font-semibold text-base">Contribute</h3>
-            <p className="text-sm text-muted-foreground mt-1.5">Report issues or suggest features.</p>
-            <div className="mt-auto pt-5 space-y-2">
-              <Button className="w-full h-11" asChild>
+          <CardContent className="p-4 flex flex-col h-full">
+            <h3 className="font-semibold text-sm">Contribute</h3>
+            <p className="text-xs text-muted-foreground mt-1.5">Report issues or suggest features.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button className="w-full h-9" asChild>
                 <a href={GITHUB_BUG} target="_blank" rel="noopener noreferrer">
                   Report a bug
                 </a>
               </Button>
-              <Button variant="outline" className="w-full h-11" asChild>
+              <Button variant="outline" className="w-full h-9" asChild>
                 <a href={GITHUB_FEATURE} target="_blank" rel="noopener noreferrer">
                   Request a feature
                 </a>

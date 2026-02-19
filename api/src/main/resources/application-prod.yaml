@@ -22,6 +22,7 @@ spring:
 # JWT Configuration (ApplicationConfig expects app.jwt-secret)
 app:
   jwt-secret: ${JWT_SECRET}
+  superuser-email: ${SUPERUSER_EMAIL:}
 
 application:
   jwt:

@@ -232,9 +232,19 @@ class ApiClient {
     })
   }
 
+  // Delete a listing
+  async deleteListing(id: string): Promise<void> {
+    return this.request<void>(`/api/listings/${id}`, { method: 'DELETE' })
+  }
+
   // Get listing statistics
   async getListingStats(): Promise<ListingStats> {
     return this.request<ListingStats>('/api/listings/stats')
+  }
+
+  // Get listing statistics for a specific seller
+  async getListingStatsBySeller(sellerId: string): Promise<ListingStats> {
+    return this.request<ListingStats>(`/api/listings/seller/${sellerId}/stats`)
   }
 
   // Chat-related endpoints
