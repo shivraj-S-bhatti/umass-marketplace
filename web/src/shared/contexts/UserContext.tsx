@@ -19,6 +19,7 @@ interface UserContextType {
   isAuthenticated: boolean
   isSeller: boolean
   isBuyer: boolean
+  isSuperuser: boolean
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -87,9 +88,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = user !== null
   const isSeller = role === 'seller'
   const isBuyer = role === 'buyer'
+  const superuserEmail = import.meta.env.VITE_SUPERUSER_EMAIL as string | undefined
+  const isSuperuser = !!user && !!superuserEmail && user.email.toLowerCase() === superuserEmail.toLowerCase()
 
   return (
-    <UserContext.Provider value={{ user, role, setRole, setUser, logout, isAuthenticated, isSeller, isBuyer }}>
+    <UserContext.Provider value={{ user, role, setRole, setUser, logout, isAuthenticated, isSeller, isBuyer, isSuperuser }}>
       {children}
     </UserContext.Provider>
   )
