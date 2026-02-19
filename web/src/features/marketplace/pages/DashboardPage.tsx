@@ -95,8 +95,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{isSuperuser ? 'Admin Dashboard' : 'My Dashboard'}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{isSuperuser ? 'All listings across the platform.' : 'Manage your listings.'}</p>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage your listings.</p>
         </div>
         {user && (
           <Button onClick={() => setShareModalOpen(true)} size="sm" className="shrink-0">
@@ -148,7 +148,7 @@ export default function DashboardPage() {
       {/* My Listings */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-2xl font-bold">{isSuperuser ? 'All Listings' : 'My Listings'}</h2>
+          <h2 className="text-2xl font-bold">My Listings</h2>
           {listingsData && (
             <div className="text-sm text-muted-foreground">
               <p>
