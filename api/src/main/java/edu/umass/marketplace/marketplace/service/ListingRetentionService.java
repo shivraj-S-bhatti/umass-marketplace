@@ -1,7 +1,9 @@
 package edu.umass.marketplace.marketplace.service;
 
 import edu.umass.marketplace.marketplace.model.Listing;
+import edu.umass.marketplace.marketplace.repository.ChatRepository;
 import edu.umass.marketplace.marketplace.repository.ListingRepository;
+import edu.umass.marketplace.marketplace.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,8 @@ public class ListingRetentionService {
     private static final Logger log = LoggerFactory.getLogger(ListingRetentionService.class);
 
     private final ListingRepository listingRepository;
+    private final ChatRepository chatRepository;
+    private final MessageRepository messageRepository;
     private final ImageService imageService;
 
     // Retention period in days (default 14 days)
@@ -66,6 +70,9 @@ public class ListingRetentionService {
         int deletedCount = 0;
         for (Listing listing : oldListings) {
             try {
+                // 1:1 conversation model: preserve chat history and only clear listing references.
+                messageRepository.clearSharedListingByListingId(listing.getId());
+                chatRepository.clearListingContextByListingId(listing.getId());
                 listingRepository.delete(listing);
                 deletedCount++;
             } catch (Exception e) {

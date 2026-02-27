@@ -5,11 +5,10 @@ import { useLoginModal } from '@/shared/contexts/LoginModalContext'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  requireSeller?: boolean
 }
 
-export default function ProtectedRoute({ children, requireSeller = false }: ProtectedRouteProps) {
-  const { isAuthenticated, isSeller } = useUser()
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { isAuthenticated } = useUser()
   const { openLoginModal } = useLoginModal()
 
   useEffect(() => {
@@ -20,10 +19,5 @@ export default function ProtectedRoute({ children, requireSeller = false }: Prot
     return <Navigate to="/" replace />
   }
 
-  if (requireSeller && !isSeller) {
-    return <Navigate to="/" replace />
-  }
-
   return <>{children}</>
 }
-

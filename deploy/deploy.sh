@@ -70,10 +70,10 @@ echo "🧹 Pruning dangling Docker images..."
 docker image prune -f
 log_step "image_prune"
 
-# Start services
+# Start services (--env-file so e.g. SUPERUSER_EMAIL is passed into containers)
 echo "🐳 Starting containers..."
 log_step "up_start"
-docker-compose -f "$COMPOSE_FILE" up -d
+docker-compose -f "$COMPOSE_FILE" --env-file "$SCRIPT_DIR/.env" up -d
 log_step "up_end"
 
 # Wait for services to be healthy

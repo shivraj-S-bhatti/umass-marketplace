@@ -70,7 +70,7 @@ function App() {
                       <Route
                         path="/sell"
                         element={
-                          <ProtectedRoute requireSeller>
+                          <ProtectedRoute>
                             <SellPage />
                           </ProtectedRoute>
                         }
@@ -78,7 +78,7 @@ function App() {
                       <Route
                         path="/dashboard"
                         element={
-                          <ProtectedRoute requireSeller>
+                          <ProtectedRoute>
                             <DashboardPage />
                           </ProtectedRoute>
                         }
@@ -86,7 +86,7 @@ function App() {
                       <Route
                         path="/edit/:id"
                         element={
-                          <ProtectedRoute requireSeller>
+                          <ProtectedRoute>
                             <EditPage />
                           </ProtectedRoute>
                         }

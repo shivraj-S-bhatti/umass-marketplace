@@ -1,5 +1,6 @@
 package edu.umass.marketplace.service;
 
+import edu.umass.marketplace.common.config.SuperuserConfig;
 import edu.umass.marketplace.marketplace.dto.LoginRequest;
 import edu.umass.marketplace.marketplace.dto.RegisterRequest;
 import edu.umass.marketplace.marketplace.model.User;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +35,9 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private SuperuserConfig superuserConfig;
 
     @InjectMocks
     private edu.umass.marketplace.marketplace.service.AuthService authService;
@@ -57,6 +62,8 @@ class AuthServiceTest {
         testUser.setEmail("test@umass.edu");
         testUser.setName("Test User");
         testUser.setPasswordHash("$2a$10$hashedpassword");
+
+        lenient().when(superuserConfig.isSuperuser(anyString())).thenReturn(false);
     }
 
     @Test
@@ -129,5 +136,72 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(loginRequest))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Invalid email or password");
+    }
+
+    // Superuser gets superuser=true when SuperuserConfig returns true for that email
+    @Test
+    void superuserSsBhattiGetsSuperuserTrueOnLogin() {
+        when(superuserConfig.isSuperuser(eq("ssbhatti@umass.edu"))).thenReturn(true);
+
+        User shivraj = new User();
+        shivraj.setId(UUID.randomUUID());
+        shivraj.setEmail("ssbhatti@umass.edu");
+        shivraj.setName("Shivraj Bhatti");
+        shivraj.setPasswordHash("$2a$10$hashedpassword");
+
+        LoginRequest ssbLogin = new LoginRequest();
+        ssbLogin.setEmail("ssbhatti@umass.edu");
+        ssbLogin.setPassword("password123");
+
+        when(userService.getUserByEmail("ssbhatti@umass.edu")).thenReturn(Optional.of(shivraj));
+        when(passwordEncoder.matches("password123", "$2a$10$hashedpassword")).thenReturn(true);
+        when(jwtUtil.generateToken(any(), anyString(), anyString())).thenReturn("mock-token");
+
+        AuthResponse result = authService.login(ssbLogin);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser()).isNotNull();
+        assertThat(result.getUser().getEmail()).isEqualTo("ssbhatti@umass.edu");
+        assertThat(result.getUser().getName()).isEqualTo("Shivraj Bhatti");
+        assertThat(result.getUser().isSuperuser()).as("ssbhatti@umass.edu must have superuser=true when app.superuser-email is set").isTrue();
+    }
+
+    // Non-superuser gets superuser=false (default stub from setUp)
+    @Test
+    void nonSuperuserGetsSuperuserFalseOnLogin() {
+        when(userService.getUserByEmail("test@umass.edu")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("password123", "$2a$10$hashedpassword")).thenReturn(true);
+        when(jwtUtil.generateToken(any(), anyString(), anyString())).thenReturn("mock-token");
+
+        AuthResponse result = authService.login(loginRequest);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser()).isNotNull();
+        assertThat(result.getUser().isSuperuser()).as("test@umass.edu must have superuser=false").isFalse();
+    }
+
+    @Test
+    void superuserDummyEmailGetsSuperuserTrueOnLogin() {
+        when(superuserConfig.isSuperuser(eq("test-superuser@umass.edu"))).thenReturn(true);
+
+        User dummySuperuser = new User();
+        dummySuperuser.setId(UUID.randomUUID());
+        dummySuperuser.setEmail("test-superuser@umass.edu");
+        dummySuperuser.setName("Test Superuser");
+        dummySuperuser.setPasswordHash("$2a$10$hashedpassword");
+
+        LoginRequest login = new LoginRequest();
+        login.setEmail("test-superuser@umass.edu");
+        login.setPassword("password123");
+
+        when(userService.getUserByEmail("test-superuser@umass.edu")).thenReturn(Optional.of(dummySuperuser));
+        when(passwordEncoder.matches("password123", "$2a$10$hashedpassword")).thenReturn(true);
+        when(jwtUtil.generateToken(any(), anyString(), anyString())).thenReturn("mock-token");
+
+        AuthResponse result = authService.login(login);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUser().getEmail()).isEqualTo("test-superuser@umass.edu");
+        assertThat(result.getUser().isSuperuser()).isTrue();
     }
 }

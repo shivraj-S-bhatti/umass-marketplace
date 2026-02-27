@@ -23,7 +23,7 @@ public class Chat {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "listing_id", nullable = false)
+    @JoinColumn(name = "listing_id")
     private Listing listing;
 
     @ManyToOne(fetch = FetchType.LAZY)

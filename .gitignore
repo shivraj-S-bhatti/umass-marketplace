@@ -215,3 +215,6 @@ temp/
 samples/
 sample_sale.xlsx
 web/scripts/
+
+# Nested standalone starter repo (do not track in umass-marketplace)
+CampusCommons-starter-college-web-platform/

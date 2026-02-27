@@ -1,36 +1,34 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
-
-export type UserRole = 'buyer' | 'seller'
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
+import { apiClient } from '@/features/marketplace/api/api'
 
 interface User {
   id: string
   name: string
   email: string
   pictureUrl?: string
-  createdAt?: string // Optional to match API User type
+  createdAt?: string
+  /** Set by backend at login via OAuth redirect param; persisted in localStorage. */
+  superuser?: boolean
 }
 
 interface UserContextType {
   user: User | null
-  role: UserRole
-  setRole: (role: UserRole) => void
   setUser: (user: User | null) => void
   logout: () => void
   isAuthenticated: boolean
-  isSeller: boolean
-  isBuyer: boolean
   isSuperuser: boolean
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  // Initialize user from localStorage
   const [user, setUserState] = useState<User | null>(() => {
     const userId = localStorage.getItem('userId')
     const userName = localStorage.getItem('userName')
     const userEmail = localStorage.getItem('userEmail')
     const userPictureUrl = localStorage.getItem('userPictureUrl')
+    const userSuperuser = localStorage.getItem('userSuperuser') === 'true'
+    console.log('[Superuser] init from storage: userSuperuser=', userSuperuser)
 
     if (userId && userEmail) {
       return {
@@ -38,61 +36,67 @@ export function UserProvider({ children }: { children: ReactNode }) {
         name: userName || '',
         email: userEmail,
         pictureUrl: userPictureUrl || undefined,
+        superuser: userSuperuser,
       }
     }
     return null
   })
 
-  // Initialize role from localStorage, default to 'buyer' if not found
-  const [role, setRoleState] = useState<UserRole>(() => {
-    const savedRole = localStorage.getItem('userRole') as UserRole
-    return savedRole || 'buyer'
-  })
+  const superuserSyncedRef = useRef(false)
+  useEffect(() => {
+    if (!user?.id || superuserSyncedRef.current) return
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
+    if (!token) return
+    superuserSyncedRef.current = true
+    apiClient
+      .getUser(user.id)
+      .then((apiUser) => {
+        console.log('[Superuser] re-sync from API: superuser=', apiUser.superuser)
+        setUserState((prev) =>
+          prev ? { ...prev, superuser: !!apiUser.superuser } : null
+        )
+        localStorage.setItem('userSuperuser', String(!!apiUser.superuser))
+      })
+      .catch(() => {
+        superuserSyncedRef.current = false
+      })
+  }, [user?.id])
 
-  // Wrap setRole to also save to localStorage
-  const setRole = (newRole: UserRole) => {
-    localStorage.setItem('userRole', newRole)
-    setRoleState(newRole)
-  }
-
-  // Wrap setUser to also save to localStorage
   const setUser = (newUser: User | null) => {
     if (newUser) {
+      console.log('[Superuser] setUser superuser=', !!newUser.superuser)
       localStorage.setItem('userId', newUser.id)
       localStorage.setItem('userName', newUser.name)
       localStorage.setItem('userEmail', newUser.email)
       if (newUser.pictureUrl) {
         localStorage.setItem('userPictureUrl', newUser.pictureUrl)
       }
+      localStorage.setItem('userSuperuser', String(!!newUser.superuser))
     } else {
       localStorage.removeItem('userId')
       localStorage.removeItem('userName')
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userPictureUrl')
+      localStorage.removeItem('userSuperuser')
     }
     setUserState(newUser)
   }
 
-  // Logout function to clear all user data
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('userId')
     localStorage.removeItem('userName')
     localStorage.removeItem('userEmail')
     localStorage.removeItem('userPictureUrl')
-    localStorage.removeItem('userRole')
+    localStorage.removeItem('userSuperuser')
     setUserState(null)
-    setRoleState('buyer')
   }
 
   const isAuthenticated = user !== null
-  const isSeller = role === 'seller'
-  const isBuyer = role === 'buyer'
-  const superuserEmail = import.meta.env.VITE_SUPERUSER_EMAIL as string | undefined
-  const isSuperuser = !!user && !!superuserEmail && user.email.toLowerCase() === superuserEmail.toLowerCase()
+  const isSuperuser = !!user?.superuser
 
   return (
-    <UserContext.Provider value={{ user, role, setRole, setUser, logout, isAuthenticated, isSeller, isBuyer, isSuperuser }}>
+    <UserContext.Provider value={{ user, setUser, logout, isAuthenticated, isSuperuser }}>
       {children}
     </UserContext.Provider>
   )
@@ -105,4 +109,3 @@ export function useUser() {
   }
   return context
 }
-

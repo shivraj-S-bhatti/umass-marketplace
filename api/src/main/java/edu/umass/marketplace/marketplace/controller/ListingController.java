@@ -69,8 +69,9 @@ public class ListingController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update listing", description = "Update an existing marketplace listing")
-    public ListingResponse updateListing(@PathVariable UUID id, @Valid @RequestBody CreateListingRequest request) {
-        return listingService.updateListing(id, request);
+    public ListingResponse updateListing(@PathVariable UUID id, @Valid @RequestBody CreateListingRequest request,
+                                         java.security.Principal principal) {
+        return listingService.updateListing(id, request, principal);
     }
 
     @DeleteMapping("/{id}")

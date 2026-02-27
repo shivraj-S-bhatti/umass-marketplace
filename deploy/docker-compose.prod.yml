@@ -34,6 +34,7 @@ services:
       context: ../api
       dockerfile: Dockerfile
     container_name: umass-marketplace-api-prod
+    env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-umarket}
@@ -58,6 +59,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      SUPERUSER_EMAIL: ${SUPERUSER_EMAIL}
     ports:
       - "8080:8080"
     depends_on:

@@ -1,5 +1,6 @@
 package edu.umass.marketplace.common.security;
 
+import edu.umass.marketplace.common.config.SuperuserConfig;
 import edu.umass.marketplace.marketplace.model.User;
 import edu.umass.marketplace.marketplace.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -34,9 +33,9 @@ import java.util.Map;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    
-    private final UserRepository userRepository;
 
+    private final UserRepository userRepository;
+    private final SuperuserConfig superuserConfig;
     private final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oauth2LoginFailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -122,9 +121,10 @@ public class SecurityConfig {
                     return userRepository.save(newUser);
                 });
 
-            Collection<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_USER")
-            );
+            boolean isAdmin = superuserConfig.isSuperuser(email);
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            if (isAdmin) authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
             return new CustomOidcUser(oidcUser, user.getId(), email, name, pictureUrl, authorities);
         };

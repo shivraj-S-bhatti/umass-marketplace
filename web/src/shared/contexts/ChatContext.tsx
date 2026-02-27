@@ -5,8 +5,8 @@ import { Chat, Message, User } from '@/shared/types'
 import { useToast } from '@/shared/hooks/use-toast'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-// Use native WebSocket URL (convert http to ws)
-const WS_URL = API_BASE.replace(/^http/, 'ws') + '/ws/websocket'
+// Use native STOMP endpoint. SockJS adds /websocket internally; brokerURL should target /ws.
+const WS_URL = API_BASE.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws'
 
 function transformUser(apiUser: { id: string; name: string; pictureUrl?: string }): User {
   return {
@@ -121,6 +121,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             chatId: activeChatRef.current?.id || activeChat.id,
             sender: transformUser(msg.sender),
             content: msg.content,
+            sharedListingId: msg.sharedListingId,
+            sharedListing: msg.sharedListing,
             createdAt: msg.createdAt,
           }
 
@@ -166,14 +168,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, [activeChat])
 
   async function transformChat(chat: any): Promise<Chat> {
+    const listing = chat.listing ? {
+      ...chat.listing,
+      condition: chat.listing.condition || 'Unknown',
+      seller: transformUser(chat.seller)
+    } : undefined
+
     return {
       id: chat.id,
-      listingId: chat.listing.id,
-      listing: {
-        ...chat.listing,
-        condition: chat.listing.condition || 'Unknown',
-        seller: transformUser(chat.seller)
-      },
+      listingId: listing?.id,
+      listing,
       buyer: transformUser(chat.buyer),
       seller: transformUser(chat.seller),
       lastMessage: chat.lastMessage ? {
@@ -211,6 +215,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       chatId: chatId,
       sender: transformUser(msg.sender),
       content: msg.content,
+      sharedListingId: msg.sharedListingId,
+      sharedListing: msg.sharedListing,
       createdAt: msg.createdAt
     }
   }
@@ -291,8 +297,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const apiChat = await apiClient.startChat(listingId)
       const transformedChat = await transformChat(apiChat)
       setChats(prev => {
-        if (prev.some(c => c.id === transformedChat.id)) return prev
-        return [transformedChat, ...prev]
+        const withoutCurrent = prev.filter(c => c.id !== transformedChat.id)
+        return [transformedChat, ...withoutCurrent]
       })
       setActiveChat(transformedChat)
     } catch (error) {

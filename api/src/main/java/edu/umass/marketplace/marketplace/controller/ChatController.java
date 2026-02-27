@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -45,13 +46,28 @@ public class ChatController {
     @PostMapping("/{chatId}/messages")
     public ResponseEntity<MessageDTO> sendMessage(
             @PathVariable UUID chatId,
-            @RequestBody java.util.Map<String, String> body,
+            @RequestBody Map<String, String> body,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         if (userPrincipal == null) {
             return ResponseEntity.status(401).build();
         }
-        String content = body.get("content");
-        MessageDTO message = chatService.sendMessage(chatId, userPrincipal.getId(), content);
+        String content = body != null ? body.get("content") : null;
+        UUID sharedListingId = null;
+        String sharedListingIdText = null;
+        if (body != null) {
+            sharedListingIdText = body.get("sharedListingId");
+            if ((sharedListingIdText == null || sharedListingIdText.isBlank()) && body.get("listingId") != null) {
+                sharedListingIdText = body.get("listingId");
+            }
+        }
+        if (sharedListingIdText != null && !sharedListingIdText.isBlank()) {
+            try {
+                sharedListingId = UUID.fromString(sharedListingIdText);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+        MessageDTO message = chatService.sendMessage(chatId, userPrincipal.getId(), content, sharedListingId);
         messagingTemplate.convertAndSend("/topic/chat/" + chatId, message);
         return ResponseEntity.ok(message);
     }

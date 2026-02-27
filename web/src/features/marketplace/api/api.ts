@@ -5,6 +5,8 @@ export interface Message {
   id: string
   chatId?: string
   content: string
+  sharedListingId?: string
+  sharedListing?: Listing
   sender: {
     id: string
     name: string
@@ -15,8 +17,8 @@ export interface Message {
 
 export interface Chat {
   id: string
-  listingId: string
-  listing: Listing
+  listingId?: string
+  listing?: Listing
   buyer: {
     id: string
     name: string
@@ -117,6 +119,8 @@ export interface User {
   email: string
   pictureUrl?: string
   createdAt?: string // Made optional to match UserContext User type
+  /** From backend GET /api/users/:id; used to re-sync superuser on app load */
+  superuser?: boolean
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
@@ -162,6 +166,9 @@ class ApiClient {
       throw new Error(errorMessage)
     }
 
+    if (response.status === 204 || !response.headers.get('content-type')?.includes('application/json')) {
+      return undefined as T
+    }
     return response.json()
   }
 
@@ -258,10 +265,10 @@ class ApiClient {
     return this.request<Chat[]>('/api/chats')
   }
 
-  async sendMessage(chatId: string, content: string): Promise<Message> {
+  async sendMessage(chatId: string, content: string, sharedListingId?: string): Promise<Message> {
     return this.request<Message>(`/api/chats/${chatId}/messages`, {
       method: 'POST',
-      body: JSON.stringify({ content })
+      body: JSON.stringify({ content, sharedListingId })
     })
   }
 

@@ -1,6 +1,7 @@
 package edu.umass.marketplace.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umass.marketplace.common.config.SuperuserConfig;
 import edu.umass.marketplace.common.security.UserPrincipal;
 import edu.umass.marketplace.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.marketplace.response.ListingResponse;
@@ -62,6 +63,9 @@ class ListingControllerTest {
 
     @MockBean
     private SimpMessagingTemplate simpMessagingTemplate;
+
+    @MockBean
+    private SuperuserConfig superuserConfig;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -208,7 +212,7 @@ class ListingControllerTest {
 
     @Test
     void shouldUpdateListing() throws Exception {
-        when(listingService.updateListing(any(UUID.class), any(CreateListingRequest.class)))
+        when(listingService.updateListing(any(UUID.class), any(CreateListingRequest.class), any(Principal.class)))
                 .thenReturn(testListingResponse);
 
         mockMvc.perform(put("/api/listings/{id}", testListingId)
@@ -218,7 +222,7 @@ class ListingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Test Laptop"));
 
-        verify(listingService, times(1)).updateListing(testListingId, testCreateRequest);
+        verify(listingService, times(1)).updateListing(eq(testListingId), eq(testCreateRequest), any(Principal.class));
     }
 
     @Test

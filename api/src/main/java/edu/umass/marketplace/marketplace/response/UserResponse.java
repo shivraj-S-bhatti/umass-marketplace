@@ -24,15 +24,23 @@ public class UserResponse {
     private String email;
     private String pictureUrl;
     private OffsetDateTime createdAt;
+    /** Derived from app.superuser-email at response time, not stored in DB. */
+    private boolean superuser;
 
-    // Static factory method to convert from entity
-    public static UserResponse fromEntity(User user) {
+    /** Build from entity with superuser flag (e.g. from Controller/Service that has superuser config). */
+    public static UserResponse fromEntity(User user, boolean superuser) {
         return UserResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .pictureUrl(user.getPictureUrl())
                 .createdAt(user.getCreatedAt())
+                .superuser(superuser)
                 .build();
+    }
+
+    /** Static factory when superuser is not available (defaults to false). */
+    public static UserResponse fromEntity(User user) {
+        return fromEntity(user, false);
     }
 }

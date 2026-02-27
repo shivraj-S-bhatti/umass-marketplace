@@ -1,18 +1,20 @@
 package edu.umass.marketplace.marketplace.service;
 
+import edu.umass.marketplace.common.config.SuperuserConfig;
 import edu.umass.marketplace.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.marketplace.model.Condition;
-import edu.umass.marketplace.marketplace.response.ListingResponse;
 import edu.umass.marketplace.marketplace.model.Listing;
 import edu.umass.marketplace.marketplace.model.User;
+import edu.umass.marketplace.marketplace.repository.ChatRepository;
 import edu.umass.marketplace.marketplace.repository.ListingRepository;
+import edu.umass.marketplace.marketplace.repository.MessageRepository;
 import edu.umass.marketplace.marketplace.repository.UserRepository;
+import edu.umass.marketplace.marketplace.response.ListingResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +33,10 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
+    private final ChatRepository chatRepository;
+    private final MessageRepository messageRepository;
     private final ImageService imageService;
-
-    @Value("${app.superuser-email:}")
-    private String superuserEmail;
+    private final SuperuserConfig superuserConfig;
 
     @Transactional
     public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
@@ -280,11 +282,19 @@ public class ListingService {
      * Update a listing
      */
     @Transactional
-    public ListingResponse updateListing(UUID id, CreateListingRequest request) {
+    public ListingResponse updateListing(UUID id, CreateListingRequest request, java.security.Principal principal) {
         log.debug("🔍 Updating listing with ID: {}", id);
 
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
+
+        String callerEmail = principal != null ? principal.getName() : null;
+        boolean isSuperuser = superuserConfig.isSuperuser(callerEmail);
+        boolean isOwner = listing.getSeller() != null && listing.getSeller().getEmail() != null
+                && listing.getSeller().getEmail().equals(callerEmail);
+        if (!isOwner && !isSuperuser) {
+            throw new org.springframework.security.access.AccessDeniedException("Not authorized to update this listing");
+        }
 
         // Update status if provided
         if (request.getStatus() != null) {
@@ -366,7 +376,7 @@ public class ListingService {
             .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
 
         String callerEmail = principal != null ? principal.getName() : null;
-        boolean isSuperuser = superuserEmail != null && !superuserEmail.isBlank() && superuserEmail.trim().equalsIgnoreCase(callerEmail);
+        boolean isSuperuser = superuserConfig.isSuperuser(callerEmail);
         boolean isOwner = listing.getSeller() != null && listing.getSeller().getEmail() != null
             && listing.getSeller().getEmail().equals(callerEmail);
         if (!isOwner && !isSuperuser) {
@@ -382,6 +392,9 @@ public class ListingService {
             }
         }
 
+        // 1:1 conversation model: preserve chat history and only clear listing references.
+        messageRepository.clearSharedListingByListingId(id);
+        chatRepository.clearListingContextByListingId(id);
         listingRepository.deleteById(id);
         log.debug("🔍 Deleted listing with ID: {}", id);
     }
