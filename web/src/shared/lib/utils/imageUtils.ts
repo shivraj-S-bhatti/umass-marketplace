@@ -1,6 +1,7 @@
 // Image handling utilities
 // Centralized functions for image validation, compression, and conversion
-import { compressImage } from '../imageCompression'
+import { compressImage } from './imageCompression'
+import { UPLOAD_IMAGE_MAX_KB } from '../constants/constants'
 
 export interface ImageValidationResult {
   valid: boolean
@@ -91,14 +92,14 @@ export function fileToDataUrl(file: File): Promise<string> {
  * Process image: validate, convert to base64, and compress
  * @param file - Image file to process
  * @param maxSizeMB - Maximum file size in MB (default: 5MB)
- * @param compressionTargetKB - Target compressed size in KB (default: 400KB)
+ * @param compressionTargetKB - Target compressed size in KB (default: UPLOAD_IMAGE_MAX_KB)
  * @returns Promise that resolves to compressed base64 string
  * @throws Error if validation fails
  */
 export async function processImage(
   file: File,
   maxSizeMB: number = 5,
-  compressionTargetKB: number = 400
+  compressionTargetKB: number = UPLOAD_IMAGE_MAX_KB
 ): Promise<string> {
   // Validate image
   const validation = validateImage(file, maxSizeMB)

@@ -19,6 +19,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,13 +42,19 @@ public class ChatService {
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new IllegalArgumentException("Listing not found"));
 
-        // Check if chat already exists
-        List<Chat> existingChats = chatRepository.findByListingAndUser(listingId, buyerId);
-        if (!existingChats.isEmpty()) {
-            return convertToDTO(existingChats.get(0));
+        if (buyer.getId().equals(listing.getSeller().getId())) {
+            throw new IllegalArgumentException("Cannot start a chat with yourself");
         }
 
-        // Create new chat
+        // Keep a single 1:1 conversation per participant pair.
+        List<Chat> existingChats = chatRepository.findByParticipantPair(buyer.getId(), listing.getSeller().getId());
+        if (!existingChats.isEmpty()) {
+            Chat chat = existingChats.get(0);
+            // Keep latest listing context so the UI can show what item is being discussed now.
+            chat.setListing(listing);
+            return convertToDTO(chatRepository.save(chat));
+        }
+
         Chat chat = new Chat();
         chat.setListing(listing);
         chat.setBuyer(buyer);
@@ -59,27 +67,43 @@ public class ChatService {
     public List<ChatDTO> getUserChats(UUID userId) {
         return chatRepository.findAllChatsForUser(userId).stream()
                 .map(this::convertToDTO)
+                .sorted(Comparator.comparing(this::activityTime).reversed())
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public MessageDTO sendMessage(UUID chatId, UUID senderId, String content) {
+        return sendMessage(chatId, senderId, content, null);
+    }
+
+    @Transactional
+    public MessageDTO sendMessage(UUID chatId, UUID senderId, String content, UUID sharedListingId) {
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
 
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
 
-        // Verify sender is part of the chat
-        if (!sender.getId().equals(chat.getBuyer().getId()) &&
-            !sender.getId().equals(chat.getSeller().getId())) {
-            throw new AccessDeniedException("User is not part of this chat");
+        assertUserIsParticipant(chat, sender.getId());
+
+        String normalizedContent = content != null ? content.trim() : "";
+        if (normalizedContent.isEmpty() && sharedListingId == null) {
+            throw new IllegalArgumentException("Message content cannot be empty unless a listing is shared");
         }
 
         Message message = new Message();
         message.setChat(chat);
         message.setSender(sender);
-        message.setContent(content);
+        message.setContent(normalizedContent.isEmpty() ? "Shared a listing" : normalizedContent);
+
+        if (sharedListingId != null) {
+            Listing sharedListing = listingRepository.findById(sharedListingId)
+                    .orElseThrow(() -> new IllegalArgumentException("Shared listing not found"));
+            message.setSharedListing(sharedListing);
+            // Update chat context to the latest referenced listing.
+            chat.setListing(sharedListing);
+            chatRepository.save(chat);
+        }
 
         return convertToMessageDTO(messageRepository.save(message));
     }
@@ -89,11 +113,7 @@ public class ChatService {
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
 
-        // Verify user is part of the chat
-        if (!userId.equals(chat.getBuyer().getId()) &&
-            !userId.equals(chat.getSeller().getId())) {
-            throw new AccessDeniedException("User is not part of this chat");
-        }
+        assertUserIsParticipant(chat, userId);
 
         return messageRepository.findByChatIdOrderByCreatedAtDesc(chatId, pageable)
                 .map(this::convertToMessageDTO);
@@ -102,16 +122,16 @@ public class ChatService {
     private ChatDTO convertToDTO(Chat chat) {
         ChatDTO dto = new ChatDTO();
         dto.setId(chat.getId());
-        dto.setListingId(chat.getListing().getId());
-        dto.setListing(convertToListingDTO(chat.getListing()));
+        if (chat.getListing() != null) {
+            dto.setListingId(chat.getListing().getId());
+            dto.setListing(convertToListingDTO(chat.getListing()));
+        }
         dto.setBuyer(convertToUserDTO(chat.getBuyer()));
         dto.setSeller(convertToUserDTO(chat.getSeller()));
         dto.setCreatedAt(chat.getCreatedAt());
 
-        // Set last message if available
-        if (!chat.getMessages().isEmpty()) {
-            dto.setLastMessage(convertToMessageDTO(chat.getMessages().get(chat.getMessages().size() - 1)));
-        }
+        messageRepository.findTopByChatIdOrderByCreatedAtDesc(chat.getId())
+                .ifPresent(message -> dto.setLastMessage(convertToMessageDTO(message)));
 
         return dto;
     }
@@ -122,8 +142,23 @@ public class ChatService {
         dto.setChatId(message.getChat().getId());
         dto.setSender(convertToUserDTO(message.getSender()));
         dto.setContent(message.getContent());
+        if (message.getSharedListing() != null) {
+            dto.setSharedListingId(message.getSharedListing().getId());
+            dto.setSharedListing(convertToListingDTO(message.getSharedListing()));
+        }
         dto.setCreatedAt(message.getCreatedAt());
         return dto;
+    }
+
+    private void assertUserIsParticipant(Chat chat, UUID userId) {
+        if (!userId.equals(chat.getBuyer().getId()) &&
+            !userId.equals(chat.getSeller().getId())) {
+            throw new AccessDeniedException("User is not part of this chat");
+        }
+    }
+
+    private OffsetDateTime activityTime(ChatDTO chatDTO) {
+        return chatDTO.getLastMessage() != null ? chatDTO.getLastMessage().getCreatedAt() : chatDTO.getCreatedAt();
     }
 
     private UserDto convertToUserDTO(User user) {

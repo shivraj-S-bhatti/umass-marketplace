@@ -11,7 +11,8 @@ import { Label } from '@/shared/components/ui/label'
 import { updateListing, getListing } from '@/features/marketplace/api/api'
 import { useToast } from '@/shared/hooks/use-toast'
 import { Save, ArrowLeft, MapPin, Loader2 } from 'lucide-react'
-import { CATEGORIES, CONDITIONS } from '@/shared/lib/constants/constants'
+import { CATEGORIES, CONDITIONS, UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
+import { compressImage } from '@/shared/lib/utils/imageCompression'
 import LocationMapSelector from '@/features/marketplace/components/LocationMapSelector'
 
 // Edit listing form schema
@@ -110,12 +111,13 @@ export default function EditPage() {
 
       setImageFile(file)
 
-      // Create preview
+      // Create preview and compress for small storage
       const reader = new FileReader()
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64String = reader.result as string
-        setImagePreview(base64String)
-        setValue('imageUrl', base64String)
+        const compressed = await compressImage(base64String, UPLOAD_IMAGE_MAX_KB)
+        setImagePreview(compressed)
+        setValue('imageUrl', compressed)
       }
       reader.readAsDataURL(file)
     }
@@ -266,7 +268,7 @@ export default function EditPage() {
               <textarea
                 id="description"
                 placeholder="Describe your item in detail..."
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-[80px] w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('description')}
               />
               {errors.description && (
@@ -298,7 +300,7 @@ export default function EditPage() {
               <Label htmlFor="category">Category</Label>
               <select
                 id="category"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('category')}
               >
                 <option value="">Select a category</option>
@@ -318,7 +320,7 @@ export default function EditPage() {
               <Label htmlFor="condition">Condition</Label>
               <select
                 id="condition"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 {...register('condition')}
               >
                 <option value="">Select condition</option>
@@ -363,7 +365,7 @@ export default function EditPage() {
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="h-32 w-32 object-cover rounded-md border border-input"
+                    className="h-32 w-32 object-cover rounded-lg border border-border"
                   />
                 </div>
               )}
@@ -400,7 +402,7 @@ export default function EditPage() {
                       setShowMapSelector(false)
                     }
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-border bg-card text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   aria-label="Share my location with buyers"
                 />
                 <Label htmlFor="useLocation" className="cursor-pointer font-medium flex items-center gap-2">

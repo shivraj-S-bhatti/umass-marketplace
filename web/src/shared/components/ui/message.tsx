@@ -1,11 +1,16 @@
-import { User } from '@/shared/types/types'
 import { Avatar, AvatarFallback, AvatarImage } from './avatar'
 import { cn } from '@/shared/lib/utils/utils'
 import { format } from 'date-fns'
 
+interface MessageSender {
+  id: string
+  name: string
+  pictureUrl?: string
+}
+
 interface MessageProps {
   content: string
-  sender: User
+  sender: MessageSender
   createdAt: string
   isOwn: boolean
 }

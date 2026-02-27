@@ -8,10 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -20,6 +22,7 @@ import java.util.UUID;
 public class ChatController {
 
     private final ChatService chatService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/listing/{listingId}")
     public ResponseEntity<ChatDTO> startChat(
@@ -43,13 +46,30 @@ public class ChatController {
     @PostMapping("/{chatId}/messages")
     public ResponseEntity<MessageDTO> sendMessage(
             @PathVariable UUID chatId,
-            @RequestBody java.util.Map<String, String> body,
+            @RequestBody Map<String, String> body,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         if (userPrincipal == null) {
             return ResponseEntity.status(401).build();
         }
-        String content = body.get("content");
-        return ResponseEntity.ok(chatService.sendMessage(chatId, userPrincipal.getId(), content));
+        String content = body != null ? body.get("content") : null;
+        UUID sharedListingId = null;
+        String sharedListingIdText = null;
+        if (body != null) {
+            sharedListingIdText = body.get("sharedListingId");
+            if ((sharedListingIdText == null || sharedListingIdText.isBlank()) && body.get("listingId") != null) {
+                sharedListingIdText = body.get("listingId");
+            }
+        }
+        if (sharedListingIdText != null && !sharedListingIdText.isBlank()) {
+            try {
+                sharedListingId = UUID.fromString(sharedListingIdText);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+        MessageDTO message = chatService.sendMessage(chatId, userPrincipal.getId(), content, sharedListingId);
+        messagingTemplate.convertAndSend("/topic/chat/" + chatId, message);
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping("/{chatId}/messages")

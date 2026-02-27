@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import { CreateListingForm } from '@/features/marketplace/pages/SellPage'
+import { UPLOAD_IMAGE_MAX_KB } from '@/shared/lib/constants/constants'
 
 // Template column headers - must match exactly
 export const TEMPLATE_COLUMNS = [
@@ -44,7 +45,7 @@ export function generateTemplate(): XLSX.WorkBook {
   
   // Convert to worksheet
   const worksheet = XLSX.utils.json_to_sheet(exampleData, {
-    header: TEMPLATE_COLUMNS,
+    header: [...TEMPLATE_COLUMNS],
     skipHeader: false,
   })
   
@@ -184,7 +185,7 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
     for (const image of images) {
       try {
         // Get the image from workbook media
-        const excelImage = workbook.model.media?.find(m => m.index === image.imageId)
+        const excelImage = workbook.model.media?.find((m: unknown) => String((m as { index?: number }).index) === String(image.imageId))
         if (!excelImage || !excelImage.buffer) {
           console.warn(`Image ${image.imageId} not found in media`)
           continue
@@ -196,7 +197,7 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
           buffer = excelImage.buffer
         } else if (excelImage.buffer instanceof ArrayBuffer) {
           buffer = new Uint8Array(excelImage.buffer)
-        } else if (Buffer && excelImage.buffer instanceof Buffer) {
+        } else if (typeof Buffer !== 'undefined' && (excelImage.buffer as any) instanceof Buffer) {
           // Node.js Buffer - convert to Uint8Array
           buffer = new Uint8Array(excelImage.buffer)
         } else {
@@ -220,8 +221,8 @@ async function extractImagesFromExcel(file: File): Promise<Map<number, string>> 
         const base64 = btoa(binaryString)
         const dataUrl = `data:${mimeType};base64,${base64}`
         
-        // Compress the image to reduce size
-        const compressedDataUrl = await compressImage(dataUrl, 400) // Max 400KB per image
+        // Compress the image to reduce size (small for Postgres storage)
+        const compressedDataUrl = await compressImage(dataUrl, UPLOAD_IMAGE_MAX_KB)
         
         // Map image to row number (range.tl.nativeRow is 0-indexed, we want 1-indexed for row number)
         // Add 1 because Excel rows are 1-indexed and we want to match the data row
@@ -275,11 +276,6 @@ export async function parseExcelFile(file: File): Promise<TemplateRow[]> {
           
           // Get headers from first row
           const headers = jsonData[0].map((h: any) => String(h).toLowerCase().trim())
-          
-          // Find image column index (if exists)
-          const imageColIndex = headers.findIndex((h: string) => 
-            h.includes('image') || h === 'imageurl' || h === 'image'
-          )
           
           // Map old column names to new template format
           const columnMapping: Record<string, string> = {

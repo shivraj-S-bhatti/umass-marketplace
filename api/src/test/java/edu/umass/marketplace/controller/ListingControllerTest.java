@@ -1,6 +1,8 @@
 package edu.umass.marketplace.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umass.marketplace.common.config.SuperuserConfig;
+import edu.umass.marketplace.common.security.UserPrincipal;
 import edu.umass.marketplace.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.marketplace.response.ListingResponse;
 import edu.umass.marketplace.marketplace.response.StatsResponse;
@@ -12,10 +14,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.security.Principal;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -24,6 +29,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -47,7 +53,19 @@ class ListingControllerTest {
     private edu.umass.marketplace.common.security.OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @MockBean
+    private edu.umass.marketplace.common.security.OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+
+    @MockBean
     private edu.umass.marketplace.common.security.JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private PasswordEncoder passwordEncoder;
+
+    @MockBean
+    private SimpMessagingTemplate simpMessagingTemplate;
+
+    @MockBean
+    private SuperuserConfig superuserConfig;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -55,6 +73,7 @@ class ListingControllerTest {
     private ListingResponse testListingResponse;
     private CreateListingRequest testCreateRequest;
     private UUID testListingId;
+    private UsernamePasswordAuthenticationToken mockAuth;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -66,6 +85,10 @@ class ListingControllerTest {
 
         testListingId = UUID.randomUUID();
         UUID testSellerId = UUID.randomUUID();
+
+        // Create a mock authenticated user for protected endpoints
+        UserPrincipal principal = new UserPrincipal(testSellerId, "test@umass.edu", "Test User", null);
+        mockAuth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
         testListingResponse = ListingResponse.builder()
                 .id(testListingId)
@@ -90,13 +113,11 @@ class ListingControllerTest {
 
     @Test
     void shouldGetListings() throws Exception {
-        // Given
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
         when(listingService.getListings(anyString(), anyString(), anyString(), anyString(),
                 any(Double.class), any(Double.class), anyInt(), anyInt()))
                 .thenReturn(page);
 
-        // When & Then
         mockMvc.perform(get("/api/listings"))
                 .andExpect(status().isOk());
 
@@ -106,13 +127,11 @@ class ListingControllerTest {
 
     @Test
     void shouldGetListingsWithFilters() throws Exception {
-        // Given
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
         when(listingService.getListings(anyString(), anyString(), anyString(), anyString(),
                 any(Double.class), any(Double.class), anyInt(), anyInt()))
                 .thenReturn(page);
 
-        // When & Then
         mockMvc.perform(get("/api/listings")
                         .param("q", "laptop")
                         .param("category", "Electronics")
@@ -126,10 +145,8 @@ class ListingControllerTest {
 
     @Test
     void shouldGetListingById() throws Exception {
-        // Given
         when(listingService.getListingById(testListingId)).thenReturn(testListingResponse);
 
-        // When & Then
         mockMvc.perform(get("/api/listings/{id}", testListingId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testListingId.toString()))
@@ -141,12 +158,11 @@ class ListingControllerTest {
 
     @Test
     void shouldCreateListing() throws Exception {
-        // Given
         when(listingService.createListing(any(CreateListingRequest.class), any()))
                 .thenReturn(testListingResponse);
 
-        // When & Then
         mockMvc.perform(post("/api/listings")
+                        .with(authentication(mockAuth))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testCreateRequest)))
                 .andExpect(status().isCreated())
@@ -157,13 +173,21 @@ class ListingControllerTest {
     }
 
     @Test
-    void shouldRejectInvalidCreateRequest() throws Exception {
-        // Given - Create invalid request
-        CreateListingRequest invalidRequest = new CreateListingRequest();
-        invalidRequest.setTitle(""); // Invalid: empty title
-
-        // When & Then
+    void shouldRejectUnauthenticatedCreateRequest() throws Exception {
+        // OAuth2 login is configured, so unauthenticated POST returns 302 redirect
         mockMvc.perform(post("/api/listings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(testCreateRequest)))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void shouldRejectInvalidCreateRequest() throws Exception {
+        CreateListingRequest invalidRequest = new CreateListingRequest();
+        invalidRequest.setTitle("");
+
+        mockMvc.perform(post("/api/listings")
+                        .with(authentication(mockAuth))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
@@ -171,13 +195,12 @@ class ListingControllerTest {
 
     @Test
     void shouldCreateBulkListings() throws Exception {
-        // Given
         List<CreateListingRequest> requests = List.of(testCreateRequest);
         when(listingService.createListingsBulk(anyList(), any()))
                 .thenReturn(List.of(testListingResponse));
 
-        // When & Then
         mockMvc.perform(post("/api/listings/bulk")
+                        .with(authentication(mockAuth))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("listings", requests))))
                 .andExpect(status().isCreated())
@@ -189,41 +212,37 @@ class ListingControllerTest {
 
     @Test
     void shouldUpdateListing() throws Exception {
-        // Given
-        when(listingService.updateListing(any(UUID.class), any(CreateListingRequest.class)))
+        when(listingService.updateListing(any(UUID.class), any(CreateListingRequest.class), any(Principal.class)))
                 .thenReturn(testListingResponse);
 
-        // When & Then
         mockMvc.perform(put("/api/listings/{id}", testListingId)
+                        .with(authentication(mockAuth))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testCreateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Test Laptop"));
 
-        verify(listingService, times(1)).updateListing(testListingId, testCreateRequest);
+        verify(listingService, times(1)).updateListing(eq(testListingId), eq(testCreateRequest), any(Principal.class));
     }
 
     @Test
     void shouldDeleteListing() throws Exception {
-        // Given
-        doNothing().when(listingService).deleteListing(testListingId);
+        doNothing().when(listingService).deleteListing(eq(testListingId), any(Principal.class));
 
-        // When & Then
-        mockMvc.perform(delete("/api/listings/{id}", testListingId))
+        mockMvc.perform(delete("/api/listings/{id}", testListingId)
+                        .with(authentication(mockAuth)))
                 .andExpect(status().isNoContent());
 
-        verify(listingService, times(1)).deleteListing(testListingId);
+        verify(listingService, times(1)).deleteListing(eq(testListingId), any(Principal.class));
     }
 
     @Test
     void shouldGetListingsBySeller() throws Exception {
-        // Given
         UUID sellerId = UUID.randomUUID();
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
         when(listingService.getListingsBySeller(sellerId, 0, 10))
                 .thenReturn(page);
 
-        // When & Then
         mockMvc.perform(get("/api/listings/seller/{sellerId}", sellerId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
@@ -233,11 +252,9 @@ class ListingControllerTest {
 
     @Test
     void shouldGetListingStats() throws Exception {
-        // Given
         StatsResponse stats = new StatsResponse(10L, 5L, 2L);
         when(listingService.getListingStats()).thenReturn(stats);
 
-        // When & Then
         mockMvc.perform(get("/api/listings/stats"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activeListings").value(10))
@@ -247,4 +264,3 @@ class ListingControllerTest {
         verify(listingService, times(1)).getListingStats();
     }
 }
-

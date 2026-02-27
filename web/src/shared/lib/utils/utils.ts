@@ -37,3 +37,44 @@ export function formatDate(dateString: string, includeYear: boolean = true): str
   }
   return new Date(dateString).toLocaleDateString('en-US', options)
 }
+
+/**
+ * Relative time string (e.g. "Posted 2d ago")
+ * @param dateString - ISO date string
+ * @param prefix - Optional prefix, e.g. "Posted "
+ * @returns e.g. "Posted 2d ago", "Posted 1h ago", "Posted just now"
+ */
+export function timeAgo(dateString: string, prefix: string = 'Posted '): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+  if (seconds < 60) return `${prefix}just now`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${prefix}${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${prefix}${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${prefix}${days}d ago`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${prefix}${months}mo ago`
+  const years = Math.floor(months / 12)
+  return `${prefix}${years}y ago`
+}
+
+/**
+ * Slugify a name for use in share URLs (e.g. "Amanda Smith" -> "amanda-smith").
+ * Lowercase, replace spaces with -, strip non-alphanumeric/hyphen.
+ * @param name - Display name
+ * @param fallback - Used when name is empty (default "listings")
+ */
+export function slugifyName(name: string | null | undefined, fallback: string = 'listings'): string {
+  if (!name || typeof name !== 'string') return fallback
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  return slug || fallback
+}

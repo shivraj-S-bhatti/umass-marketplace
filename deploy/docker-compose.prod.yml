@@ -1,0 +1,117 @@
+# Production Docker Compose configuration for UMass Marketplace
+# Deploys PostgreSQL, Spring Boot API, and Nginx frontend on single EC2 instance
+version: '3.8'
+
+services:
+  # PostgreSQL database service
+  db:
+    image: postgres:16
+    container_name: umass-marketplace-db-prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-umarket}
+      POSTGRES_USER: ${POSTGRES_USER:-umarket}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-umarket} -d ${POSTGRES_DB:-umarket}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - umass-marketplace-prod
+    # Limit resources to stay within free tier
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Spring Boot API service
+  api:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    container_name: umass-marketplace-api-prod
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-umarket}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-umarket}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      PORT: 8080
+      # AWS S3 Configuration
+      AWS_S3_ENABLED: ${AWS_S3_ENABLED:-true}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-umass-marketplace-images}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      # Image compression settings
+      IMAGE_MAX_WIDTH: ${IMAGE_MAX_WIDTH:-1200}
+      IMAGE_MAX_HEIGHT: ${IMAGE_MAX_HEIGHT:-1200}
+      IMAGE_QUALITY: ${IMAGE_QUALITY:-0.85}
+      IMAGE_MAX_SIZE_KB: ${IMAGE_MAX_SIZE_KB:-100}
+      # Listing retention
+      LISTING_RETENTION_DAYS: ${LISTING_RETENTION_DAYS:-14}
+      # JWT and OAuth
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      SUPERUSER_EMAIL: ${SUPERUSER_EMAIL}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - umass-marketplace-prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Limit resources
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # Nginx frontend service
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: umass-marketplace-web-prod
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    ports:
+      - "80:5173"
+      - "443:443"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - umass-marketplace-prod
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    # Limit resources
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  umass-marketplace-prod:
+    driver: bridge

@@ -2,35 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global CSS for Everything UMass - Warm, nostalgic Archie-era comic aesthetic */
+/* UMass design system: neutral ladder + brand hex (actions only) + focus ring */
 @layer base {
   :root {
-    /* Warm autumn color palette - cozy reds/oranges/yellows */
-    --background: 35 100% 97%; /* Warm cream/yellow */
-    --foreground: 15 85% 20%; /* Deep brown for text */
-    --card: 35 100% 99%; /* Slightly off-white cream */
-    --card-foreground: 15 85% 20%;
-    --popover: 35 100% 99%;
-    --popover-foreground: 15 85% 20%;
-    --primary: 15 85% 45%; /* Warm orange-red */
-    --primary-foreground: 35 100% 98%;
-    --secondary: 25 90% 92%; /* Light orange */
-    --secondary-foreground: 15 85% 20%;
-    --muted: 30 80% 95%; /* Warm beige */
-    --muted-foreground: 15 60% 40%;
-    --accent: 20 95% 55%; /* Bright orange */
-    --accent-foreground: 35 100% 98%;
-    --destructive: 0 84.2% 60.2%;
+    /* Light mode – warm paper */
+    --umass-maroon: 350 54% 31%;
+    --umass-grey: 0 0% 55%;
+    --background: 50 30% 96%;
+    --surface-1: 50 25% 94%;
+    --surface-2: 50 20% 99%;
+    --surface-3: 50 15% 92%;
+    --border: 50 10% 88%;
+    --border-strong: 50 10% 78%;
+    --text: 0 0% 18%;
+    --text-2: 0 0% 30%;
+    --text-3: 0 0% 55%;
+    --foreground: var(--text);
+    --card: var(--surface-2);
+    --card-foreground: var(--text);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--text);
+    /* Brand (UMass maroon) – actions/selection only, exact hex */
+    --primary: #ac312e;
+    --primary-hover: #850007;
+    --primary-pressed: #72000a;
+    --primary-foreground: #ffffff;
+    --ring: #d45750; /* focus outline only, not fill */
+    --secondary: var(--surface-1);
+    --secondary-foreground: var(--text);
+    --muted: var(--surface-1);
+    --muted-foreground: var(--text-3);
+    --accent: #850007;
+    --accent-foreground: #ffffff;
+    --destructive: 0.62 0.14 25;
     --destructive-foreground: 0 0% 98%;
-    --border: 15 85% 30%; /* Dark brown for thick borders */
-    --input: 15 85% 30%;
-    --ring: 20 95% 55%;
-    --radius: 1rem; /* More rounded for comic panels */
-    --chart-1: 15 85% 45%;
-    --chart-2: 25 90% 55%;
-    --chart-3: 35 95% 60%;
-    --chart-4: 20 95% 55%;
-    --chart-5: 15 85% 50%;
+    --input: var(--surface-3);
+    --radius: 0.5rem;
+    --success: 0.66 0.12 145;
+    --warning: 0.70 0.12 85;
+    --danger: 0.62 0.14 25;
+    --chart-1: 350 54% 31%;
+    --chart-2: 0 0% 55%;
+    --chart-3: 0 0% 65%;
+    --chart-4: 0 0% 75%;
+    --chart-5: 50 10% 90%;
+  }
+
+  .dark {
+    /* Dark mode – neutral ladder (each step noticeably lighter so cards lift) */
+    --background: 0 0% 5%;
+    --surface-1: 0 0% 10%;
+    --surface-2: 0 0% 16%;
+    --surface-3: 0 0% 22%;
+    --border: 0 0% 28%;
+    --border-strong: 0 0% 38%;
+    --text: 0 0% 96%;
+    --text-2: 0 0% 84%;
+    --text-3: 0 0% 68%;
+    --foreground: var(--text);
+    --card: var(--surface-2);
+    --card-foreground: var(--text);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--text);
+    --secondary: var(--surface-1);
+    --secondary-foreground: var(--text);
+    --muted: var(--surface-1);
+    --muted-foreground: var(--text-3);
+    --input: var(--surface-3);
+    /* Brand – same hex (primary = action/selected only) */
+    --primary: #ac312e;
+    --primary-hover: #850007;
+    --primary-pressed: #72000a;
+    --primary-foreground: #ffffff;
+    --ring: #d45750;
+    --accent: #850007;
+    --accent-foreground: #ffffff;
+    --destructive: var(--danger);
+    --destructive-foreground: 0 0% 98%;
+    --chart-1: 350 54% 31%;
+    --chart-2: 0 0% 55%;
+    --chart-3: 0 0% 40%;
+    --chart-4: 0 0% 30%;
+    --chart-5: 0 0% 20%;
   }
 }
 
@@ -39,63 +92,34 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased text-base;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
   }
-  
-  /* Custom scrollbar - matches theme */
+
+  /* Scrollbar – theme-aware */
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+    scrollbar-color: hsl(var(--border)) hsl(var(--muted));
   }
-  
+
   *::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
   }
-  
+
   *::-webkit-scrollbar-track {
     background: hsl(var(--muted));
-    border-radius: 6px;
+    border-radius: 4px;
   }
-  
-  *::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
-    border-radius: 6px;
-    border: 2px solid hsl(var(--muted));
-  }
-  
-  *::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--accent));
-  }
-}
 
-/* Comic panel style - rounded with thick border */
-@layer components {
-  .comic-panel {
-    @apply rounded-2xl border-4 border-foreground bg-card;
-    box-shadow: 
-      4px 4px 0px rgba(0, 0, 0, 0.2),
-      8px 8px 0px rgba(0, 0, 0, 0.1);
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
   }
-  
-  .comic-card {
-    @apply comic-panel p-4;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  
-  /* Warm paper texture */
-  .paper-texture {
-    background-color: hsl(var(--card));
-    background-image: 
-      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-  
-  /* Leaf decoration component */
-  .leaf-decoration {
-    position: absolute;
-    opacity: 0.3;
-    pointer-events: none;
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
   }
 }

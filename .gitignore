@@ -131,6 +131,10 @@ dist
 .cache/
 public
 
+# Vite: allow web app static assets
+!web/public/
+!web/public/**
+
 # Vuepress build output
 .vuepress/dist
 
@@ -175,8 +179,16 @@ Thumbs.db
 # Docker
 .dockerignore
 
-# Environment files
+# Environment files (never commit secrets - any .env anywhere)
 .env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+api/.env
+deploy/.env
+*.pem
+*.key
 .env.local
 .env.development.local
 .env.test.local
@@ -203,3 +215,6 @@ temp/
 samples/
 sample_sale.xlsx
 web/scripts/
+
+# Nested standalone starter repo (do not track in umass-marketplace)
+CampusCommons-starter-college-web-platform/

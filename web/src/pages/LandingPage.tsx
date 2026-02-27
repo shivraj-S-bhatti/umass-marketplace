@@ -1,181 +1,153 @@
-import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
+import { useNavigate } from 'react-router-dom'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
-import { Store, Calendar, MessageSquare, Users, Trophy, ArrowRight, ShoppingBag, Sparkles } from 'lucide-react'
+import { Mail, MessageCircle } from 'lucide-react'
+import { useUser } from '@/shared/contexts/UserContext'
+import { useLoginModal } from '@/shared/contexts/LoginModalContext'
 
-// Landing Page - Hero section showcasing the platform's future vision
-// Features: Marketplace, Event Hub, Common Room, Clubs, Sports
-export default function LandingPage() {
-  const features = [
-    {
-      icon: Store,
-      title: 'Marketplace',
-      description: 'Buy and sell with verified UMass students. Zero fees, campus proximity, and real-time distance tracking.',
-      path: '/',
-      color: 'bg-primary/20 border-primary'
-    },
-    {
-      icon: Calendar,
-      title: 'Event Hub',
-      description: 'Discover campus events, parties, workshops, and gatherings. Create and promote your own events.',
-      path: '/events',
-      color: 'bg-accent/30 border-accent'
-    },
-    {
-      icon: MessageSquare,
-      title: 'Common Room',
-      description: 'Join discussions, ask questions, and connect with your UMass community in organized forums.',
-      path: '/common-room',
-      color: 'bg-secondary/30 border-secondary'
-    },
-    {
-      icon: Users,
-      title: 'Clubs',
-      description: 'Find and join student organizations. Manage your club, recruit members, and share updates.',
-      path: '/clubs',
-      color: 'bg-primary/10 border-primary/50'
-    },
-    {
-      icon: Trophy,
-      title: 'Sports',
-      description: 'Organize pickup games, join intramural teams, and find your next basketball or soccer match.',
-      path: '/sports',
-      color: 'bg-accent/20 border-accent/70'
-    },
-  ]
+const DISCORD_URL = 'https://discord.gg/Xb4W6FUh'
+const GITHUB_ISSUES = 'https://github.com/shivraj-S-bhatti/umass-marketplace/issues'
+const GITHUB_BUG = `${GITHUB_ISSUES}/new?template=bug_report.md`
+const GITHUB_FEATURE = `${GITHUB_ISSUES}/new?template=feature_request.md`
+
+export default function BentoHomePage() {
+  const { isAuthenticated } = useUser()
+  const { openLoginModal } = useLoginModal()
+  const navigate = useNavigate()
+  const handleProtectedNav = (path: string) => {
+    if (isAuthenticated) {
+      navigate(path)
+    } else {
+      openLoginModal()
+    }
+  }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-      {/* Hero Section */}
-      <section className="relative border-b-4 border-foreground bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/10 paper-texture py-12 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-comic border-2 border-foreground bg-card mb-4">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold">Your All-in-One UMass Hub</span>
-            </div>
-            
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
-              Everything UMass,<br />
-              <span className="text-primary">We've Got You</span>
+    <div className="flex-1 flex flex-col min-h-0 p-4 md:p-6 lg:p-8 gap-4 md:gap-6">
+      {/* Hero card: fixed height so it never grows with viewport; mascot always touches bottom */}
+      <Card className="border border-border w-full h-[200px] sm:h-[240px] md:h-[280px] shrink-0 relative overflow-hidden !p-0">
+        <CardContent className="relative w-full h-full flex items-center p-5 sm:p-6 md:p-8 pb-0">
+          {/* Left: text + button — items-center on parent keeps this vertically centered */}
+          <div className="flex flex-col space-y-3 text-left pr-36 sm:pr-44 md:pr-56 lg:pr-64">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">
+              Everything UMass,{' '}
+              <span className="text-primary">We've Got You!</span>
             </h1>
-            
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Your one-stop platform for campus life. Host your clubs, organize events, 
-              join pickup games, or engage in commerce—all in one verified, student-only community.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button 
-                size="lg" 
-                className="text-base px-8 py-6 rounded-comic border-2 border-foreground shadow-comic"
-                asChild
-              >
-                <Link to="/">
-                  <ShoppingBag className="h-5 w-5 mr-2" />
-                  Explore Marketplace
-                </Link>
+            {!isAuthenticated ? (
+              <Button size="lg" className="mt-2 w-fit" onClick={openLoginModal}>
+                <Mail className="h-4 w-4 mr-2" />
+                Sign in with UMass Email
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="text-base px-8 py-6 rounded-comic border-2 border-foreground"
-                asChild
-              >
-                <Link to="/login">
-                  Get Started
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Link>
-              </Button>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-2">
+                Welcome back! Pick a tile below to get started.
+              </p>
+            )}
           </div>
-        </div>
-      </section>
 
-      {/* Features Grid */}
-      <section className="container mx-auto px-4 py-12 md:py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-3">Everything You Need for Campus Life</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            One platform. One community. Everything UMass.
-          </p>
-        </div>
+          {/* Mascot: absolute bottom-right so feet always sit on the card's bottom edge */}
+          <div className="absolute bottom-0 right-0 pr-5 sm:pr-6 md:pr-8 flex items-end pointer-events-none">
+            <img
+              src="/mascot.png"
+              alt="Sam the Minuteman"
+              className="w-36 sm:w-44 md:w-56 lg:w-64 h-auto object-contain object-bottom block"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {features.map((feature) => {
-            const Icon = feature.icon
-            return (
-              <Card 
-                key={feature.title}
-                className={`hover:shadow-comic transition-all border-4 ${feature.color} cursor-pointer group`}
-              >
-                <CardHeader>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-comic border-2 border-foreground bg-card">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-sm mb-4 min-h-[3rem]">
-                    {feature.description}
-                  </CardDescription>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="w-full border-2 border-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                    asChild
-                  >
-                    <Link to={feature.path}>
-                      Learn More
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="border-t-4 border-foreground bg-card paper-texture py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <Card className="max-w-3xl mx-auto border-4 border-foreground bg-gradient-to-br from-primary/20 to-accent/20">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl md:text-4xl mb-3">
-                Ready to Join the UMass Community?
-              </CardTitle>
-              <CardDescription className="text-base md:text-lg">
-                Connect with thousands of verified UMass students. Buy, sell, organize, and engage—all in one place.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button 
-                size="lg" 
-                className="text-base px-8 py-6 rounded-comic border-2 border-foreground shadow-comic"
-                asChild
-              >
-                <Link to="/login">
-                  Sign In with UMass Email
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Link>
+      {/* Bento grid — all tiles same color, buttons bottom-aligned */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 shrink-0">
+        {/* Marketplace */}
+        <Card
+          className="border border-border hover:border-border/80 transition-colors cursor-pointer"
+          onClick={() => handleProtectedNav('/marketplace')}
+        >
+          <CardContent className="p-4 flex flex-col h-full">
+            <h3 className="font-semibold text-sm">Marketplace</h3>
+            <p className="text-xs text-muted-foreground mt-1.5">Buy and sell with verified UMass students.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button className="w-full h-9" onClick={(e) => { e.stopPropagation(); handleProtectedNav('/marketplace') }}>
+                Browse listings
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="text-base px-8 py-6 rounded-comic border-2 border-foreground"
-                asChild
+              <button
+                onClick={(e) => { e.stopPropagation(); handleProtectedNav('/marketplace/sell') }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-center"
               >
-                <Link to="/">
-                  Browse Marketplace
-                </Link>
+                Post an item
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* UMass links directory */}
+        <Card
+          className="border border-border hover:border-border/80 transition-colors cursor-pointer"
+          onClick={() => handleProtectedNav('/directory')}
+        >
+          <CardContent className="p-4 flex flex-col h-full">
+            <h3 className="font-semibold text-sm">UMass Links Directory</h3>
+            <p className="text-xs text-muted-foreground mt-1.5">Useful campus links, curated by students.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button variant="outline" className="w-full h-9" onClick={(e) => { e.stopPropagation(); handleProtectedNav('/directory') }}>
+                Explore links
               </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleProtectedNav('/directory/submit') }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors w-full text-center"
+              >
+                Submit a link
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Leasing (coming soon) */}
+        <Card className="border border-border">
+          <CardContent className="p-4 flex flex-col h-full">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm">Leasing</h3>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full leading-none">Coming soon</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">Sublets and lease transfers, verified.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button variant="outline" className="w-full h-9" disabled>
+                Vote to prioritize
+              </Button>
+              <div className="h-4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contribute */}
+        <Card className="border border-border hover:border-border/80 transition-colors">
+          <CardContent className="p-4 flex flex-col h-full">
+            <h3 className="font-semibold text-sm">Contribute</h3>
+            <p className="text-xs text-muted-foreground mt-1.5">Report issues or suggest features.</p>
+            <div className="mt-auto pt-3 space-y-2">
+              <Button className="w-full h-9" asChild>
+                <a href={GITHUB_BUG} target="_blank" rel="noopener noreferrer">
+                  Report a bug
+                </a>
+              </Button>
+              <Button variant="outline" className="w-full h-9" asChild>
+                <a href={GITHUB_FEATURE} target="_blank" rel="noopener noreferrer">
+                  Request a feature
+                </a>
+              </Button>
+              <a
+                href={DISCORD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors pt-1"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Join Discord
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

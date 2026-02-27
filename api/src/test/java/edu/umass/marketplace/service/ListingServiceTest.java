@@ -4,7 +4,10 @@ import edu.umass.marketplace.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.marketplace.model.Condition;
 import edu.umass.marketplace.marketplace.model.Listing;
 import edu.umass.marketplace.marketplace.model.User;
+import edu.umass.marketplace.common.config.SuperuserConfig;
+import edu.umass.marketplace.marketplace.repository.ChatRepository;
 import edu.umass.marketplace.marketplace.repository.ListingRepository;
+import edu.umass.marketplace.marketplace.repository.MessageRepository;
 import edu.umass.marketplace.marketplace.repository.UserRepository;
 import edu.umass.marketplace.marketplace.response.ListingResponse;
 import edu.umass.marketplace.marketplace.response.StatsResponse;
@@ -23,6 +26,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.security.Principal;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -49,6 +53,15 @@ class ListingServiceTest {
     @Mock
     private Authentication authentication;
 
+    @Mock
+    private SuperuserConfig superuserConfig;
+
+    @Mock
+    private ChatRepository chatRepository;
+
+    @Mock
+    private MessageRepository messageRepository;
+
     @InjectMocks
     private edu.umass.marketplace.marketplace.service.ListingService listingService;
 
@@ -62,6 +75,7 @@ class ListingServiceTest {
         lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
         lenient().when(authentication.getPrincipal()).thenReturn("dummy@umass.edu");
+        lenient().when(superuserConfig.isSuperuser(anyString())).thenReturn(false);
 
         testSeller = new User();
         testSeller.setId(UUID.randomUUID());
@@ -175,11 +189,14 @@ class ListingServiceTest {
     @Test
     void shouldCreateBulkListings() {
         // Given
+        java.security.Principal mockPrincipal = mock(java.security.Principal.class);
+        when(mockPrincipal.getName()).thenReturn("dummy@umass.edu");
         List<CreateListingRequest> requests = List.of(testRequest);
+        when(userRepository.findByEmail("dummy@umass.edu")).thenReturn(Optional.of(testSeller));
         when(listingRepository.saveAll(anyList())).thenReturn(List.of(testListing));
 
         // When
-        List<ListingResponse> result = listingService.createListingsBulk(requests, null);
+        List<ListingResponse> result = listingService.createListingsBulk(requests, mockPrincipal);
 
         // Then
         assertThat(result).hasSize(1);
@@ -192,9 +209,11 @@ class ListingServiceTest {
         when(listingRepository.findById(testListing.getId()))
                 .thenReturn(Optional.of(testListing));
         when(listingRepository.save(any(Listing.class))).thenReturn(testListing);
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn(testSeller.getEmail());
 
         // When
-        ListingResponse result = listingService.updateListing(testListing.getId(), testRequest);
+        ListingResponse result = listingService.updateListing(testListing.getId(), testRequest, principal);
 
         // Then
         assertThat(result).isNotNull();
@@ -203,37 +222,58 @@ class ListingServiceTest {
 
     @Test
     void shouldThrowExceptionWhenUpdatingNonExistentListing() {
-        // Given
+        // Given: findById returns empty so principal is never used
         UUID nonExistentId = UUID.randomUUID();
         when(listingRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        Principal principal = mock(Principal.class);
 
         // When & Then
-        assertThatThrownBy(() -> listingService.updateListing(nonExistentId, testRequest))
+        assertThatThrownBy(() -> listingService.updateListing(nonExistentId, testRequest, principal))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("not found");
     }
 
     @Test
+    void shouldDenyUpdatingListingWhenNotOwnerOrSuperuser() {
+        when(listingRepository.findById(testListing.getId())).thenReturn(Optional.of(testListing));
+        when(superuserConfig.isSuperuser("other@umass.edu")).thenReturn(false);
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn("other@umass.edu");
+
+        assertThatThrownBy(() -> listingService.updateListing(testListing.getId(), testRequest, principal))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class)
+                .hasMessageContaining("Not authorized");
+    }
+
+    @Test
     void shouldDeleteListing() {
-        // Given
-        when(listingRepository.existsById(testListing.getId())).thenReturn(true);
+        // Given: deleteListing uses findById then deleteById; caller is owner
+        when(listingRepository.findById(testListing.getId())).thenReturn(Optional.of(testListing));
+        when(messageRepository.clearSharedListingByListingId(testListing.getId())).thenReturn(0);
+        when(chatRepository.clearListingContextByListingId(testListing.getId())).thenReturn(0);
         doNothing().when(listingRepository).deleteById(testListing.getId());
+        Principal principal = mock(Principal.class);
+        when(principal.getName()).thenReturn(testSeller.getEmail());
 
         // When
-        listingService.deleteListing(testListing.getId());
+        listingService.deleteListing(testListing.getId(), principal);
 
         // Then
+        verify(listingRepository, times(1)).findById(testListing.getId());
+        verify(messageRepository, times(1)).clearSharedListingByListingId(testListing.getId());
+        verify(chatRepository, times(1)).clearListingContextByListingId(testListing.getId());
         verify(listingRepository, times(1)).deleteById(testListing.getId());
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNonExistentListing() {
-        // Given
+        // Given: deleteListing uses findById first
         UUID nonExistentId = UUID.randomUUID();
-        when(listingRepository.existsById(nonExistentId)).thenReturn(false);
+        when(listingRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        Principal principal = mock(Principal.class);
 
         // When & Then
-        assertThatThrownBy(() -> listingService.deleteListing(nonExistentId))
+        assertThatThrownBy(() -> listingService.deleteListing(nonExistentId, principal))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("not found");
     }
@@ -273,4 +313,3 @@ class ListingServiceTest {
         verify(listingRepository, times(1)).countByStatus("ON_HOLD");
     }
 }
-

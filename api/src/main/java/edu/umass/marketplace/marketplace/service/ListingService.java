@@ -1,12 +1,15 @@
 package edu.umass.marketplace.marketplace.service;
 
+import edu.umass.marketplace.common.config.SuperuserConfig;
 import edu.umass.marketplace.marketplace.dto.CreateListingRequest;
 import edu.umass.marketplace.marketplace.model.Condition;
-import edu.umass.marketplace.marketplace.response.ListingResponse;
 import edu.umass.marketplace.marketplace.model.Listing;
 import edu.umass.marketplace.marketplace.model.User;
+import edu.umass.marketplace.marketplace.repository.ChatRepository;
 import edu.umass.marketplace.marketplace.repository.ListingRepository;
+import edu.umass.marketplace.marketplace.repository.MessageRepository;
 import edu.umass.marketplace.marketplace.repository.UserRepository;
+import edu.umass.marketplace.marketplace.response.ListingResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,62 +33,21 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
-
-    /**
-     * Helper to get the current authenticated user from the security context
-     */
-    private User getCurrentAuthenticatedUser() {
-        // Uses Spring Security to get the current principal
-        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        String email = null;
-        String name = null;
-        String pictureUrl = null;
-
-        if (principal instanceof edu.umass.marketplace.common.security.UserPrincipal userPrincipal) {
-            email = userPrincipal.getEmail();
-            name = userPrincipal.getName();
-            pictureUrl = userPrincipal.getPictureUrl();
-        } else if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
-            email = springUser.getUsername();
-        } else if (principal instanceof String principalStr) {
-            email = principalStr;
-        }
-
-        if (email == null) return null;
-
-        // Try to find existing user; if not found, create one from principal info
-        var opt = userRepository.findByEmail(email);
-        if (opt.isPresent()) return opt.get();
-
-        User u = new User();
-        u.setEmail(email);
-        u.setName(name != null ? name : "Unknown User");
-        u.setPictureUrl(pictureUrl);
-        return userRepository.save(u);
-    }
+    private final ChatRepository chatRepository;
+    private final MessageRepository messageRepository;
+    private final ImageService imageService;
+    private final SuperuserConfig superuserConfig;
 
     @Transactional
     public ListingResponse createListing(CreateListingRequest request, java.security.Principal principal) {
-        // Get seller from authenticated principal, or use QA Testing user if not authenticated
-        User seller;
         if (principal == null || principal.getName() == null || principal.getName().trim().isEmpty()) {
-            // Use QA Testing user for unauthenticated requests
-            String qaEmail = "qa-testing@umass.edu";
-            seller = userRepository.findByEmail(qaEmail)
-                .orElseGet(() -> {
-                    User qaUser = new User();
-                    qaUser.setEmail(qaEmail);
-                    qaUser.setName("QA Testing");
-                    return userRepository.save(qaUser);
-                });
-            log.debug("🔍 Using QA Testing user for unauthenticated listing creation");
-        } else {
-            String email = principal.getName();
-            seller = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "User not found in database. Please try logging in again."));
+            throw new IllegalArgumentException("Authentication required to create a listing.");
         }
+
+        String email = principal.getName();
+        User seller = userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "User not found in database. Please try logging in again."));
 
         Listing listing = new Listing();
         listing.setTitle(request.getTitle());
@@ -94,20 +56,9 @@ public class ListingService {
         listing.setCategory(request.getCategory());
         listing.setCondition(Condition.fromDisplayName(request.getCondition()));
         
-        // Handle imageUrl - use null for "not set", only set if provided and non-empty
-        // Standard: null = not set, non-empty string = image provided
-        String imageUrl = request.getImageUrl();
-        if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-            int imageSize = imageUrl.length();
-            log.debug("🔍 Setting imageUrl, size: {} characters", imageSize);
-            if (imageSize > 1000000) {
-                log.warn("⚠️ Image data is very large: {} characters (max allowed: 1000000)", imageSize);
-            }
-            listing.setImageUrl(imageUrl.trim());
-        } else {
-            // Use null to indicate image is not set (standard convention)
-            listing.setImageUrl(null);
-        }
+        // Defer image upload until after save so we have the real listing ID for S3 key (listings/{id}/...)
+        String imageUrlFromRequest = request.getImageUrl();
+        listing.setImageUrl(null);
         
         listing.setLatitude(request.getLatitude());
         listing.setLongitude(request.getLongitude());
@@ -123,6 +74,20 @@ public class ListingService {
         listing.setSeller(seller);
 
         Listing savedListing = listingRepository.save(listing);
+        
+        // Upload image with actual listing ID so S3 key is listings/{actualId}/...
+        if (imageUrlFromRequest != null && !imageUrlFromRequest.trim().isEmpty()) {
+            try {
+                String processedImageUrl = imageService.compressAndUpload(imageUrlFromRequest.trim(), savedListing.getId());
+                savedListing.setImageUrl(processedImageUrl);
+                listingRepository.save(savedListing);
+                log.debug("🔍 Processed image with listing ID {}, final size: {} characters",
+                    savedListing.getId(), processedImageUrl != null ? processedImageUrl.length() : 0);
+            } catch (Exception e) {
+                log.error("Error processing image: {}", e.getMessage(), e);
+                // Leave imageUrl null; listing is already saved
+            }
+        }
         log.debug("🔍 Created listing with ID: {}", savedListing.getId());
         
         // Ensure seller is loaded (eager fetch to avoid lazy loading issues)
@@ -240,11 +205,13 @@ public class ListingService {
             throw new RuntimeException("Request list cannot be empty");
         }
 
-        // Get seller from authenticated user context (OAuth2)
-        User seller = getCurrentAuthenticatedUser();
-        if (seller == null) {
-            throw new RuntimeException("User not authenticated");
+        if (principal == null || principal.getName() == null || principal.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Authentication required to create listings.");
         }
+        String email = principal.getName();
+        User seller = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found in database. Please try logging in again."));
 
         // Validate each request
         for (int i = 0; i < requests.size(); i++) {
@@ -260,6 +227,7 @@ public class ListingService {
             }
         }
 
+        // Build listings without uploading images so we get real IDs from save
         List<Listing> listings = requests.stream()
                 .map(request -> {
                     Listing listing = new Listing();
@@ -268,18 +236,9 @@ public class ListingService {
                     listing.setPrice(request.getPrice());
                     listing.setCategory(request.getCategory());
                     listing.setCondition(Condition.fromDisplayName(request.getCondition()));
-                    // Handle imageUrl - use null for "not set" (standard convention)
-                    String bulkImageUrl = request.getImageUrl();
-                    if (bulkImageUrl != null && !bulkImageUrl.trim().isEmpty()) {
-                        log.debug("🔍 Bulk listing imageUrl set: {} characters", bulkImageUrl.length());
-                        listing.setImageUrl(bulkImageUrl.trim());
-                    } else {
-                        log.debug("🔍 Bulk listing imageUrl is empty or null, setting to null");
-                        listing.setImageUrl(null);
-                    }
+                    listing.setImageUrl(null); // set after save so S3 key uses actual listing ID
                     listing.setLatitude(request.getLatitude());
                     listing.setLongitude(request.getLongitude());
-                    // Parse mustGoBy from ISO 8601 string if provided
                     if (request.getMustGoBy() != null && !request.getMustGoBy().trim().isEmpty()) {
                         try {
                             listing.setMustGoBy(java.time.OffsetDateTime.parse(request.getMustGoBy()));
@@ -296,6 +255,24 @@ public class ListingService {
         List<Listing> savedListings = listingRepository.saveAll(listings);
         log.debug("🔍 Created {} listings successfully", savedListings.size());
 
+        // Upload images using actual listing IDs (listings/{id}/...)
+        for (int i = 0; i < savedListings.size(); i++) {
+            String bulkImageUrl = requests.get(i).getImageUrl();
+            if (bulkImageUrl != null && !bulkImageUrl.trim().isEmpty()) {
+                Listing listing = savedListings.get(i);
+                try {
+                    String processedImageUrl = imageService.compressAndUpload(bulkImageUrl.trim(), listing.getId());
+                    listing.setImageUrl(processedImageUrl);
+                    listingRepository.save(listing);
+                    log.debug("🔍 Bulk listing image processed for listing ID {}", listing.getId());
+                } catch (Exception e) {
+                    log.error("Error processing bulk image: {}", e.getMessage(), e);
+                    listing.setImageUrl(bulkImageUrl.trim());
+                    listingRepository.save(listing);
+                }
+            }
+        }
+
         return savedListings.stream()
                 .map(ListingResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -305,11 +282,19 @@ public class ListingService {
      * Update a listing
      */
     @Transactional
-    public ListingResponse updateListing(UUID id, CreateListingRequest request) {
+    public ListingResponse updateListing(UUID id, CreateListingRequest request, java.security.Principal principal) {
         log.debug("🔍 Updating listing with ID: {}", id);
 
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
+
+        String callerEmail = principal != null ? principal.getName() : null;
+        boolean isSuperuser = superuserConfig.isSuperuser(callerEmail);
+        boolean isOwner = listing.getSeller() != null && listing.getSeller().getEmail() != null
+                && listing.getSeller().getEmail().equals(callerEmail);
+        if (!isOwner && !isSuperuser) {
+            throw new org.springframework.security.access.AccessDeniedException("Not authorized to update this listing");
+        }
 
         // Update status if provided
         if (request.getStatus() != null) {
@@ -336,9 +321,23 @@ public class ListingService {
         }
         if (request.getImageUrl() != null) {
             // Update imageUrl: empty string clears image (sets to null), non-empty sets new image
-            // Standard: null = not set, non-empty string = image provided
             String imageUrl = request.getImageUrl().trim();
-            listing.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
+            if (imageUrl.isEmpty()) {
+                // Delete old image from S3 if it exists
+                if (listing.getImageUrl() != null && listing.getImageUrl().startsWith("https://")) {
+                    imageService.deleteImage(listing.getImageUrl());
+                }
+                listing.setImageUrl(null);
+            } else {
+                // Compress and upload new image
+                try {
+                    String processedImageUrl = imageService.compressAndUpload(imageUrl, listing.getId());
+                    listing.setImageUrl(processedImageUrl);
+                } catch (Exception e) {
+                    log.error("Error processing image update: {}", e.getMessage(), e);
+                    listing.setImageUrl(imageUrl);
+                }
+            }
         }
         if (request.getLatitude() != null) {
             listing.setLatitude(request.getLatitude());
@@ -367,16 +366,35 @@ public class ListingService {
     }
 
     /**
-     * Delete a listing
+     * Delete a listing. Caller must be the listing owner or a superuser (app.superuser-email from env).
      */
     @Transactional
-    public void deleteListing(UUID id) {
+    public void deleteListing(UUID id, java.security.Principal principal) {
         log.debug("🔍 Deleting listing with ID: {}", id);
 
-        if (!listingRepository.existsById(id)) {
-            throw new RuntimeException("Listing not found with id: " + id);
+        Listing listing = listingRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Listing not found with id: " + id));
+
+        String callerEmail = principal != null ? principal.getName() : null;
+        boolean isSuperuser = superuserConfig.isSuperuser(callerEmail);
+        boolean isOwner = listing.getSeller() != null && listing.getSeller().getEmail() != null
+            && listing.getSeller().getEmail().equals(callerEmail);
+        if (!isOwner && !isSuperuser) {
+            throw new org.springframework.security.access.AccessDeniedException("Not authorized to delete this listing");
         }
 
+        // Delete associated image from S3 if it exists
+        if (listing.getImageUrl() != null && listing.getImageUrl().startsWith("https://")) {
+            try {
+                imageService.deleteImage(listing.getImageUrl());
+            } catch (Exception e) {
+                log.warn("Failed to delete image for listing {}: {}", id, e.getMessage());
+            }
+        }
+
+        // 1:1 conversation model: preserve chat history and only clear listing references.
+        messageRepository.clearSharedListingByListingId(id);
+        chatRepository.clearListingContextByListingId(id);
         listingRepository.deleteById(id);
         log.debug("🔍 Deleted listing with ID: {}", id);
     }
@@ -406,6 +424,22 @@ public class ListingService {
         long onHoldCount = listingRepository.countByStatus(Listing.STATUS_ON_HOLD);
 
         log.debug("🔍 Stats - Active: {}, Sold: {}, On Hold: {}", activeCount, soldCount, onHoldCount);
+
+        return new edu.umass.marketplace.marketplace.response.StatsResponse(activeCount, soldCount, onHoldCount);
+    }
+
+    /**
+     * Get listing statistics for a specific seller (counts by status)
+     */
+    @Transactional(readOnly = true)
+    public edu.umass.marketplace.marketplace.response.StatsResponse getListingStatsBySeller(UUID sellerId) {
+        log.debug("🔍 Getting listing statistics for seller ID: {}", sellerId);
+
+        long activeCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ACTIVE);
+        long soldCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_SOLD);
+        long onHoldCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ON_HOLD);
+
+        log.debug("🔍 Seller {} stats - Active: {}, Sold: {}, On Hold: {}", sellerId, activeCount, soldCount, onHoldCount);
 
         return new edu.umass.marketplace.marketplace.response.StatsResponse(activeCount, soldCount, onHoldCount);
     }

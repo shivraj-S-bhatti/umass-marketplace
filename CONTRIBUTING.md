@@ -42,21 +42,18 @@ Thank you for your interest in contributing to UMass Marketplace! This guide wil
 
 ## 🌳 Branching Strategy
 
-We use GitFlow with the following branches:
+We use a main-first workflow:
 
-- **`main`** - Production-ready code
-- **`develop`** - Integration branch for features
-- **`feature/*`** - Feature development branches
-- **`hotfix/*`** - Critical bug fixes
-- **`release/*`** - Release preparation branches
+- **`main`** - Production branch and default PR target
+- **`feature/*`** - Feature and improvement branches
+- **`fix/*`** - Bug-fix branches
 
 ### Branch Naming Convention
 
 ```
 feature/listing-image-upload
 feature/user-dashboard
-hotfix/security-patch
-release/v1.1.0
+fix/chat-shared-listing-regression
 ```
 
 ## 📝 Development Workflow
@@ -64,8 +61,8 @@ release/v1.1.0
 ### 1. Create a Feature Branch
 
 ```bash
-git checkout develop
-git pull origin develop
+git checkout main
+git pull origin main
 git checkout -b feature/your-feature-name
 ```
 
@@ -135,7 +132,7 @@ Closes #67
 git push origin feature/your-feature-name
 ```
 
-Create a pull request targeting the `develop` branch.
+Create a pull request targeting the `main` branch.
 
 ## 🎨 Code Style Guidelines
 

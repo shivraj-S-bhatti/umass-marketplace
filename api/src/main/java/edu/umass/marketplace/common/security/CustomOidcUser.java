@@ -15,7 +15,7 @@ public class CustomOidcUser extends UserPrincipal implements OidcUser {
 
     public CustomOidcUser(OidcUser delegate, UUID id, String email, String name, String pictureUrl,
                          Collection<? extends GrantedAuthority> authorities) {
-        super(id, email, name, pictureUrl);
+        super(id, email, name, pictureUrl, authorities);
         this.delegate = delegate;
     }
 

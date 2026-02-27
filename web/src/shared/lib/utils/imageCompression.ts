@@ -1,10 +1,10 @@
 /**
- * Compresses an image by converting it to a canvas and reducing quality/dimensions
- * Returns a promise that resolves to compressed base64 data URL
+ * Compresses an image by converting it to a canvas and reducing quality/dimensions.
+ * Use a low maxSizeKB (e.g. 80) when storing in Postgres to keep storage small.
  * @param dataUrl - The image data URL to compress
- * @param maxSizeKB - Maximum size in KB (default 400KB)
+ * @param maxSizeKB - Maximum size in KB (default 80 for small storage)
  */
-export function compressImage(dataUrl: string, maxSizeKB: number = 400): Promise<string> {
+export function compressImage(dataUrl: string, maxSizeKB: number = 80): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => {

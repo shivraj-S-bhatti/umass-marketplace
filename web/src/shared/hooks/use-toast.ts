@@ -3,7 +3,7 @@ import * as React from "react"
 import type {
   ToastActionElement,
   ToastProps,
-} from "@/components/ui/toast"
+} from "@/shared/components/ui/toast"
 
 // Toast hook for managing toast notifications
 // Provides functions to show different types of toast messages throughout the app
@@ -155,7 +155,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
-      onOpenChange: (open) => {
+      onOpenChange: (open: boolean) => {
         if (!open) dismiss()
       },
     },

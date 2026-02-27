@@ -19,15 +19,20 @@ spring:
           starttls:
             enable: true
 
-# JWT Configuration
+# JWT Configuration (ApplicationConfig expects app.jwt-secret)
+app:
+  jwt-secret: ${JWT_SECRET}
+  superuser-email: ${SUPERUSER_EMAIL:}
+
 application:
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:86400000}
 
-# Server configuration
+# Server configuration (behind nginx: trust X-Forwarded-Proto so OAuth redirect_uri uses https)
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
 
 # Production-specific settings
 springdoc:
@@ -35,3 +40,24 @@ springdoc:
     enabled: false  # Disable Swagger UI in production
   api-docs:
     enabled: false  # Disable API docs in production
+
+# AWS S3 Configuration
+aws:
+  s3:
+    enabled: ${AWS_S3_ENABLED:true}
+    bucket-name: ${AWS_S3_BUCKET_NAME:umass-marketplace-images}
+    region: ${AWS_REGION:us-east-1}
+    access-key-id: ${AWS_ACCESS_KEY_ID}
+    secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+
+# Image Compression (aggressive for Postgres / free-tier storage)
+image:
+  compression:
+    max-width: ${IMAGE_MAX_WIDTH:800}
+    max-height: ${IMAGE_MAX_HEIGHT:800}
+    quality: ${IMAGE_QUALITY:0.6}
+    max-size-kb: ${IMAGE_MAX_SIZE_KB:40}
+
+# Listing Retention Configuration
+listing:
+  retentionDays: ${LISTING_RETENTION_DAYS:14}

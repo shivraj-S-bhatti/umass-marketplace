@@ -69,14 +69,15 @@ public class ListingController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update listing", description = "Update an existing marketplace listing")
-    public ListingResponse updateListing(@PathVariable UUID id, @Valid @RequestBody CreateListingRequest request) {
-        return listingService.updateListing(id, request);
+    public ListingResponse updateListing(@PathVariable UUID id, @Valid @RequestBody CreateListingRequest request,
+                                         java.security.Principal principal) {
+        return listingService.updateListing(id, request, principal);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete listing", description = "Delete a marketplace listing")
-    public ResponseEntity<Void> deleteListing(@PathVariable UUID id) {
-        listingService.deleteListing(id);
+    public ResponseEntity<Void> deleteListing(@PathVariable UUID id, java.security.Principal principal) {
+        listingService.deleteListing(id, principal);
         return ResponseEntity.noContent().build();
     }
 
@@ -88,6 +89,12 @@ public class ListingController {
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size
     ) {
         return listingService.getListingsBySeller(sellerId, page, size);
+    }
+
+    @GetMapping("/seller/{sellerId}/stats")
+    @Operation(summary = "Get listing statistics by seller", description = "Retrieve counts of listings by status for a specific seller")
+    public StatsResponse getListingStatsBySeller(@PathVariable UUID sellerId) {
+        return listingService.getListingStatsBySeller(sellerId);
     }
 
     @GetMapping("/stats")

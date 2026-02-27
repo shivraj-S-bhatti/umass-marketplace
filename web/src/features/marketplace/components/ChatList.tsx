@@ -33,7 +33,7 @@ export function ChatListItem({ chat, isActive, onClick, currentUser }: ChatListI
           <div>
             <p className="font-medium truncate">{otherUser.name}</p>
             <p className="text-sm text-muted-foreground truncate">
-              {chat.listing.title}
+              {chat.listing?.title || 'Direct conversation'}
             </p>
           </div>
           {chat.lastMessage && (

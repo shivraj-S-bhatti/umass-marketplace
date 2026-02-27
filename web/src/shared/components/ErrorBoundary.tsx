@@ -1,6 +1,6 @@
 // Error Boundary component for React
 // Catches JavaScript errors anywhere in the child component tree
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { Component, ErrorInfo, ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { AlertCircle } from 'lucide-react'

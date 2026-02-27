@@ -1,14 +1,48 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/ui/button'
-import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, Palette, ShoppingCart, Calendar, Users, Trophy, Store } from 'lucide-react'
-import { UserRole, useUser } from '@/shared/contexts/UserContext'
+import { ShoppingBag, Plus, LayoutDashboard, LogIn, MessageSquare, ShoppingCart, Store, Home, Link2, Sun, Moon, ChevronDown, User, LogOut } from 'lucide-react'
+import { useUser } from '@/shared/contexts/UserContext'
+import { useTheme } from '@/shared/contexts/ThemeContext'
+import { useLoginModal } from '@/shared/contexts/LoginModalContext'
+import { useCart } from '@/shared/contexts/CartContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
-import Logo from '@/shared/components/Logo'
-import { LeafWallpaper } from '@/shared/components/ui/leaf-wallpaper'
-import { useEffect } from 'react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/shared/components/ui/dropdown-menu'
+import { useToast } from '@/shared/hooks/use-toast'
+import { useEffect, useState } from 'react'
+import { getPlatformStats } from '@/features/marketplace/api/api'
 
-// Layout component for Everything UMass
-// Provides consistent navigation and page structure across the application
+function PlatformStats() {
+  const [stats, setStats] = useState({ totalStudents: 456, onlineNow: 3 })
+
+  useEffect(() => {
+    getPlatformStats()
+      .then(setStats)
+      .catch(() => {})
+  }, [])
+
+  return (
+    <span className="inline-flex rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground whitespace-nowrap">
+      {stats.totalStudents} students • {stats.onlineNow} online
+    </span>
+  )
+}
+
+const SUBAPPS = [
+  { path: '/', label: 'Home', icon: Home, disabled: false },
+  { path: '/marketplace', label: 'Marketplace', icon: Store, disabled: false },
+  { path: '/directory', label: 'Links', icon: Link2, disabled: false },
+  { path: '/leasings', label: 'Leasing', icon: Home, disabled: true },
+] as const
+
+const MARKETPLACE_PATHS = ['/marketplace', '/sell', '/dashboard', '/cart', '/listing', '/u']
+
+const marketplaceSubNavLinks = [
+  { path: '/marketplace', label: 'Explore', icon: ShoppingBag },
+  { path: '/sell', label: 'Sell', icon: Plus },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/cart', label: 'Saved Items', icon: ShoppingCart },
+]
+
 interface LayoutProps {
   children: React.ReactNode
 }
@@ -16,245 +50,168 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { role, setRole, isSeller, isBuyer, user } = useUser()
+  const { user, logout } = useUser()
+  const { theme, toggleTheme } = useTheme()
+  const { openLoginModal } = useLoginModal()
+  const { toast } = useToast()
+  const { cartCount } = useCart()
 
-  // Navigation items - same for both modes, but will show/hide based on mode
-  const allNavItems = [
-    { path: '/', label: 'Explore', icon: ShoppingBag, showIn: ['buyer', 'seller'] as UserRole[] },
-    { path: '/sell', label: 'Sell', icon: Plus, showIn: ['seller'] as UserRole[] },
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, showIn: ['seller'] as UserRole[] },
-    // { path: '/design-playground', label: 'Design', icon: Palette, showIn: ['buyer', 'seller'] as UserRole[] }, // Hidden for demo
-    { path: '/messages', label: 'Messages', icon: MessageSquare, showIn: ['buyer', 'seller'] as UserRole[] },
-  ]
+  const isMarketplace = MARKETPLACE_PATHS.some(p => location.pathname.startsWith(p))
+  const isPublicSharePath = location.pathname.startsWith('/listing/') || location.pathname.startsWith('/u/')
+  const showMarketplaceSubNav = isMarketplace && (!!user || isPublicSharePath)
+  const showCart = !!user && !isPublicSharePath
 
-  // Filter nav items based on current mode
-  const navItems = allNavItems.filter(item => item.showIn.includes(role))
-
-  // Handle role change and cart access logic
-  useEffect(() => {
-    // If user is on cart page and switches to seller mode, redirect to dashboard
-    if (location.pathname === '/cart' && isSeller) {
-      navigate('/dashboard')
-    }
-  }, [role, location.pathname, isSeller, navigate])
-
-  // Handle cart access - auto-switch to buyer if accessing cart via URL
-  useEffect(() => {
-    if (location.pathname === '/cart' && !isBuyer) {
-      setRole('buyer')
-    }
-  }, [location.pathname, isBuyer, setRole])
-
-  // Handle role toggle with redirect logic
-  const handleRoleChange = (newRole: 'buyer' | 'seller') => {
-    // If switching from buyer to seller while on cart, redirect to dashboard
-    if (location.pathname === '/cart' && newRole === 'seller') {
-      setRole(newRole)
-      navigate('/dashboard')
-    } else {
-      setRole(newRole)
-    }
-  }
-
-  // Top-tier navigation items for future enhancements
-  const topTierNavItems = [
-    { path: '/', label: 'Marketplace', icon: Store },
-    { path: '/events', label: 'Event Hub', icon: Calendar },
-    { path: '/common-room', label: 'Common Room', icon: MessageSquare },
-    { path: '/clubs', label: 'Clubs', icon: Users },
-    { path: '/sports', label: 'Sports', icon: Trophy },
-  ]
+  const currentSubapp = (location.pathname.startsWith('/listing') || location.pathname.startsWith('/u/'))
+    ? SUBAPPS.find(s => s.path === '/marketplace') ?? SUBAPPS[0]
+    : SUBAPPS.find(s =>
+        s.path === '/' ? location.pathname === '/' : location.pathname.startsWith(s.path)
+      ) ?? SUBAPPS[0]
+  const navItems = (isPublicSharePath && !user)
+    ? marketplaceSubNavLinks.filter(item => item.path === '/marketplace')
+    : marketplaceSubNavLinks.filter(item => item.path !== '/cart' || showCart)
 
   return (
     <div className="min-h-screen bg-background relative flex flex-col">
-      {/* Leaf wallpaper background */}
-      <LeafWallpaper />
-      
-      {/* Top-Tier Navigation - Future Enhancements */}
-      <nav className="border-b-4 border-foreground bg-primary/10 paper-texture relative z-10">
-        <div className="container mx-auto px-2 sm:px-4 py-2">
-          <div className="flex items-center justify-center gap-1 md:gap-2 overflow-x-auto scrollbar-hide">
-            {topTierNavItems.map(({ path, label, icon: Icon }) => {
-              const isActive = location.pathname === path || 
-                (path === '/' && location.pathname === '/') ||
-                (path !== '/' && location.pathname.startsWith(path))
-              return (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`flex items-center space-x-1.5 px-2 sm:px-3 py-1.5 rounded-comic text-xs md:text-sm font-bold transition-all border-2 whitespace-nowrap flex-shrink-0 ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground border-foreground shadow-comic'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent border-transparent hover:border-foreground'
-                  }`}
-                >
-                  <Icon className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">{label}</span>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      </nav>
-      
-      {/* Header Navigation - Tier 2 */}
-      <header className="border-b-4 border-foreground bg-card paper-texture relative z-10">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Logo />
+      {/* Header: Logo (brand/home) | App switcher (navigation) | Avatar */}
+      <header className="border-b border-border bg-card relative z-10">
+        <div className="w-full max-w-[1600px] mx-auto pl-3 pr-4 py-2.5 sm:pl-4">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            {/* Left group: Logo (brand/home) + App switcher (navigation) – left aligned */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink">
+              <Link
+                to="/"
+                className="flex items-center gap-2 shrink-0 rounded-lg px-1 py-1.5 sm:px-2 focus:outline-none focus:ring-2 focus:ring-primary/40 hover:opacity-90 min-w-0"
+                aria-label="Everything UMass – Home"
+              >
+                <img src="/UMass_Seal.png" alt="" className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0" />
+                <span className="hidden sm:inline font-graduate text-lg sm:text-xl text-foreground whitespace-nowrap tracking-tight">
+                  Everything UMass
+                </span>
+              </Link>
 
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-2">
-              {/* Shopping Cart (Buyer only) */}
-              {isBuyer && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mr-2"
-                  asChild
+              {/* App switcher – visually lighter (smaller font, neutral border), pill-style trigger */}
+              <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 shrink-0 text-sm text-muted-foreground hover:text-foreground border border-border rounded-full pl-3 pr-2 py-1.5 bg-secondary/50 hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  <Link to="/cart">
+                  <span className="font-medium">{currentSubapp.label}</span>
+                  {currentSubapp.disabled && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Soon</span>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[11rem]">
+                {SUBAPPS.map(({ path, label, icon: Icon, disabled }) => (
+                  <DropdownMenuItem
+                    key={path}
+                    disabled={disabled}
+                    onSelect={() => {
+                      if (disabled) {
+                        toast({ title: 'Coming soon', description: 'Leasing launches soon!' })
+                      } else {
+                        navigate(path)
+                      }
+                    }}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    {label}
+                    {disabled && (
+                      <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Coming soon
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            </div>
+
+            {/* Right: stats pill + auth */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <PlatformStats />
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="rounded-full border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 shrink-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.pictureUrl} alt={user.name} />
+                      <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[12rem]">
+                  <DropdownMenuLabel className="font-normal flex flex-col gap-0.5">
+                    <span className="font-semibold truncate">{user.name || 'User'}</span>
+                    <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => navigate('/profile/me')}>
+                    <User className="h-4 w-4 mr-2" />
+                    Profile & settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate('/messages')}>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Messages
+                  </DropdownMenuItem>                  
+                  <DropdownMenuItem onSelect={() => navigate('/cart')}>
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Cart
-                  </Link>
-                </Button>
-              )}
-
-              {/* Navigation Links */}
-              {navItems.map(({ path, label, icon: Icon }) => (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`flex items-center space-x-2 px-3 py-1.5 rounded-comic text-sm font-bold transition-all border-2 ${
-                    location.pathname === path
-                      ? 'bg-primary text-primary-foreground border-foreground shadow-comic'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent border-transparent hover:border-foreground'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </nav>
-
-            {/* Right Side: User Info or Login + Toggle */}
-            <div className="flex items-center space-x-3">
-              {/* Buyer/Seller Toggle */}
-              <div className="hidden md:flex items-center border-2 border-foreground rounded-comic overflow-hidden">
-                <button
-                  onClick={() => handleRoleChange('buyer')}
-                  className={`px-3 py-1.5 text-sm font-bold transition-all ${
-                    isBuyer
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
-                  }`}
-                >
-                  Buyer
-                </button>
-                <button
-                  onClick={() => handleRoleChange('seller')}
-                  className={`px-3 py-1.5 text-sm font-bold transition-all border-l-2 border-foreground ${
-                    isSeller
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground hover:bg-accent hover:text-foreground'
-                  }`}
-                >
-                  Seller
-                </button>
-              </div>
-
-              {user ? (
-                <Link to="/login">
-                  <Avatar className="cursor-pointer border-2 border-foreground">
-                    <AvatarImage src={user.pictureUrl} alt={user.name} />
-                    <AvatarFallback>{user.name ? user.name[0] : '?'}</AvatarFallback>
-                  </Avatar>
-                </Link>
-              ) : (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/login">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Login
-                  </Link>
-                </Button>
-              )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => toggleTheme()}>
+                    {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+                    {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => logout()} className="text-destructive focus:text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" size="sm" onClick={openLoginModal}>
+                <LogIn className="h-4 w-4 mr-1.5" />
+                Log in
+              </Button>
+            )}
             </div>
           </div>
+        </div>
 
-          {/* Mobile Navigation */}
-          <nav className="md:hidden mt-3 space-y-2">
-            {/* Navigation Links (Mobile) */}
-            <div className="flex flex-wrap gap-2">
-              {/* Shopping Cart (Buyer only, Mobile) */}
-              {isBuyer && (
-                <Link
-                  to="/cart"
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-comic text-sm font-medium transition-colors border-2 ${
-                    location.pathname === '/cart'
-                      ? 'bg-primary text-primary-foreground border-foreground'
-                      : 'bg-card text-muted-foreground border-foreground hover:bg-accent hover:text-foreground'
-                  }`}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  <span>Cart</span>
-                </Link>
-              )}
+        {/* Marketplace sub-nav: same left alignment as main header */}
+        {showMarketplaceSubNav && (
+          <nav className="border-t border-border/50">
+            <div className="w-full max-w-[1600px] mx-auto pl-3 pr-4 py-2 flex flex-wrap items-center gap-2 sm:pl-4">
               {navItems.map(({ path, label, icon: Icon }) => (
                 <Link
                   key={path}
                   to={path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-comic text-sm font-medium transition-colors border-2 ${
-                    location.pathname === path
-                      ? 'bg-primary text-primary-foreground border-foreground'
-                      : 'bg-card text-muted-foreground border-foreground hover:bg-accent hover:text-foreground'
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    location.pathname === path ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  <span>{label}</span>
+                  {path === '/cart' && cartCount > 0 ? `Cart (${cartCount})` : label}
                 </Link>
               ))}
             </div>
-
-            {/* Buyer/Seller Toggle (Mobile) */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center border-2 border-foreground rounded-comic overflow-hidden flex-1">
-                <button
-                  onClick={() => handleRoleChange('buyer')}
-                  className={`flex-1 px-3 py-2 text-sm font-bold transition-all ${
-                    isBuyer
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground'
-                  }`}
-                >
-                  Buyer
-                </button>
-                <button
-                  onClick={() => handleRoleChange('seller')}
-                  className={`flex-1 px-3 py-2 text-sm font-bold transition-all border-l-2 border-foreground ${
-                    isSeller
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground'
-                  }`}
-                >
-                  Seller
-                </button>
-              </div>
-            </div>
           </nav>
-        </div>
+        )}
       </header>
 
-      {/* Main Content - will be wrapped by pages that need sidebar */}
-      <main className="relative z-10 flex-1 flex flex-col min-h-0">
+      <main className="flex-1 flex flex-col min-h-0">
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t-4 border-foreground bg-card mt-auto paper-texture relative z-10">
+      <footer className="border-t border-border bg-card mt-auto">
         <div className="container mx-auto px-4 py-3">
           <div className="text-center text-xs text-muted-foreground">
-            <p className="font-medium">&copy; 2025 Everything UMass. Built for students, by students. 🍂</p>
+            <p className="font-medium">A project to build things for the UMass student community.</p>
           </div>
         </div>
       </footer>

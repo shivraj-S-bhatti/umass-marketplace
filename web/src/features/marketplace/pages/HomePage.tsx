@@ -1,23 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
-import { StickerBadge } from '@/shared/components/ui/sticker-badge'
+import { Card, CardContent, CardHeader } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Link } from 'react-router-dom'
 import { apiClient, type Listing } from '@/features/marketplace/api/api'
-import { Search, Calendar, XCircle, MapPin, Eye } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { type SearchFilters as SearchFiltersType } from '@/features/marketplace/components/SearchFilters'
 import TwoTierNavbar from '@/shared/components/TwoTierNavbar'
 import { useSearchParams } from 'react-router-dom'
+import { useListingsView } from '@/shared/contexts/ListingsViewContext'
 import { ListingDetailModal } from '@/shared/components/ui/listing-detail-modal'
+import { ListingCard } from '@/shared/components/ListingCard'
 import { useUser } from '@/shared/contexts/UserContext'
-import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
-import { getDistanceText, requestLocationOnInteraction, type Location } from '@/shared/lib/utils/locationUtils'
+import { useCart } from '@/shared/contexts/CartContext'
+import { useToast } from '@/shared/hooks/use-toast'
 
 // Home Page - displays listings with search and filter capabilities
 // Main landing page where users can browse available items for sale
 export default function HomePage() {
   const [searchParams] = useSearchParams()
+  const { view: listingsView } = useListingsView()
+  const queryClient = useQueryClient()
+  const { user } = useUser()
+  const { addToCart } = useCart()
+  const { toast } = useToast()
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({
     query: '',
     category: searchParams.get('category') || '',
@@ -90,8 +97,8 @@ export default function HomePage() {
   }
 
   const listings = listingsData?.content || []
-  const hasActiveSearch = searchFilters.query || searchFilters.category || 
-                         searchFilters.condition || searchFilters.minPrice || 
+  const hasActiveSearch = searchFilters.query || searchFilters.category ||
+                         searchFilters.condition.length > 0 || searchFilters.minPrice ||
                          searchFilters.maxPrice || searchFilters.status
 
   return (
@@ -163,9 +170,18 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className={listingsView === 'compact'
+              ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2'
+              : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+            }>
               {listings.map((listing) => (
-                <HomeListingCard key={listing.id} listing={listing} />
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  compact={listingsView === 'compact'}
+                  onViewListing={(item) => setSelectedListing(item as Listing)}
+                  onAddToShoppingList={user ? (item) => { addToCart(item as Listing); toast({ title: 'Added to Saved Items', description: `${item.title} has been added.` }) } : undefined}
+                />
               ))}
             </div>
             
@@ -231,197 +247,26 @@ export default function HomePage() {
             )}
           </>
         )}
+
+          <ListingDetailModal
+            listing={selectedListing}
+            isOpen={selectedListing !== null}
+            onClose={() => setSelectedListing(null)}
+            isCurrentUserSeller={user?.id === selectedListing?.sellerId}
+            onUpdateStatus={
+              user?.id === selectedListing?.sellerId && selectedListing
+                ? async (newStatus) => {
+                    if (!selectedListing) return
+                    await apiClient.updateListing(selectedListing.id, { ...selectedListing, status: newStatus })
+                    queryClient.invalidateQueries({ queryKey: ['listings'] })
+                    setSelectedListing(null)
+                  }
+                : undefined
+            }
+          />
           </div>
         </div>
     </div>
   )
 }
 
-// Individual listing card component
-function HomeListingCard({ listing }: { listing: Listing }) {
-  const queryClient = useQueryClient()
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const { user } = useUser()
-
-  // Get the current user's ID from context
-  const currentUserId = user?.id
-
-  // Get user location for distance calculation
-  useEffect(() => {
-    if (userLocation) return
-
-    const cleanup = requestLocationOnInteraction((location: Location) => {
-      setUserLocation(location)
-    })
-
-    return cleanup
-  }, [userLocation])
-
-  // Calculate distance
-  const distanceText = userLocation && listing.latitude != null && listing.longitude != null
-    ? getDistanceText(
-        userLocation,
-        { lat: listing.latitude, lng: listing.longitude }
-      )
-    : null
-
-  const handleUpdateStatus = async (newStatus: 'ACTIVE' | 'ON_HOLD' | 'SOLD') => {
-    try {
-      await apiClient.updateListing(listing.id, {
-        ...listing,
-        status: newStatus,
-      })
-      // Refetch the listings by invalidating the query cache
-      queryClient.invalidateQueries({ queryKey: ['listings'] })
-    } catch (error) {
-      console.error('Failed to update listing status:', error)
-      throw error
-    }
-  }
-
-  // Handle Escape key to close modal
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isImageModalOpen) {
-        setIsImageModalOpen(false)
-      }
-    }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [isImageModalOpen])
-
-  return (
-    <>
-      <Card 
-        className="hover:shadow-comic transition-all hover:scale-[1.01] relative overflow-hidden h-full flex flex-col"
-        onClick={() => setIsDetailModalOpen(true)}
-      >
-        {/* Image Section - Always show, with default Eye icon if no image */}
-        <div 
-          className="w-full h-40 overflow-hidden rounded-t-comic cursor-pointer hover:opacity-90 transition-opacity bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 relative"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (listing.imageUrl) {
-              setIsImageModalOpen(true);
-            }
-          }}
-        >
-          {listing.imageUrl ? (
-            <img
-              src={listing.imageUrl}
-              alt={listing.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Eye className="h-12 w-12 text-primary/40" />
-          )}
-          {/* Must Go By Badge on Image */}
-          {listing.mustGoBy && new Date(listing.mustGoBy) > new Date() && (
-            <div className="absolute top-2 left-2 z-10">
-              <StickerBadge variant="new" className="bg-red-500 text-white text-xs px-2 py-1 border-2 border-white shadow-lg">
-                MUST GO
-              </StickerBadge>
-            </div>
-          )}
-        </div>
-
-        <CardHeader className="pb-2 flex-shrink-0">
-          <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-base font-bold line-clamp-2 flex-1">{listing.title}</CardTitle>
-            <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'} className="shrink-0 text-xs px-2 py-1">
-              {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
-            </StickerBadge>
-          </div>
-          <CardDescription className="line-clamp-2 mt-1 text-sm">
-            {listing.description || 'No description provided'}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="pt-0 flex-1 flex flex-col justify-between">
-          <div className="space-y-2">
-            {/* Price - Centered */}
-            <div className="flex items-center justify-center">
-              <StickerBadge variant="price" className="text-lg px-3 py-1">
-                {formatPrice(listing.price)}
-              </StickerBadge>
-            </div>
-
-            {/* Distance - Centered below price */}
-            {distanceText && (
-              <div className="flex items-center justify-center gap-1 text-green-600 font-semibold text-xs">
-                <MapPin className="h-4 w-4" />
-                <span>{distanceText}</span>
-              </div>
-            )}
-
-            {/* Date - Centered */}
-            <div className="flex items-center justify-center text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3 mr-1" />
-              <span>{formatDate(listing.createdAt, false)}</span>
-            </div>
-
-            {/* Category and Condition as Bubbles - Centered */}
-            <div className="flex flex-wrap gap-1.5 justify-center text-xs">
-              {listing.category && (
-                <span className="px-2 py-0.5 rounded-comic bg-secondary border border-foreground font-medium">
-                  {listing.category}
-                </span>
-              )}
-              {listing.condition && (
-                <span className="px-2 py-0.5 rounded-comic bg-muted border border-foreground font-medium">
-                  {listing.condition}
-                </span>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-    {/* Details Modal */}
-    <ListingDetailModal
-      listing={listing}
-      isOpen={isDetailModalOpen}
-      onClose={() => setIsDetailModalOpen(false)}
-      isCurrentUserSeller={currentUserId === listing.sellerId}
-      onUpdateStatus={handleUpdateStatus}
-    />
-
-    {/* Image Modal */}
-    {isImageModalOpen && listing.imageUrl && (
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-        onClick={() => setIsImageModalOpen(false)}
-      >
-        <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
-          {/* Close button */}
-          <button
-            onClick={() => setIsImageModalOpen(false)}
-            className="absolute top-4 right-4 z-10 bg-white hover:bg-gray-100 rounded-full p-2 transition-colors"
-            aria-label="Close image"
-          >
-            <XCircle className="h-6 w-6" />
-          </button>
-
-          {/* Image */}
-          <img
-            src={listing.imageUrl}
-            alt={listing.title}
-            className="max-w-full max-h-full object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          {/* Image info */}
-          <div className="absolute bottom-4 left-4 right-4 bg-black/60 text-white rounded-lg p-3 backdrop-blur-sm">
-            <h3 className="font-semibold text-lg mb-1">{listing.title}</h3>
-            <p className="text-sm text-gray-300">
-              {formatPrice(listing.price)} • {listing.category || 'Uncategorized'}
-            </p>
-          </div>
-        </div>
-      </div>
-    )}
-  </>
-  )
-}

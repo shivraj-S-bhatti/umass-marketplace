@@ -1,0 +1,52 @@
+package edu.umass.marketplace.common.config;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+@EnableWebSocketMessageBroker
+@RequiredArgsConstructor
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
+
+    @Value("${app.frontend-url:}")
+    private String frontendUrl;
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic");
+        config.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        List<String> originPatterns = new ArrayList<>(Arrays.asList("http://localhost:*", "http://127.0.0.1:*"));
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            originPatterns.add(frontendUrl);
+        }
+        String[] patterns = originPatterns.toArray(new String[0]);
+        // Native WebSocket endpoint (used by @stomp/stompjs with brokerURL)
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns(patterns);
+        // SockJS fallback endpoint
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns(patterns)
+                .withSockJS();
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketAuthInterceptor);
+    }
+}

@@ -28,6 +28,10 @@ public class Message {
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shared_listing_id")
+    private Listing sharedListing;
+
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 

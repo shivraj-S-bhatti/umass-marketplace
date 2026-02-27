@@ -5,6 +5,8 @@ export interface Message {
   id: string
   chatId?: string
   content: string
+  sharedListingId?: string
+  sharedListing?: Listing
   sender: {
     id: string
     name: string
@@ -15,8 +17,8 @@ export interface Message {
 
 export interface Chat {
   id: string
-  listingId: string
-  listing: Listing
+  listingId?: string
+  listing?: Listing
   buyer: {
     id: string
     name: string
@@ -117,6 +119,8 @@ export interface User {
   email: string
   pictureUrl?: string
   createdAt?: string // Made optional to match UserContext User type
+  /** From backend GET /api/users/:id; used to re-sync superuser on app load */
+  superuser?: boolean
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
@@ -162,6 +166,9 @@ class ApiClient {
       throw new Error(errorMessage)
     }
 
+    if (response.status === 204 || !response.headers.get('content-type')?.includes('application/json')) {
+      return undefined as T
+    }
     return response.json()
   }
 
@@ -203,6 +210,11 @@ class ApiClient {
     return this.request<Listing>(`/api/listings/${id}`)
   }
 
+  // Get listings by seller ID (paginated)
+  async getListingsBySeller(sellerId: string, page = 0, size = 12): Promise<ListingsResponse> {
+    return this.request<ListingsResponse>(`/api/listings/seller/${sellerId}?page=${page}&size=${size}`)
+  }
+
   // Create a new listing
   async createListing(data: CreateListingRequest): Promise<Listing> {
     return this.request<Listing>('/api/listings', {
@@ -227,9 +239,19 @@ class ApiClient {
     })
   }
 
+  // Delete a listing
+  async deleteListing(id: string): Promise<void> {
+    return this.request<void>(`/api/listings/${id}`, { method: 'DELETE' })
+  }
+
   // Get listing statistics
   async getListingStats(): Promise<ListingStats> {
     return this.request<ListingStats>('/api/listings/stats')
+  }
+
+  // Get listing statistics for a specific seller
+  async getListingStatsBySeller(sellerId: string): Promise<ListingStats> {
+    return this.request<ListingStats>(`/api/listings/seller/${sellerId}/stats`)
   }
 
   // Chat-related endpoints
@@ -243,10 +265,10 @@ class ApiClient {
     return this.request<Chat[]>('/api/chats')
   }
 
-  async sendMessage(chatId: string, content: string): Promise<Message> {
+  async sendMessage(chatId: string, content: string, sharedListingId?: string): Promise<Message> {
     return this.request<Message>(`/api/chats/${chatId}/messages`, {
       method: 'POST',
-      body: JSON.stringify({ content })
+      body: JSON.stringify({ content, sharedListingId })
     })
   }
 
@@ -286,6 +308,11 @@ class ApiClient {
   async getUser(userId: string): Promise<User> {
     return this.request<User>(`/api/users/${userId}`)
   }
+
+  // Platform stats
+  async getPlatformStats(): Promise<{ totalStudents: number; onlineNow: number }> {
+    return this.request<{ totalStudents: number; onlineNow: number }>(`/api/stats/platform`)
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL)
@@ -295,6 +322,7 @@ export const createListing = (data: CreateListingRequest) => apiClient.createLis
 export const updateListing = (id: string, data: CreateListingRequest) => apiClient.updateListing(id, data)
 export const getListings = (page = 0, size = 12) => apiClient.getListings({ page, size })
 export const getListing = (id: string) => apiClient.getListing(id)
+export const getListingsBySeller = (sellerId: string, page = 0, size = 12) => apiClient.getListingsBySeller(sellerId, page, size)
 export const getListingStats = () => apiClient.getListingStats()
 export const healthCheck = () => apiClient.healthCheck()
 export const createBulkListings = (data: CreateListingRequest[]) => apiClient.createBulkListings(data)
@@ -303,3 +331,4 @@ export const getReviewsBySeller = (sellerId: string, page = 0, size = 10) => api
 export const getSellerReviewStats = (sellerId: string) => apiClient.getSellerReviewStats(sellerId)
 export const hasUserReviewedSeller = (sellerId: string) => apiClient.hasUserReviewedSeller(sellerId)
 export const getUser = (userId: string) => apiClient.getUser(userId)
+export const getPlatformStats = () => apiClient.getPlatformStats()

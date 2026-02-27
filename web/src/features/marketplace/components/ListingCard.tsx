@@ -176,9 +176,9 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
         <CardContent className="pt-0 flex-1 flex flex-col justify-between">
           <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <StickerBadge variant="price" className="px-3 sm:px-4 py-1.5 sm:py-2 text-base sm:text-lg md:text-xl shadow-sm">
+              <span className="font-semibold text-foreground text-base sm:text-lg md:text-xl">
                 {formatPrice(listing.price)}
-              </StickerBadge>
+              </span>
 
               {distanceText && (
                 <div 
@@ -191,9 +191,12 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
             </div>
 
             <div className="flex items-center justify-between text-xs">
-              <StickerBadge variant={listing.status === 'ACTIVE' ? 'status' : 'new'}>
-                {listing.status === 'ACTIVE' ? 'ACTIVE' : listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
-              </StickerBadge>
+              {listing.status !== 'ACTIVE' && (
+                <StickerBadge variant="status" statusType={listing.status}>
+                  {listing.status === 'ON_HOLD' ? 'ON HOLD' : 'SOLD'}
+                </StickerBadge>
+              )}
+              {listing.status === 'ACTIVE' && <span />}
               <div className="flex items-center text-muted-foreground">
                 <Calendar className="h-3 w-3 mr-1" />
                 <span>{formatDate(listing.createdAt)}</span>
@@ -227,15 +230,15 @@ export default function ListingCard({ listing, showEditButtons = false }: Listin
                 </Button>
                 {listing.status === 'ACTIVE' ? (
                    <>
-                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ON_HOLD')}>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs bg-amber-500 hover:bg-amber-600 text-white border-0" onClick={() => handleStatusUpdate('ON_HOLD')}>
                       Hold
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('SOLD')}>
+                    <Button size="sm" variant="outline" className="flex-1 text-xs bg-red-600 hover:bg-red-700 text-white border-0" onClick={() => handleStatusUpdate('SOLD')}>
                       Sold
                     </Button>
                    </>
                 ) : (
-                  <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => handleStatusUpdate('ACTIVE')}>
+                  <Button size="sm" variant="outline" className="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white border-0" onClick={() => handleStatusUpdate('ACTIVE')}>
                     Reactivate
                   </Button>
                 )}

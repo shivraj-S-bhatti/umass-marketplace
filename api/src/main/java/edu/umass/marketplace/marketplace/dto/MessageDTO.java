@@ -15,5 +15,7 @@ public class MessageDTO {
     private UUID chatId;
     private UserDto sender;
     private String content;
+    private UUID sharedListingId;
+    private ListingDto sharedListing;
     private OffsetDateTime createdAt;
 }

@@ -2,8 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/shared/lib/utils/utils"
 
-// Card component for displaying content in containers
-// Provides consistent styling for listings and other content
+// Card – Swiss design: thin border, dark surface, no texture
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -11,7 +10,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "comic-card paper-texture",
+      "rounded-lg border border-border bg-card p-4",
       className
     )}
     {...props}

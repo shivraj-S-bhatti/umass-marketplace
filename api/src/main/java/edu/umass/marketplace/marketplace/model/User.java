@@ -31,6 +31,9 @@ public class User {
     @Column(name = "picture_url")
     private String pictureUrl;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

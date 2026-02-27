@@ -45,6 +45,16 @@ spring:
 app:
   jwt-secret: ${JWT_SECRET:default_secret_key_for_development_only_12345}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  # Optional: comma-separated superuser emails (e.g. for delete-any-listing). Set SUPERUSER_EMAIL in .env.
+  superuser-email: ${SUPERUSER_EMAIL:}
+
+# Image compression (aggressive for Postgres/storage when S3 disabled)
+image:
+  compression:
+    max-width: 800
+    max-height: 800
+    quality: 0.6
+    max-size-kb: 40
 
 # Server configuration
 server:

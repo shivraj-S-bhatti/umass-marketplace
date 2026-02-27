@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Star, User } from 'lucide-react'
-import { getReviewsBySeller, getSellerReviewStats, type Review, type SellerReviewStats } from '@/features/marketplace/api/api'
+import { getReviewsBySeller, getSellerReviewStats, type Review } from '@/features/marketplace/api/api'
 import { formatDate } from '@/shared/lib/utils/utils'
 
 interface SellerReviewsProps {

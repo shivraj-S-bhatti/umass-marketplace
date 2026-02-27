@@ -2,6 +2,7 @@ package edu.umass.marketplace.marketplace.controller;
 
 // User Controller - handles user-related API endpoints
 // Provides operations for retrieving user information
+import edu.umass.marketplace.common.config.SuperuserConfig;
 import edu.umass.marketplace.marketplace.response.UserResponse;
 import edu.umass.marketplace.marketplace.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,12 +22,16 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final SuperuserConfig superuserConfig;
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Retrieve user information by user ID")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return userService.getUserById(id)
-                .map(user -> ResponseEntity.ok(UserResponse.fromEntity(user)))
+                .map(user -> {
+                    boolean superuser = superuserConfig.isSuperuser(user.getEmail());
+                    return ResponseEntity.ok(UserResponse.fromEntity(user, superuser));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 }

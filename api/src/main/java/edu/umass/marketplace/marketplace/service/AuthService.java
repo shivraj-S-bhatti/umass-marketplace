@@ -1,5 +1,6 @@
 package edu.umass.marketplace.marketplace.service;
 
+import edu.umass.marketplace.common.config.SuperuserConfig;
 import edu.umass.marketplace.marketplace.dto.LoginRequest;
 import edu.umass.marketplace.marketplace.dto.RegisterRequest;
 import edu.umass.marketplace.marketplace.response.AuthResponse;
@@ -7,6 +8,7 @@ import edu.umass.marketplace.marketplace.response.UserResponse;
 import edu.umass.marketplace.marketplace.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,8 @@ public class AuthService {
 
     private final UserService userService;
     private final edu.umass.marketplace.common.security.JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
+    private final SuperuserConfig superuserConfig;
 
     /**
      * Register a new user
@@ -36,7 +40,8 @@ public class AuthService {
 
         // Generate JWT token for the created user
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getName());
-        AuthResponse response = AuthResponse.create(token, UserResponse.fromEntity(user));
+        boolean superuser = superuserConfig.isSuperuser(user.getEmail());
+        AuthResponse response = AuthResponse.create(token, UserResponse.fromEntity(user, superuser));
 
         log.debug("🔍 User registered successfully with ID: {}", user.getId());
         return response;
@@ -52,13 +57,13 @@ public class AuthService {
         User user = userService.getUserByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
-        // For now, simple password check - in real app, use proper password hashing
-        if (!request.getPassword().equals("password")) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new RuntimeException("Invalid email or password");
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getName());
-        AuthResponse response = AuthResponse.create(token, UserResponse.fromEntity(user));
+        boolean superuser = superuserConfig.isSuperuser(user.getEmail());
+        AuthResponse response = AuthResponse.create(token, UserResponse.fromEntity(user, superuser));
 
         log.debug("🔍 User logged in successfully with ID: {}", user.getId());
         return response;

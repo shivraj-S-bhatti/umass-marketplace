@@ -18,11 +18,16 @@ public class UserPrincipal implements UserDetails {
     private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(UUID id, String email, String name, String pictureUrl) {
+        this(id, email, name, pictureUrl, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+    }
+
+    public UserPrincipal(UUID id, String email, String name, String pictureUrl,
+                         Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.name = name;
         this.pictureUrl = pictureUrl;
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        this.authorities = authorities;
     }
 
     @Override
