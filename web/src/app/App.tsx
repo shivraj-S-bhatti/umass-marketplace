@@ -61,11 +61,7 @@ function App() {
                       />
                       <Route
                         path="/directory"
-                        element={
-                          <ProtectedRoute>
-                            <DirectoryPage />
-                          </ProtectedRoute>
-                        }
+                        element={<DirectoryPage />}
                       />
                       <Route
                         path="/sell"

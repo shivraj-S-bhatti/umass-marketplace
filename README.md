@@ -1,6 +1,7 @@
 # Everything UMass
 
 Everything UMass is a verified-student campus marketplace for UMass Amherst.
+It is also a playground for shipping apps and features that are genuinely useful to the UMass student community.
 
 ## Live Site
 
@@ -26,6 +27,13 @@ Everything UMass replaces scattered campus resale channels with one trusted plac
 - buyer/seller chat with shared listing cards
 - dashboard for listing management
 - public listing links and share flows
+- public UMass links directory (`/directory`) with search, tags, and quick submissions
+
+## Roadmap (In Progress)
+
+- leasing module (sublets, roommates, and housing workflows)
+- expanded Yahoo-style campus links directory with student-submitted entries
+- more sub-apps in the same product shell for student life utilities
 
 ## Architecture
 
@@ -50,7 +58,12 @@ High-impact areas:
 - marketplace UX polish and mobile responsiveness
 - chat reliability and message/thread UX
 - performance and observability improvements
-- campus expansion modules (clubs, events, sports, common room)
+- campus expansion modules (leasing, links directory growth, clubs, events, sports)
+
+Starter contribution opportunities:
+
+- Good first issue: [Seed the UMass links directory with verified student resources](docs/GOOD_FIRST_ISSUE.md)
+- Feature live now (try it in browser): [UMass Useful Links Directory](https://everything-umass.tech/directory)
 
 ## Local Development
 
@@ -85,7 +98,8 @@ Local URLs:
 ## Support
 
 - Issues: [GitHub Issues](https://github.com/shivraj-S-bhatti/umass-marketplace/issues)
-- Discussions: [GitHub Discussions](https://github.com/shivraj-S-bhatti/umass-marketplace/discussions)
+- Community ideas board: [Open a discussion-style issue](https://github.com/shivraj-S-bhatti/umass-marketplace/issues/new?template=community_idea.md&title=%5BIDEA%5D+)
+- Discord: [Everything UMass Community](https://discord.gg/Xb4W6FUh)
 
 ## License
 
