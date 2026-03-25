@@ -33,6 +33,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/umarket
       SPRING_DATASOURCE_USERNAME: umarket
       SPRING_DATASOURCE_PASSWORD: umarket
+      SUPERUSER_EMAIL: ${SUPERUSER_EMAIL:-}
       SPRING_PROFILES_ACTIVE: dev
     ports:
       - "8080:8080"
