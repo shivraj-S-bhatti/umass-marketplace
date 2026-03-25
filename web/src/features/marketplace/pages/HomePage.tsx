@@ -87,10 +87,13 @@ export default function HomePage() {
   }
 
   if (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return (
       <div className="text-center py-12">
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
-          <p className="text-destructive">Failed to load listings. Please try again later.</p>
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto space-y-2">
+          <p className="text-destructive font-medium">Failed to load listings.</p>
+          <p className="text-sm text-muted-foreground break-words">{message}</p>
+          <p className="text-sm text-muted-foreground mt-2">Check the API is running and try again.</p>
         </div>
       </div>
     )

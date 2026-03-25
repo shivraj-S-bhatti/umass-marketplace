@@ -2,6 +2,121 @@
 
 Use this when deploying the current `unified-home-page` (or main) branch to production.
 
+---
+
+## Quick reference: All commands (for SSH, status, diagnostics, build, push, deploy)
+
+Replace `YOUR_KEY.pem` with your key path (e.g. `~/Downloads/everything-umass-key.pem`) and `EC2_IP` with your VM IP (e.g. `100.50.19.17`).
+
+### 1. SSH into the VM
+
+```bash
+ssh -i YOUR_KEY.pem ubuntu@EC2_IP
+```
+
+### 2. On the VM: check status and run diagnostics
+
+```bash
+# Container status
+docker ps -a
+
+# Compose project (from deploy dir)
+cd ~/umass-marketplace/deploy
+docker compose -f docker-compose.ecr.yml ps -a
+
+# API health (from VM; omit | jq if jq not installed)
+curl -s http://localhost:8080/health
+
+# Frontend (from VM)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:5173
+
+# API logs (last 200 lines)
+docker logs umass-marketplace-api-prod --tail 200
+
+# API logs follow (Ctrl+C to stop)
+docker logs -f umass-marketplace-api-prod
+
+# DB container logs
+docker logs umass-marketplace-db-prod --tail 100
+
+# Deploy log (written by deploy.sh)
+tail -100 ~/umass-marketplace/deploy/deploy.log
+```
+
+### 3. Listings not showing in prod (Explore / Dashboard empty, but Saved Items still show)
+
+- **Saved Items (Cart)** are stored in the browser’s **localStorage** (full listing snapshot). They can still appear even when the listings API is failing or the DB has no rows.
+- **Explore and Dashboard** load from **GET /api/listings** and **GET /api/listings/seller/:id**. If those return an error or empty data, you’ll see “0 items” or “Failed to load listings” with the API error message in the UI.
+- **Quick checks:**
+  - From the VM: `curl -s -w "\n%{http_code}" http://localhost:8080/api/listings?page=0&size=10` (expect 200 and JSON with `content`, `totalElements`, etc.).
+  - Browser: open DevTools → Network, reload Explore; inspect the `/api/listings` request for status and response body.
+  - If the UI shows “Failed to load listings” it will now display the API error message to help debug.
+- If the API returns 200 but `totalElements` is 0, the DB may be empty or filtered; use the DB diagnostics below to confirm.
+
+### 4. On the VM: database diagnostics (DB dropping / not showing data)
+
+Password comes from `deploy/.env` (`POSTGRES_PASSWORD`). Set it once: `export PGPASSWORD=$(grep POSTGRES_PASSWORD ~/umass-marketplace/deploy/.env | cut -d= -f2)` (then unset with `unset PGPASSWORD` when done).
+
+```bash
+# List tables
+docker exec -it umass-marketplace-db-prod psql -U umarket -d umarket -c "\dt"
+
+# Row counts for main tables
+docker exec -it umass-marketplace-db-prod psql -U umarket -d umarket -c "
+SELECT 'users' AS tbl, COUNT(*) FROM users
+UNION ALL SELECT 'listings', COUNT(*) FROM listings
+UNION ALL SELECT 'chats', COUNT(*) FROM chats
+UNION ALL SELECT 'messages', COUNT(*) FROM messages;
+"
+
+# Flyway migrations (if Flyway is enabled in prod)
+docker exec -it umass-marketplace-db-prod psql -U umarket -d umarket -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank;" 2>/dev/null || echo "Flyway table may not exist (Hibernate ddl-auto)."
+
+# Recent listings
+docker exec -it umass-marketplace-db-prod psql -U umarket -d umarket -c "SELECT id, title, status, created_at FROM listings ORDER BY created_at DESC LIMIT 10;"
+
+# Listings table schema
+docker exec -it umass-marketplace-db-prod psql -U umarket -d umarket -c "\d listings"
+```
+
+### 5. On your Mac: build images and push to ECR
+
+```bash
+cd /path/to/umass-marketplace
+
+# Build API + Web for linux/amd64 and push to ECR (requires AWS CLI configured)
+./deploy/build-and-push.sh
+```
+
+Then add the printed `ECR_URI_API` and `ECR_URI_WEB` to `deploy/.env` if not already there.
+
+### 6. Copy deploy files to VM (if you changed .env or deploy.sh)
+
+```bash
+# From your Mac (repo root)
+scp -i YOUR_KEY.pem deploy/.env ubuntu@EC2_IP:~/umass-marketplace/deploy/.env
+scp -i YOUR_KEY.pem deploy/deploy.sh ubuntu@EC2_IP:~/umass-marketplace/deploy/deploy.sh
+```
+
+### 7. On the VM: pull and deploy (full down + pull + up)
+
+```bash
+cd ~/umass-marketplace
+./deploy/deploy.sh
+```
+
+(`deploy.sh` loads `deploy/.env`, logs into ECR, runs `docker compose down`, `pull`, then `up -d`.)
+
+### 8. After deploy: verify again
+
+```bash
+curl -s http://localhost:8080/health
+docker ps -a
+docker logs umass-marketplace-api-prod --tail 50
+```
+
+---
+
 ## 1. Pre-deploy: Code & config
 
 - [ ] **Branch**: Deploy from `unified-home-page` (or merge into `aws-deployment`). Latest fixes include:

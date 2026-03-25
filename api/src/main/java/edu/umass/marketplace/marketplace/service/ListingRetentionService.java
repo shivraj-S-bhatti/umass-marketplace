@@ -5,6 +5,7 @@ import edu.umass.marketplace.marketplace.repository.ChatRepository;
 import edu.umass.marketplace.marketplace.repository.ListingRepository;
 import edu.umass.marketplace.marketplace.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "listing.retention.enabled", havingValue = "true")
 public class ListingRetentionService {
 
     private static final Logger log = LoggerFactory.getLogger(ListingRetentionService.class);

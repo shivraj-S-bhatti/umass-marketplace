@@ -60,4 +60,5 @@ image:
 
 # Listing Retention Configuration
 listing:
+  enabled: ${LISTING_RETENTION_ENABLED:false}
   retentionDays: ${LISTING_RETENTION_DAYS:14}

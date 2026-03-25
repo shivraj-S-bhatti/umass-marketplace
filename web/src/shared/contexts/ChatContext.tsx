@@ -23,7 +23,7 @@ interface ChatContextValue {
   messages: Message[]
   sendMessage: (content: string) => Promise<void>
   setActiveChat: (chat: Chat | null) => void
-  startChat: (listingId: string) => Promise<void>
+  startChat: (listingId: string) => Promise<Chat | null>
   loadMoreMessages: () => Promise<void>
   hasMoreMessages: boolean
   loading: boolean
@@ -292,7 +292,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeChat, toast])
 
-  async function startChat(listingId: string) {
+  async function startChat(listingId: string): Promise<Chat | null> {
     try {
       const apiChat = await apiClient.startChat(listingId)
       const transformedChat = await transformChat(apiChat)
@@ -301,6 +301,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         return [transformedChat, ...withoutCurrent]
       })
       setActiveChat(transformedChat)
+      return transformedChat
     } catch (error) {
       console.error('Failed to start chat:', error)
       toast({
@@ -308,6 +309,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         description: 'Failed to start chat. Please try again.',
         variant: 'destructive',
       })
+      return null
     }
   }
 

@@ -77,8 +77,12 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Manage your marketplace listings.</p>
         </div>
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md">
-          <p className="text-destructive">Failed to load your listings. Please try again later.</p>
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md space-y-2">
+          <p className="text-destructive font-medium">Failed to load your listings.</p>
+          {error instanceof Error && (
+            <p className="text-sm text-muted-foreground break-words">{error.message}</p>
+          )}
+          <p className="text-sm text-muted-foreground mt-2">Check the API is running and try again.</p>
         </div>
       </div>
     )

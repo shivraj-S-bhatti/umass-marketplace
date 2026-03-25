@@ -1,12 +1,19 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Bookmark, Trash2, MessageCircle } from 'lucide-react'
 import { useCart } from '@/shared/contexts/CartContext'
+import { useChat } from '@/shared/contexts/ChatContext'
 import { useNavigate } from 'react-router-dom'
 import { formatPrice } from '@/shared/lib/utils/utils'
 import { useToast } from '@/shared/hooks/use-toast'
 import type { CartItem } from '@/shared/contexts/CartContext'
-import { MessageSellersModal, type SellerGroup } from '@/features/marketplace/components/MessageSellersModal'
+
+interface SellerGroup {
+  sellerId: string
+  sellerName: string
+  sellerEmail: string
+  items: CartItem[]
+}
 
 function groupBySeller(items: CartItem[]): SellerGroup[] {
   const map = new Map<string, { sellerName: string; sellerEmail: string; items: CartItem[] }>()
@@ -31,9 +38,9 @@ function groupBySeller(items: CartItem[]): SellerGroup[] {
 
 export default function CartPage() {
   const { items, removeFromCart } = useCart()
+  const { startChat } = useChat()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const [outreachOpen, setOutreachOpen] = useState(false)
 
   const sellerGroups = useMemo(() => groupBySeller(items), [items])
 
@@ -108,7 +115,22 @@ export default function CartPage() {
                     <Button
                       size="sm"
                       className="gap-1.5"
-                      onClick={() => setOutreachOpen(true)}
+                      onClick={async () => {
+                        const listingId = group.items[0]?.id
+                        if (!listingId) {
+                          toast({
+                            title: 'Error',
+                            description: 'This saved item can no longer be messaged.',
+                            variant: 'destructive',
+                          })
+                          return
+                        }
+
+                        const chat = await startChat(listingId)
+                        if (chat) {
+                          navigate('/messages')
+                        }
+                      }}
                     >
                       <MessageCircle className="h-3.5 w-3.5" />
                       Message seller
@@ -146,12 +168,6 @@ export default function CartPage() {
           </div>
         )}
       </div>
-
-      <MessageSellersModal
-        open={outreachOpen}
-        onOpenChange={setOutreachOpen}
-        sellerGroups={sellerGroups}
-      />
     </div>
   )
 }

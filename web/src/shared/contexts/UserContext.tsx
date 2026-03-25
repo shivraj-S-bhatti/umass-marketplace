@@ -23,6 +23,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(() => {
+    const token = localStorage.getItem('token')
     const userId = localStorage.getItem('userId')
     const userName = localStorage.getItem('userName')
     const userEmail = localStorage.getItem('userEmail')
@@ -30,7 +31,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const userSuperuser = localStorage.getItem('userSuperuser') === 'true'
     console.log('[Superuser] init from storage: userSuperuser=', userSuperuser)
 
-    if (userId && userEmail) {
+    if (token && userId && userEmail) {
       return {
         id: userId,
         name: userName || '',
@@ -43,6 +44,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
   })
 
   const superuserSyncedRef = useRef(false)
+
+  useEffect(() => {
+    const handleAuthInvalid = () => {
+      setUserState(null)
+    }
+
+    window.addEventListener('auth:invalid', handleAuthInvalid)
+    return () => window.removeEventListener('auth:invalid', handleAuthInvalid)
+  }, [])
+
   useEffect(() => {
     if (!user?.id || superuserSyncedRef.current) return
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null

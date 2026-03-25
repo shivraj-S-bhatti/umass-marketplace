@@ -124,6 +124,17 @@ export interface User {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const AUTH_INVALID_EVENT = 'auth:invalid'
+
+function clearStoredAuth() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('userName')
+  localStorage.removeItem('userEmail')
+  localStorage.removeItem('userPictureUrl')
+  localStorage.removeItem('userSuperuser')
+  window.dispatchEvent(new Event(AUTH_INVALID_EVENT))
+}
 
 class ApiClient {
   private baseUrl: string
@@ -151,6 +162,10 @@ class ApiClient {
     })
 
     if (!response.ok) {
+      if (response.status === 401 && token) {
+        clearStoredAuth()
+      }
+
       // Try to extract error message from response body
       let errorMessage = `API Error: ${response.status} ${response.statusText}`
       try {

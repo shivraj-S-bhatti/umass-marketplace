@@ -264,16 +264,9 @@ export function ListingDetailModal({
                     variant="outline"
                     className="h-8 text-xs w-full sm:flex-1 border-border bg-card hover:bg-secondary"
                     onClick={async () => {
-                      try {
-                        await startChat(listing.id)
+                      const chat = await startChat(listing.id)
+                      if (chat) {
                         navigate('/messages')
-                      } catch (error) {
-                        console.error('Failed to start chat:', error)
-                        toast({
-                          title: 'Error',
-                          description: 'Failed to start chat. Please try again.',
-                          variant: 'destructive',
-                        })
                       }
                     }}
                   >
