@@ -9,6 +9,7 @@ import { useUser } from '@/shared/contexts/UserContext'
 import { LayoutDashboard, Calendar, Share2 } from 'lucide-react'
 import { formatPrice, formatDate } from '@/shared/lib/utils/utils'
 import { ShareMyListingsModal } from '@/features/marketplace/components/ShareMyListingsModal'
+import { formatListingEnum, getLeasingBadgeLabels, isLeasingListing } from '@/shared/lib/utils/listingMetadata'
 import {
   Dialog,
   DialogContent,
@@ -20,28 +21,44 @@ import {
 
 // Dashboard Page - displays user's listings and statistics
 // Shows seller's own listings with management options and overview stats
-export default function DashboardPage() {
+interface DashboardPageProps {
+  kind?: 'MARKETPLACE' | 'LEASING'
+}
+
+export default function DashboardPage({ kind = 'MARKETPLACE' }: DashboardPageProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const pageSize = 12
   const { user, isSuperuser } = useUser()
+  const isLeasingMode = kind === 'LEASING'
+  const heading = isLeasingMode ? 'Leasing Dashboard' : 'Dashboard'
+  const headingDescription = isLeasingMode ? 'Manage your sublets and lease transfers.' : 'Manage your listings.'
+  const createHref = isLeasingMode ? '/leasings/sell' : '/sell'
+  const createLabel = isLeasingMode ? 'Create Your First Lease Post' : 'Create Your First Listing'
+  const shareLabel = isLeasingMode ? 'Share my lease posts' : 'Share my listings'
+  const collectionLabel = isLeasingMode ? 'My Leasing Posts' : 'My Listings'
+  const emptyTitle = isLeasingMode ? 'No lease posts yet' : 'No listings yet'
+  const emptyDescription = isLeasingMode
+    ? 'Start by posting your first sublet or transfer.'
+    : 'Start selling by creating your first listing'
+  const itemNoun = isLeasingMode ? 'post' : 'item'
 
   const { data: listingsData, isLoading, error } = useQuery({
-    queryKey: ['my-listings', isSuperuser ? 'all' : user?.id, currentPage],
+    queryKey: ['my-listings', kind, isSuperuser ? 'all' : user?.id, currentPage],
     queryFn: () =>
       isSuperuser
-        ? apiClient.getListings({ page: currentPage, size: pageSize })
-        : apiClient.getListingsBySeller(user!.id, currentPage, pageSize),
+        ? apiClient.getListings({ page: currentPage, size: pageSize, kind })
+        : apiClient.getListingsBySeller(user!.id, currentPage, pageSize, kind),
     enabled: !!user?.id,
   })
 
   // Superusers see global stats; regular users see their own
   const { data: stats } = useQuery({
-    queryKey: ['my-listings-stats', isSuperuser ? 'global' : user?.id],
+    queryKey: ['my-listings-stats', kind, isSuperuser ? 'global' : user?.id],
     queryFn: () =>
       isSuperuser
-        ? apiClient.getListingStats()
-        : apiClient.getListingStatsBySeller(user!.id),
+        ? apiClient.getListingStats(kind)
+        : apiClient.getListingStatsBySeller(user!.id, kind),
     enabled: !!user?.id,
   })
 
@@ -49,8 +66,8 @@ export default function DashboardPage() {
     return (
       <div className="container mx-auto px-4 py-4 max-w-4xl space-y-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage your listings.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{heading}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{headingDescription}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -72,10 +89,10 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-4 max-w-4xl">
+      <div className="container mx-auto px-4 py-4 max-w-6xl">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage your marketplace listings.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{heading}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{headingDescription}</p>
         </div>
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md space-y-2">
           <p className="text-destructive font-medium">Failed to load your listings.</p>
@@ -95,17 +112,17 @@ export default function DashboardPage() {
   const onHoldListingsCount = stats?.onHoldListings || 0
 
   return (
-    <div className="container mx-auto px-4 py-4 max-w-4xl space-y-4">
+    <div className="container mx-auto px-4 py-4 max-w-6xl space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage your listings.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{heading}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{headingDescription}</p>
         </div>
         {user && (
           <Button onClick={() => setShareModalOpen(true)} size="sm" className="shrink-0">
             <Share2 className="h-4 w-4 mr-2" />
-            Share my listings
+            {shareLabel}
           </Button>
         )}
       </div>
@@ -152,11 +169,11 @@ export default function DashboardPage() {
       {/* My Listings */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-2xl font-bold">My Listings</h2>
+          <h2 className="text-2xl font-bold">{collectionLabel}</h2>
           {listingsData && (
             <div className="text-sm text-muted-foreground">
               <p>
-                {listingsData.totalElements} item{listingsData.totalElements !== 1 ? 's' : ''} found
+                {listingsData.totalElements} {itemNoun}{listingsData.totalElements !== 1 ? 's' : ''} found
                 {listingsData.totalPages > 1 && (
                   <span className="ml-2">
                     (Page {currentPage + 1} of {listingsData.totalPages})
@@ -170,18 +187,18 @@ export default function DashboardPage() {
           <Card>
             <CardContent className="text-center py-12">
               <LayoutDashboard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No listings yet</h3>
+              <h3 className="text-lg font-semibold mb-2">{emptyTitle}</h3>
               <p className="text-muted-foreground mb-4">
-                Start selling by creating your first listing
+                {emptyDescription}
               </p>
               <Button asChild>
-                <Link to="/sell">Create Your First Listing</Link>
+                <Link to={createHref}>{createLabel}</Link>
               </Button>
             </CardContent>
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
               {listings.map((listing) => (
                 <DashboardListingCard key={listing.id} listing={listing} />
               ))}
@@ -324,66 +341,92 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [isImageModalOpen])
 
+  const leasing = isLeasingListing(listing)
+  const leasingBadges = leasing ? getLeasingBadgeLabels(listing) : []
+  const leasingMeta = [listing.propertyName, listing.areaLabel].filter(Boolean).join(' · ')
+
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
-        {listing.imageUrl && (
-          <div
-            className="w-full h-36 overflow-hidden rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
-          >
-            <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
-          </div>
-        )}
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-sm font-semibold line-clamp-1">{listing.title}</CardTitle>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className={`h-2 w-2 rounded-full ${statusDotClass(listing.status)}`} aria-hidden />
-              <select
-                value={listing.status}
-                onChange={handleStatusChange}
-                className="h-8 min-w-0 rounded-md border border-input bg-background px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="ACTIVE">Active</option>
-                <option value="ON_HOLD">On Hold</option>
-                <option value="SOLD">Sold</option>
-              </select>
+      <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+        <div className="flex flex-col sm:flex-row">
+          {listing.imageUrl && (
+            <div
+              className="w-full sm:w-44 h-44 sm:h-auto overflow-hidden cursor-pointer hover:opacity-90 transition-opacity shrink-0 bg-secondary/30"
+              onClick={() => listing.imageUrl && setIsImageModalOpen(true)}
+            >
+              <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" />
             </div>
-          </div>
-          <CardDescription className="line-clamp-1 text-xs">
-            {listing.description || 'No description provided'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0 pb-3">
-          <div className="space-y-1">
-            <div className="flex items-center text-base font-bold text-foreground">
-              {formatPrice(listing.price)}
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <Calendar className="h-4 w-4 mr-1" />
-              Listed {formatDate(listing.createdAt)}
-            </div>
-            {listing.category && (
-              <div className="text-xs">
-                <span className="font-medium">Category:</span> {listing.category}
+          )}
+          <div className="flex-1 min-w-0">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start gap-3">
+                <div className="min-w-0">
+                  <CardTitle className="text-base font-semibold line-clamp-2">{listing.title}</CardTitle>
+                  {leasing && leasingMeta && (
+                    <p className="mt-1 text-xs text-muted-foreground">{leasingMeta}</p>
+                  )}
+                  <CardDescription className="mt-2 line-clamp-2 text-xs">
+                    {listing.description || 'No description provided'}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`h-2 w-2 rounded-full ${statusDotClass(listing.status)}`} aria-hidden />
+                  <select
+                    value={listing.status}
+                    onChange={handleStatusChange}
+                    className="h-8 min-w-0 rounded-md border border-input bg-background px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="ON_HOLD">On Hold</option>
+                    <option value="SOLD">Sold</option>
+                  </select>
+                </div>
               </div>
-            )}
-            {listing.condition && (
-              <div className="text-xs">
-                <span className="font-medium">Condition:</span> {listing.condition}
+            </CardHeader>
+            <CardContent className="pt-0 pb-4">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="text-lg font-bold text-foreground">
+                    {formatPrice(listing.price)}{leasing ? <span className="text-sm font-medium text-muted-foreground"> / month</span> : null}
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    Listed {formatDate(listing.createdAt)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatListingEnum(listing.kind) ?? 'Marketplace'}
+                  </div>
+                </div>
+                {leasing ? (
+                  leasingBadges.length > 0 && (
+                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      {leasingBadges.map((badge, index) => (
+                        <span key={`${badge}-${index}`}>{badge}</span>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                    {listing.category && (
+                      <span><span className="font-medium">Category:</span> {listing.category}</span>
+                    )}
+                    {listing.condition && (
+                      <span><span className="font-medium">Condition:</span> {listing.condition}</span>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+              <div className="mt-4 flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
+                  Edit
+                </Button>
+                <Button size="sm" variant="destructive" className="flex-1" onClick={() => setDeleteConfirmOpen(true)}>
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
           </div>
-          <div className="mt-3 flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1" onClick={handleEdit}>
-              Edit
-            </Button>
-            <Button size="sm" variant="destructive" className="flex-1" onClick={() => setDeleteConfirmOpen(true)}>
-              Delete
-            </Button>
-          </div>
-        </CardContent>
+        </div>
       </Card>
 
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -474,4 +517,3 @@ function DashboardListingCard({ listing }: { listing: Listing }) {
   </>
   )
 }
-

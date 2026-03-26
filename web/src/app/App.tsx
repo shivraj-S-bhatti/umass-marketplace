@@ -16,6 +16,9 @@ import SellPage from '@/features/marketplace/pages/SellPage'
 import DashboardPage from '@/features/marketplace/pages/DashboardPage'
 import EditPage from '@/features/marketplace/pages/EditPage'
 import MessagesPage from '@/features/marketplace/pages/MessagesPage'
+import LeasingHomePage from '@/features/leasing/pages/LeasingHomePage'
+import LeasingSellPage from '@/features/leasing/pages/LeasingSellPage'
+import LeasingDashboardPage from '@/features/leasing/pages/LeasingDashboardPage'
 import OAuthSuccessPage from '@/pages/OAuthSuccessPage'
 import CartPage from '@/features/marketplace/pages/CartPage'
 import SellerProfilePage from '@/features/marketplace/pages/SellerProfilePage'
@@ -60,6 +63,14 @@ function App() {
                         }
                       />
                       <Route
+                        path="/leasings"
+                        element={
+                          <ProtectedRoute>
+                            <LeasingHomePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
                         path="/directory"
                         element={<DirectoryPage />}
                       />
@@ -76,6 +87,22 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <DashboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/leasings/sell"
+                        element={
+                          <ProtectedRoute>
+                            <LeasingSellPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/leasings/dashboard"
+                        element={
+                          <ProtectedRoute>
+                            <LeasingDashboardPage />
                           </ProtectedRoute>
                         }
                       />

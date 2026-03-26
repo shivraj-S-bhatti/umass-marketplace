@@ -114,7 +114,7 @@ export default function HomePage() {
         />
 
         {/* Content */}
-        <div className="flex-1 container mx-auto px-4 py-4 min-h-0">
+        <div className="flex-1 w-full max-w-[1440px] mx-auto px-4 py-5 min-h-0">
           <div className="space-y-4 pb-4">
             {/* Results Section */}
             <div>
@@ -174,8 +174,8 @@ export default function HomePage() {
         ) : (
           <>
             <div className={listingsView === 'compact'
-              ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2'
-              : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+              ? 'grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3'
+              : 'grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4'
             }>
               {listings.map((listing) => (
                 <ListingCard
@@ -272,4 +272,3 @@ export default function HomePage() {
     </div>
   )
 }
-

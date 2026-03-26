@@ -87,7 +87,7 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
   return (
     <div className="border-b border-border bg-card">
       {/* Row 1: Search + Sort + View toggle */}
-      <div className="container mx-auto px-4 py-2 w-full max-w-full min-w-0">
+      <div className="w-full max-w-[1440px] mx-auto px-4 py-2 min-w-0">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="flex-1 relative min-w-0 flex items-center gap-2">
             <Input
@@ -145,7 +145,7 @@ export default function TwoTierNavbar({ onSearch, initialFilters, isLoading = fa
       </div>
 
       {/* Row 2: Filter chips (horizontal scroll) */}
-      <div className="container mx-auto px-4 pb-2 w-full max-w-full min-w-0">
+      <div className="w-full max-w-[1440px] mx-auto px-4 pb-2 min-w-0">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin py-1">
           {/* Category chip (dropdown, portaled) */}
           <DropdownMenu>

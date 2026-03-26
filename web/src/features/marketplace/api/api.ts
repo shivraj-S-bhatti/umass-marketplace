@@ -256,6 +256,8 @@ class ApiClient {
     category?: string
     status?: string
     condition?: string
+    leaseArrangement?: string
+    spaceType?: string
     minPrice?: number
     maxPrice?: number
   } = {}): Promise<ListingsResponse> {
@@ -268,6 +270,8 @@ class ApiClient {
     if (params.category) searchParams.set('category', params.category)
     if (params.status) searchParams.set('status', params.status)
     if (params.condition) searchParams.set('condition', params.condition)
+    if (params.leaseArrangement) searchParams.set('leaseArrangement', params.leaseArrangement)
+    if (params.spaceType) searchParams.set('spaceType', params.spaceType)
     if (params.minPrice !== undefined) searchParams.set('minPrice', params.minPrice.toString())
     if (params.maxPrice !== undefined) searchParams.set('maxPrice', params.maxPrice.toString())
 
@@ -283,8 +287,13 @@ class ApiClient {
   }
 
   // Get listings by seller ID (paginated)
-  async getListingsBySeller(sellerId: string, page = 0, size = 12): Promise<ListingsResponse> {
-    return this.request<ListingsResponse>(`/api/listings/seller/${sellerId}?page=${page}&size=${size}`)
+  async getListingsBySeller(sellerId: string, page = 0, size = 12, kind?: string): Promise<ListingsResponse> {
+    const searchParams = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+    })
+    if (kind) searchParams.set('kind', kind)
+    return this.request<ListingsResponse>(`/api/listings/seller/${sellerId}?${searchParams.toString()}`)
   }
 
   // Create a new listing
@@ -317,13 +326,17 @@ class ApiClient {
   }
 
   // Get listing statistics
-  async getListingStats(): Promise<ListingStats> {
-    return this.request<ListingStats>('/api/listings/stats')
+  async getListingStats(kind?: string): Promise<ListingStats> {
+    const searchParams = new URLSearchParams()
+    if (kind) searchParams.set('kind', kind)
+    return this.request<ListingStats>(`/api/listings/stats${searchParams.toString() ? `?${searchParams.toString()}` : ''}`)
   }
 
   // Get listing statistics for a specific seller
-  async getListingStatsBySeller(sellerId: string): Promise<ListingStats> {
-    return this.request<ListingStats>(`/api/listings/seller/${sellerId}/stats`)
+  async getListingStatsBySeller(sellerId: string, kind?: string): Promise<ListingStats> {
+    const searchParams = new URLSearchParams()
+    if (kind) searchParams.set('kind', kind)
+    return this.request<ListingStats>(`/api/listings/seller/${sellerId}/stats${searchParams.toString() ? `?${searchParams.toString()}` : ''}`)
   }
 
   // Chat-related endpoints
@@ -394,8 +407,8 @@ export const createListing = (data: CreateListingRequest) => apiClient.createLis
 export const updateListing = (id: string, data: CreateListingRequest) => apiClient.updateListing(id, data)
 export const getListings = (page = 0, size = 12) => apiClient.getListings({ page, size })
 export const getListing = (id: string) => apiClient.getListing(id)
-export const getListingsBySeller = (sellerId: string, page = 0, size = 12) => apiClient.getListingsBySeller(sellerId, page, size)
-export const getListingStats = () => apiClient.getListingStats()
+export const getListingsBySeller = (sellerId: string, page = 0, size = 12, kind?: string) => apiClient.getListingsBySeller(sellerId, page, size, kind)
+export const getListingStats = (kind?: string) => apiClient.getListingStats(kind)
 export const healthCheck = () => apiClient.healthCheck()
 export const createBulkListings = (data: CreateListingRequest[]) => apiClient.createBulkListings(data)
 export const createReview = (data: CreateReviewRequest) => apiClient.createReview(data)

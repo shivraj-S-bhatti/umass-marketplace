@@ -122,7 +122,10 @@ export function ListingCard({
         <div
           className={`flex flex-wrap items-center gap-x-3 gap-y-0.5 text-muted-foreground ${compact ? 'text-[10px]' : 'text-xs'}`}
         >
-          <span className="font-semibold text-foreground text-[1.15em] leading-none">{formatPrice(listing.price)}</span>
+          <span className="font-semibold text-foreground text-[1.15em] leading-none">
+            {formatPrice(listing.price)}
+            {isLeasingListing(listing) ? <span className="text-[0.82em] font-medium text-muted-foreground"> / month</span> : null}
+          </span>
           <span className="text-muted-foreground">{postedAgo ? `Posted ${postedAgo}` : ''}</span>
           {distanceText && (
             <span className="flex items-center gap-1">

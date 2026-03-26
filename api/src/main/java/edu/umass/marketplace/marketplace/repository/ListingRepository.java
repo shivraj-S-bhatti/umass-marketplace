@@ -21,6 +21,7 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
     // Find listings by seller ID with pagination
     Page<Listing> findBySellerId(UUID sellerId, Pageable pageable);
+    Page<Listing> findBySellerIdAndKind(UUID sellerId, String kind, Pageable pageable);
 
     // Find listings by status with pagination
     Page<Listing> findByStatus(String status, Pageable pageable);
@@ -30,19 +31,27 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
     // Count listings by status
     long countByStatus(String status);
+    long countByKindAndStatus(String kind, String status);
 
     // Count listings by seller ID and status
     long countBySellerIdAndStatus(UUID sellerId, String status);
+    long countBySellerIdAndKindAndStatus(UUID sellerId, String kind, String status);
 
     // Find listings created before the given cutoff (for retention cleanup)
     List<Listing> findByCreatedAtBefore(OffsetDateTime cutoff);
 
     // Find listings with multiple filters
     @Query("SELECT l FROM Listing l WHERE " +
-           "((:query IS NULL) OR :query = '' OR (LOWER(l.title) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')))) AND " +
+           "((:query IS NULL) OR :query = '' OR (" +
+           "LOWER(COALESCE(l.title, '')) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')) OR " +
+           "LOWER(COALESCE(l.description, '')) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')) OR " +
+           "LOWER(COALESCE(l.propertyName, '')) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')) OR " +
+           "LOWER(COALESCE(l.areaLabel, '')) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')))) AND " +
            "((:kind IS NULL) OR :kind = '' OR (l.kind = :kind)) AND " +
            "((:category IS NULL) OR :category = '' OR (l.category = :category)) AND " +
            "((:status IS NULL) OR :status = '' OR (l.status = :status)) AND " +
+           "((:leaseArrangement IS NULL) OR :leaseArrangement = '' OR (l.leaseArrangement = :leaseArrangement)) AND " +
+           "((:spaceType IS NULL) OR :spaceType = '' OR (l.spaceType = :spaceType)) AND " +
            "((:conditions IS NULL) OR (l.condition IN :conditions)) AND " +
            "((:minPrice IS NULL) OR (l.price >= :minPrice)) AND " +
            "((:maxPrice IS NULL) OR (l.price <= :maxPrice)) " +
@@ -52,6 +61,8 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
             @Param("kind") String kind,
             @Param("category") String category,
             @Param("status") String status,
+            @Param("leaseArrangement") String leaseArrangement,
+            @Param("spaceType") String spaceType,
             @Param("conditions") List<Condition> conditions,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,

@@ -101,6 +101,8 @@ public class ListingService {
             String condition,
             Double minPrice,
             Double maxPrice,
+            String leaseArrangement,
+            String spaceType,
             int page,
             int size
     ) {
@@ -112,6 +114,8 @@ public class ListingService {
         log.debug("  condition: '{}'", condition);
         log.debug("  minPrice: {}", minPrice);
         log.debug("  maxPrice: {}", maxPrice);
+        log.debug("  leaseArrangement: '{}'", leaseArrangement);
+        log.debug("  spaceType: '{}'", spaceType);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
@@ -140,27 +144,44 @@ public class ListingService {
         boolean hasKind = kind != null && !kind.trim().isEmpty();
         boolean hasCategory = category != null && !category.trim().isEmpty();
         boolean hasStatus = status != null && !status.trim().isEmpty();
+        boolean hasLeaseArrangement = leaseArrangement != null && !leaseArrangement.trim().isEmpty();
+        boolean hasSpaceType = spaceType != null && !spaceType.trim().isEmpty();
         boolean hasCondition = conditionParams != null && !conditionParams.isEmpty();
         boolean hasMinPrice = minPriceBD != null;
         boolean hasMaxPrice = maxPriceBD != null;
 
         Page<Listing> listings;
 
-        if (hasQuery || hasKind || hasCategory || hasStatus || hasCondition || hasMinPrice || hasMaxPrice) {
+        if (hasQuery || hasKind || hasCategory || hasStatus || hasLeaseArrangement || hasSpaceType || hasCondition || hasMinPrice || hasMaxPrice) {
             // Pass null for empty strings to the repository
             String queryParam = hasQuery && query != null ? query.trim() : null;
             String kindParam = hasKind && kind != null ? normalizeUpper(kind) : null;
             String categoryParam = hasCategory && category != null ? category.trim() : null;
             String statusParam = hasStatus && status != null ? status.trim() : null;
+            String leaseArrangementParam = hasLeaseArrangement && leaseArrangement != null ? normalizeUpper(leaseArrangement) : null;
+            String spaceTypeParam = hasSpaceType && spaceType != null ? normalizeUpper(spaceType) : null;
 
             log.debug("🔍 Using filtered query with params:");
             log.debug("  queryParam: '{}'", queryParam);
             log.debug("  kindParam: '{}'", kindParam);
             log.debug("  categoryParam: '{}'", categoryParam);
             log.debug("  statusParam: '{}'", statusParam);
+            log.debug("  leaseArrangementParam: '{}'", leaseArrangementParam);
+            log.debug("  spaceTypeParam: '{}'", spaceTypeParam);
             log.debug("  conditionParams: '{}'", conditionParams);
 
-            listings = listingRepository.findWithFilters(queryParam, kindParam, categoryParam, statusParam, conditionParams, minPriceBD, maxPriceBD, pageable);
+            listings = listingRepository.findWithFilters(
+                    queryParam,
+                    kindParam,
+                    categoryParam,
+                    statusParam,
+                    leaseArrangementParam,
+                    spaceTypeParam,
+                    conditionParams,
+                    minPriceBD,
+                    maxPriceBD,
+                    pageable
+            );
         } else {
             // Return all listings if no filters
             log.debug("🔍 No filters detected, returning all listings");
@@ -298,11 +319,14 @@ public class ListingService {
     /**
      * Get listings by seller ID
      */
-    public Page<ListingResponse> getListingsBySeller(UUID sellerId, int page, int size) {
+    public Page<ListingResponse> getListingsBySeller(UUID sellerId, String kind, int page, int size) {
         log.debug("🔍 Getting listings for seller ID: {}", sellerId);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Listing> listings = listingRepository.findBySellerId(sellerId, pageable);
+        String normalizedKind = normalizeNullable(kind) != null ? normalizeListingKind(kind) : null;
+        Page<Listing> listings = normalizedKind == null
+                ? listingRepository.findBySellerId(sellerId, pageable)
+                : listingRepository.findBySellerIdAndKind(sellerId, normalizedKind, pageable);
 
         log.debug("🔍 Found {} listings for seller ID: {}", listings.getTotalElements(), sellerId);
         return listings.map(ListingResponse::fromEntity);
@@ -312,12 +336,20 @@ public class ListingService {
      * Get listing statistics (counts by status)
      */
     @Transactional(readOnly = true)
-    public edu.umass.marketplace.marketplace.response.StatsResponse getListingStats() {
+    public edu.umass.marketplace.marketplace.response.StatsResponse getListingStats(String kind) {
         log.debug("🔍 Getting listing statistics");
 
-        long activeCount = listingRepository.countByStatus(Listing.STATUS_ACTIVE);
-        long soldCount = listingRepository.countByStatus(Listing.STATUS_SOLD);
-        long onHoldCount = listingRepository.countByStatus(Listing.STATUS_ON_HOLD);
+        String normalizedKind = normalizeNullable(kind) != null ? normalizeListingKind(kind) : null;
+
+        long activeCount = normalizedKind == null
+                ? listingRepository.countByStatus(Listing.STATUS_ACTIVE)
+                : listingRepository.countByKindAndStatus(normalizedKind, Listing.STATUS_ACTIVE);
+        long soldCount = normalizedKind == null
+                ? listingRepository.countByStatus(Listing.STATUS_SOLD)
+                : listingRepository.countByKindAndStatus(normalizedKind, Listing.STATUS_SOLD);
+        long onHoldCount = normalizedKind == null
+                ? listingRepository.countByStatus(Listing.STATUS_ON_HOLD)
+                : listingRepository.countByKindAndStatus(normalizedKind, Listing.STATUS_ON_HOLD);
 
         log.debug("🔍 Stats - Active: {}, Sold: {}, On Hold: {}", activeCount, soldCount, onHoldCount);
 
@@ -328,12 +360,20 @@ public class ListingService {
      * Get listing statistics for a specific seller (counts by status)
      */
     @Transactional(readOnly = true)
-    public edu.umass.marketplace.marketplace.response.StatsResponse getListingStatsBySeller(UUID sellerId) {
+    public edu.umass.marketplace.marketplace.response.StatsResponse getListingStatsBySeller(UUID sellerId, String kind) {
         log.debug("🔍 Getting listing statistics for seller ID: {}", sellerId);
 
-        long activeCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ACTIVE);
-        long soldCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_SOLD);
-        long onHoldCount = listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ON_HOLD);
+        String normalizedKind = normalizeNullable(kind) != null ? normalizeListingKind(kind) : null;
+
+        long activeCount = normalizedKind == null
+                ? listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ACTIVE)
+                : listingRepository.countBySellerIdAndKindAndStatus(sellerId, normalizedKind, Listing.STATUS_ACTIVE);
+        long soldCount = normalizedKind == null
+                ? listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_SOLD)
+                : listingRepository.countBySellerIdAndKindAndStatus(sellerId, normalizedKind, Listing.STATUS_SOLD);
+        long onHoldCount = normalizedKind == null
+                ? listingRepository.countBySellerIdAndStatus(sellerId, Listing.STATUS_ON_HOLD)
+                : listingRepository.countBySellerIdAndKindAndStatus(sellerId, normalizedKind, Listing.STATUS_ON_HOLD);
 
         log.debug("🔍 Seller {} stats - Active: {}, Sold: {}, On Hold: {}", sellerId, activeCount, soldCount, onHoldCount);
 

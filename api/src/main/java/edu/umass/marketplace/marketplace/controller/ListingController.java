@@ -39,11 +39,13 @@ public class ListingController {
             @Parameter(description = "Listing kind filter") @RequestParam(required = false) String kind,
             @Parameter(description = "Category filter") @RequestParam(required = false) String category,
             @Parameter(description = "Status filter") @RequestParam(required = false) String status,
+            @Parameter(description = "Lease arrangement filter") @RequestParam(required = false) String leaseArrangement,
+            @Parameter(description = "Space type filter") @RequestParam(required = false) String spaceType,
             @Parameter(description = "Minimum price") @RequestParam(required = false) Double minPrice,
             @Parameter(description = "Maximum price") @RequestParam(required = false) Double maxPrice,
             @Parameter(description = "Condition filter (comma-separated for multiple)") @RequestParam(required = false) String condition
     ) {
-        return listingService.getListings(q, kind, category, status, condition, minPrice, maxPrice, page, size);
+        return listingService.getListings(q, kind, category, status, condition, minPrice, maxPrice, leaseArrangement, spaceType, page, size);
     }
 
     @GetMapping("/{id}")
@@ -87,20 +89,24 @@ public class ListingController {
     public Page<ListingResponse> getListingsBySeller(
             @PathVariable UUID sellerId,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Listing kind filter") @RequestParam(required = false) String kind
     ) {
-        return listingService.getListingsBySeller(sellerId, page, size);
+        return listingService.getListingsBySeller(sellerId, kind, page, size);
     }
 
     @GetMapping("/seller/{sellerId}/stats")
     @Operation(summary = "Get listing statistics by seller", description = "Retrieve counts of listings by status for a specific seller")
-    public StatsResponse getListingStatsBySeller(@PathVariable UUID sellerId) {
-        return listingService.getListingStatsBySeller(sellerId);
+    public StatsResponse getListingStatsBySeller(
+            @PathVariable UUID sellerId,
+            @Parameter(description = "Listing kind filter") @RequestParam(required = false) String kind
+    ) {
+        return listingService.getListingStatsBySeller(sellerId, kind);
     }
 
     @GetMapping("/stats")
     @Operation(summary = "Get listing statistics", description = "Retrieve counts of listings by status")
-    public StatsResponse getListingStats() {
-        return listingService.getListingStats();
+    public StatsResponse getListingStats(@Parameter(description = "Listing kind filter") @RequestParam(required = false) String kind) {
+        return listingService.getListingStats(kind);
     }
 }

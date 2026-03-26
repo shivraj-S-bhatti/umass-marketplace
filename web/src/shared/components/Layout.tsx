@@ -31,16 +31,23 @@ const SUBAPPS = [
   { path: '/', label: 'Home', icon: Home, disabled: false },
   { path: '/marketplace', label: 'Marketplace', icon: Store, disabled: false },
   { path: '/directory', label: 'Links', icon: Link2, disabled: false },
-  { path: '/leasings', label: 'Leasing', icon: Home, disabled: true },
+  { path: '/leasings', label: 'Leasing', icon: Home, disabled: false },
 ] as const
 
 const MARKETPLACE_PATHS = ['/marketplace', '/sell', '/dashboard', '/cart', '/listing', '/u']
+const LEASING_PATHS = ['/leasings']
 
 const marketplaceSubNavLinks = [
   { path: '/marketplace', label: 'Explore', icon: ShoppingBag },
   { path: '/sell', label: 'Sell', icon: Plus },
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/cart', label: 'Saved Items', icon: ShoppingCart },
+]
+
+const leasingSubNavLinks = [
+  { path: '/leasings', label: 'Explore', icon: ShoppingBag },
+  { path: '/leasings/sell', label: 'Post a lease', icon: Plus },
+  { path: '/leasings/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ]
 
 interface LayoutProps {
@@ -57,8 +64,10 @@ export default function Layout({ children }: LayoutProps) {
   const { cartCount } = useCart()
 
   const isMarketplace = MARKETPLACE_PATHS.some(p => location.pathname.startsWith(p))
+  const isLeasing = LEASING_PATHS.some(p => location.pathname.startsWith(p))
   const isPublicSharePath = location.pathname.startsWith('/listing/') || location.pathname.startsWith('/u/')
   const showMarketplaceSubNav = isMarketplace && (!!user || isPublicSharePath)
+  const showLeasingSubNav = isLeasing && !!user
   const showCart = !!user && !isPublicSharePath
 
   const currentSubapp = (location.pathname.startsWith('/listing') || location.pathname.startsWith('/u/'))
@@ -68,7 +77,9 @@ export default function Layout({ children }: LayoutProps) {
       ) ?? SUBAPPS[0]
   const navItems = (isPublicSharePath && !user)
     ? marketplaceSubNavLinks.filter(item => item.path === '/marketplace')
-    : marketplaceSubNavLinks.filter(item => item.path !== '/cart' || showCart)
+    : showLeasingSubNav
+      ? leasingSubNavLinks
+      : marketplaceSubNavLinks.filter(item => item.path !== '/cart' || showCart)
 
   return (
     <div className="min-h-screen bg-background relative flex flex-col">
@@ -159,7 +170,7 @@ export default function Layout({ children }: LayoutProps) {
                   </DropdownMenuItem>                  
                   <DropdownMenuItem onSelect={() => navigate('/cart')}>
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    Cart
+                    Saved Items
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => toggleTheme()}>
@@ -184,7 +195,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Marketplace sub-nav: same left alignment as main header */}
-        {showMarketplaceSubNav && (
+        {(showMarketplaceSubNav || showLeasingSubNav) && (
           <nav className="border-t border-border/50">
             <div className="w-full max-w-[1600px] mx-auto pl-3 pr-4 py-2 flex flex-wrap items-center gap-2 sm:pl-4">
               {navItems.map(({ path, label, icon: Icon }) => (
@@ -196,7 +207,7 @@ export default function Layout({ children }: LayoutProps) {
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {path === '/cart' && cartCount > 0 ? `Cart (${cartCount})` : label}
+                  {path === '/cart' && cartCount > 0 ? `Saved Items (${cartCount})` : label}
                 </Link>
               ))}
             </div>

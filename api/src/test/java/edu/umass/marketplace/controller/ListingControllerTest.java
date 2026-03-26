@@ -115,21 +115,21 @@ class ListingControllerTest {
     void shouldGetListings() throws Exception {
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
         when(listingService.getListings(any(), any(), any(), any(), any(),
-                any(Double.class), any(Double.class), anyInt(), anyInt()))
+                any(Double.class), any(Double.class), any(), any(), anyInt(), anyInt()))
                 .thenReturn(page);
 
         mockMvc.perform(get("/api/listings"))
                 .andExpect(status().isOk());
 
         verify(listingService, times(1)).getListings(
-                eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(0), eq(20));
+                eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(0), eq(20));
     }
 
     @Test
     void shouldGetListingsWithFilters() throws Exception {
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
         when(listingService.getListings(any(), any(), any(), any(), any(),
-                any(Double.class), any(Double.class), anyInt(), anyInt()))
+                any(Double.class), any(Double.class), any(), any(), anyInt(), anyInt()))
                 .thenReturn(page);
 
         mockMvc.perform(get("/api/listings")
@@ -140,7 +140,7 @@ class ListingControllerTest {
                 .andExpect(status().isOk());
 
         verify(listingService, times(1)).getListings(
-                eq("laptop"), eq(null), eq("Electronics"), eq(null), eq(null), eq(100.0), eq(1000.0), eq(0), eq(20));
+                eq("laptop"), eq(null), eq("Electronics"), eq(null), eq(null), eq(100.0), eq(1000.0), eq(null), eq(null), eq(0), eq(20));
     }
 
     @Test
@@ -240,20 +240,20 @@ class ListingControllerTest {
     void shouldGetListingsBySeller() throws Exception {
         UUID sellerId = UUID.randomUUID();
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
-        when(listingService.getListingsBySeller(sellerId, 0, 10))
+        when(listingService.getListingsBySeller(sellerId, null, 0, 10))
                 .thenReturn(page);
 
         mockMvc.perform(get("/api/listings/seller/{sellerId}", sellerId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
 
-        verify(listingService, times(1)).getListingsBySeller(sellerId, 0, 10);
+        verify(listingService, times(1)).getListingsBySeller(sellerId, null, 0, 10);
     }
 
     @Test
     void shouldGetListingStats() throws Exception {
         StatsResponse stats = new StatsResponse(10L, 5L, 2L);
-        when(listingService.getListingStats()).thenReturn(stats);
+        when(listingService.getListingStats(null)).thenReturn(stats);
 
         mockMvc.perform(get("/api/listings/stats"))
                 .andExpect(status().isOk())
@@ -261,6 +261,6 @@ class ListingControllerTest {
                 .andExpect(jsonPath("$.soldListings").value(5))
                 .andExpect(jsonPath("$.onHoldListings").value(2));
 
-        verify(listingService, times(1)).getListingStats();
+        verify(listingService, times(1)).getListingStats(null);
     }
 }
