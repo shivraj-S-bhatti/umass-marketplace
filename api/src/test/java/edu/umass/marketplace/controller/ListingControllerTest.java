@@ -114,7 +114,7 @@ class ListingControllerTest {
     @Test
     void shouldGetListings() throws Exception {
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
-        when(listingService.getListings(anyString(), anyString(), anyString(), anyString(),
+        when(listingService.getListings(any(), any(), any(), any(), any(),
                 any(Double.class), any(Double.class), anyInt(), anyInt()))
                 .thenReturn(page);
 
@@ -122,13 +122,13 @@ class ListingControllerTest {
                 .andExpect(status().isOk());
 
         verify(listingService, times(1)).getListings(
-                eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(0), eq(20));
+                eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(null), eq(0), eq(20));
     }
 
     @Test
     void shouldGetListingsWithFilters() throws Exception {
         Page<ListingResponse> page = new PageImpl<>(List.of(testListingResponse));
-        when(listingService.getListings(anyString(), anyString(), anyString(), anyString(),
+        when(listingService.getListings(any(), any(), any(), any(), any(),
                 any(Double.class), any(Double.class), anyInt(), anyInt()))
                 .thenReturn(page);
 
@@ -140,7 +140,7 @@ class ListingControllerTest {
                 .andExpect(status().isOk());
 
         verify(listingService, times(1)).getListings(
-                eq("laptop"), eq("Electronics"), eq(null), eq(null), eq(100.0), eq(1000.0), eq(0), eq(20));
+                eq("laptop"), eq(null), eq("Electronics"), eq(null), eq(null), eq(100.0), eq(1000.0), eq(0), eq(20));
     }
 
     @Test

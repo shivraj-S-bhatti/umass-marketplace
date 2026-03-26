@@ -110,7 +110,7 @@ class ListingServiceTest {
 
         // When
         Page<ListingResponse> result = listingService.getListings(
-                null, null, null, null, null, null, 0, 20);
+                null, null, null, null, null, null, null, 0, 20);
 
         // Then
         assertThat(result).isNotNull();
@@ -122,18 +122,18 @@ class ListingServiceTest {
     void shouldGetListingsWithFilters() {
         // Given
         Page<Listing> page = new PageImpl<>(List.of(testListing));
-        when(listingRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any()))
+        when(listingRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(page);
 
         // When
         Page<ListingResponse> result = listingService.getListings(
-                "laptop", "Electronics", "ACTIVE", "Like New", 100.0, 1000.0, 0, 20);
+                "laptop", null, "Electronics", "ACTIVE", "Like New", 100.0, 1000.0, 0, 20);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
         verify(listingRepository, times(1)).findWithFilters(
-                eq("laptop"), eq("Electronics"), eq("ACTIVE"), any(), any(), any(), any());
+                eq("laptop"), eq(null), eq("Electronics"), eq("ACTIVE"), any(), any(), any(), any());
     }
 
     @Test
