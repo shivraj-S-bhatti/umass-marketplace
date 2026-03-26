@@ -29,6 +29,7 @@ public class ListingDto {
     @Positive(message = "Price must be greater than 0")
     private BigDecimal price;
 
+    private String kind;
     private String category;
     private String condition;
     private String imageUrl;

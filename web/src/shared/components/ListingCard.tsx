@@ -7,6 +7,7 @@ import { formatPrice, timeAgo } from '@/shared/lib/utils/utils'
 import { getDistanceText, requestLocationOnInteraction, type Location } from '@/shared/lib/utils/locationUtils'
 import type { ListingCardData } from '@/shared/types'
 import { useCart } from '@/shared/contexts/CartContext'
+import { getLeasingBadgeLabels, isLeasingListing } from '@/shared/lib/utils/listingMetadata'
 
 export interface ListingCardProps {
   /** Listing data (marketplace or leasing – same shape) */
@@ -57,6 +58,8 @@ export function ListingCard({
     listing.imageUrl.trim() !== 'null'
 
   const postedAgo = timeAgo(listing.createdAt, '')
+  const leasingBadges = getLeasingBadgeLabels(listing)
+  const leasingMeta = [listing.propertyName, listing.areaLabel].filter(Boolean).join(' · ')
 
   return (
     <Card
@@ -95,6 +98,9 @@ export function ListingCard({
         >
           {listing.title}
         </CardTitle>
+        {isLeasingListing(listing) && leasingMeta && (
+          <p className={`text-muted-foreground ${compact ? 'text-[10px]' : 'text-xs'}`}>{leasingMeta}</p>
+        )}
         {listing.status !== 'ACTIVE' && (
           <div className="mt-1">
             <StickerBadge
@@ -127,7 +133,16 @@ export function ListingCard({
         </div>
 
         {/* Category / condition pills – same size as body text, minimal styling */}
-        {(listing.category || listing.condition) && (
+        {isLeasingListing(listing) && leasingBadges.length > 0 ? (
+          <div className={`flex flex-wrap gap-x-2 gap-y-0.5 mt-1.5 ${compact ? 'text-[10px]' : 'text-xs'}`}>
+            {leasingBadges.map((badge, index) => (
+              <span key={`${badge}-${index}`} className="text-muted-foreground">
+                {index > 0 ? ' · ' : ''}
+                {badge}
+              </span>
+            ))}
+          </div>
+        ) : (listing.category || listing.condition) && (
           <div className={`flex flex-wrap gap-x-2 gap-y-0.5 mt-1.5 ${compact ? 'text-[10px]' : 'text-xs'}`}>
             {listing.category && (
               <span className="text-muted-foreground">{listing.category}</span>

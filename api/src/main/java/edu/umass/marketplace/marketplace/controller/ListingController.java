@@ -36,13 +36,14 @@ public class ListingController {
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "Search query") @RequestParam(required = false) String q,
+            @Parameter(description = "Listing kind filter") @RequestParam(required = false) String kind,
             @Parameter(description = "Category filter") @RequestParam(required = false) String category,
             @Parameter(description = "Status filter") @RequestParam(required = false) String status,
             @Parameter(description = "Minimum price") @RequestParam(required = false) Double minPrice,
             @Parameter(description = "Maximum price") @RequestParam(required = false) Double maxPrice,
             @Parameter(description = "Condition filter (comma-separated for multiple)") @RequestParam(required = false) String condition
     ) {
-        return listingService.getListings(q, category, status, condition, minPrice, maxPrice, page, size);
+        return listingService.getListings(q, kind, category, status, condition, minPrice, maxPrice, page, size);
     }
 
     @GetMapping("/{id}")

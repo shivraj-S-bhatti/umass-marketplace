@@ -40,6 +40,7 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
     // Find listings with multiple filters
     @Query("SELECT l FROM Listing l WHERE " +
            "((:query IS NULL) OR :query = '' OR (LOWER(l.title) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')) OR LOWER(l.description) LIKE LOWER(CONCAT('%', COALESCE(:query, ''), '%')))) AND " +
+           "((:kind IS NULL) OR :kind = '' OR (l.kind = :kind)) AND " +
            "((:category IS NULL) OR :category = '' OR (l.category = :category)) AND " +
            "((:status IS NULL) OR :status = '' OR (l.status = :status)) AND " +
            "((:conditions IS NULL) OR (l.condition IN :conditions)) AND " +
@@ -48,6 +49,7 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
            "ORDER BY l.createdAt DESC")
     Page<Listing> findWithFilters(
             @Param("query") String query,
+            @Param("kind") String kind,
             @Param("category") String category,
             @Param("status") String status,
             @Param("conditions") List<Condition> conditions,

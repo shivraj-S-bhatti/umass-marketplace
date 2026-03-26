@@ -14,6 +14,7 @@ export type {
   CreateReviewRequest,
   ReviewsResponse,
   SellerReviewStats,
+  ListingExternalLink,
 } from '@/features/marketplace/api/api'
 
 /** Alias for Listing used by ListingCard and other shared components */

@@ -176,6 +176,7 @@ public class ChatService {
         dto.setTitle(listing.getTitle());
         dto.setDescription(listing.getDescription());
         dto.setPrice(listing.getPrice());
+        dto.setKind(listing.getKind());
         dto.setImageUrl(listing.getImageUrl());
         dto.setCondition(listing.getCondition() != null ? listing.getCondition().getDisplayName() : null);
         dto.setStatus(listing.getStatus());

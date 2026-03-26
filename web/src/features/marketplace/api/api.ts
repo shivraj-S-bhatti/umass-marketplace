@@ -39,9 +39,11 @@ export interface Listing {
   title: string
   description?: string
   price: number
+  kind?: 'MARKETPLACE' | 'LEASING'
   category?: string
   condition?: string
   imageUrl?: string
+  imageUrls?: string[]
   latitude?: number | null
   longitude?: number | null
   status: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
@@ -52,19 +54,72 @@ export interface Listing {
   createdAt: string
   updatedAt: string
   mustGoBy?: string
+  leaseArrangement?: 'SUBLET' | 'LEASE_TRANSFER'
+  transferScope?: 'ENTIRE_UNIT' | 'ROOMS_ONLY'
+  spaceType?: 'ENTIRE_UNIT' | 'PRIVATE_ROOM' | 'SHARED_ROOM' | 'CONVERTED_LIVING_ROOM'
+  propertyName?: string
+  areaLabel?: string
+  availableFrom?: string
+  leaseEnd?: string
+  bedrooms?: number
+  bathrooms?: number
+  nearestBusStopName?: string
+  nearestBusStopWalkMinutes?: number
+  busRoutes?: string[]
+  includedUtilities?: string[]
+  estimatedUtilitiesMonthlyTotal?: number
+  electricityEstimate?: number
+  gasEstimate?: number
+  waterEstimate?: number
+  internetEstimate?: number
+  laundryType?: 'IN_UNIT' | 'ON_SITE' | 'ON_FLOOR' | 'NONE'
+  amenities?: string[]
+  cleaningNotes?: string
+  externalLinks?: ListingExternalLink[]
 }
 
 export interface CreateListingRequest {
   title: string
   description?: string
   price: number
+  kind?: 'MARKETPLACE' | 'LEASING'
   category?: string
   condition?: string
   imageUrl?: string
+  imageUrls?: string[]
   status?: 'ACTIVE' | 'ON_HOLD' | 'SOLD'
   latitude?: number | null
   longitude?: number | null
   mustGoBy?: string
+  leaseArrangement?: 'SUBLET' | 'LEASE_TRANSFER'
+  transferScope?: 'ENTIRE_UNIT' | 'ROOMS_ONLY'
+  spaceType?: 'ENTIRE_UNIT' | 'PRIVATE_ROOM' | 'SHARED_ROOM' | 'CONVERTED_LIVING_ROOM'
+  propertyName?: string
+  areaLabel?: string
+  availableFrom?: string
+  leaseEnd?: string
+  bedrooms?: number
+  bathrooms?: number
+  nearestBusStopName?: string
+  nearestBusStopWalkMinutes?: number
+  busRoutes?: string[]
+  includedUtilities?: string[]
+  estimatedUtilitiesMonthlyTotal?: number
+  electricityEstimate?: number
+  gasEstimate?: number
+  waterEstimate?: number
+  internetEstimate?: number
+  laundryType?: 'IN_UNIT' | 'ON_SITE' | 'ON_FLOOR' | 'NONE'
+  amenities?: string[]
+  cleaningNotes?: string
+  externalLinks?: ListingExternalLink[]
+}
+
+export interface ListingExternalLink {
+  id?: string
+  label: string
+  url: string
+  type?: 'OFFICIAL_SITE' | 'FLOOR_PLAN' | 'APPLICATION' | 'OTHER'
 }
 
 export interface ListingsResponse {
@@ -197,6 +252,7 @@ class ApiClient {
     page?: number
     size?: number
     q?: string
+    kind?: string
     category?: string
     status?: string
     condition?: string
@@ -208,6 +264,7 @@ class ApiClient {
     if (params.page !== undefined) searchParams.set('page', params.page.toString())
     if (params.size !== undefined) searchParams.set('size', params.size.toString())
     if (params.q) searchParams.set('q', params.q)
+    if (params.kind) searchParams.set('kind', params.kind)
     if (params.category) searchParams.set('category', params.category)
     if (params.status) searchParams.set('status', params.status)
     if (params.condition) searchParams.set('condition', params.condition)
